@@ -9,14 +9,14 @@ import {
     Image,
     Dimensions,
     ImageBackground,
-    FlatList, // FlatList 사용
+    FlatList,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import axiosInstance from '@/api/axiosInstance';
 import Constants from 'expo-constants';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated';
-import { useRouter } from 'expo-router'; // 재료 추가를 위해 useRouter 추가
+import { useRouter } from 'expo-router';
 
 // 화면 높이/너비 가져오기
 const { height: screenHeight, width: screenWidth } = Dimensions.get('window');
@@ -72,12 +72,14 @@ const STORAGE_TYPE_MAP = {
 };
 type TabName = 'fridge' | 'freezer' | 'room';
 
-// --- (EmptyFridgeView - 기존과 동일) ---
+// --- ✅ (EmptyFridgeView 수정) ---
 type EmptyFridgeViewProps = {
     tabName: TabName;
     color: string;
+    onPress: () => void; // ✅ 1. 재료 추가 함수를 받을 prop 추가
 };
-const EmptyFridgeView: React.FC<EmptyFridgeViewProps> = ({ tabName, color }) => {
+
+const EmptyFridgeView: React.FC<EmptyFridgeViewProps> = ({ tabName, color, onPress }) => {
     const tabDisplayMessage = {
         fridge: '냉장고가',
         freezer: '냉동고가',
@@ -85,9 +87,16 @@ const EmptyFridgeView: React.FC<EmptyFridgeViewProps> = ({ tabName, color }) => 
     }[tabName];
 
     return (
-        <View style={styles.fridgeContentContainer}>
+        // ✅ 2. 최상위 컴포넌트를 TouchableOpacity에서 View로 변경
+        <View style={styles.emptyContainer}>
             <Text style={[styles.emptyText, { color: color }]}>{tabDisplayMessage} 비었어요</Text>
             <Text style={[styles.emptyText, { color: color }]}>재료를 추가해주세요!</Text>
+
+            {/* ✅ 3. 중앙 재료 추가하기 버튼만 TouchableOpacity로 감싸기 */}
+            <TouchableOpacity style={styles.emptyButton} onPress={onPress} activeOpacity={0.7}>
+                <Ionicons name="add" size={60} color={color} />
+                <Text style={[styles.emptyButtonText, { color: color }]}>재료 추가하기</Text>
+            </TouchableOpacity>
         </View>
     );
 };
@@ -103,16 +112,17 @@ const IngredientGridItem: React.FC<{ item: StoredIngredient }> = ({ item }) => (
     </TouchableOpacity>
 );
 
-// --- (재료 목록 뷰) ---
+// --- ✅ (재료 목록 뷰 수정) ---
 type IngredientListViewProps = {
     isLoading: boolean;
     error: string | null;
     ingredients: StoredIngredient[];
     tabName: TabName;
     color: string;
+    onAddIngredient: () => void; // ✅ 1. 재료 추가 함수를 받을 prop 추가
 };
 
-const IngredientListView: React.FC<IngredientListViewProps> = ({ isLoading, error, ingredients, tabName, color }) => {
+const IngredientListView: React.FC<IngredientListViewProps> = ({ isLoading, error, ingredients, tabName, color, onAddIngredient }) => {
     if (isLoading) {
         return (
             <View style={styles.detailLoadingContainer}>
@@ -130,7 +140,8 @@ const IngredientListView: React.FC<IngredientListViewProps> = ({ isLoading, erro
     }
 
     if (ingredients.length === 0) {
-        return <EmptyFridgeView tabName={tabName} color={color} />;
+        // ✅ 2. EmptyFridgeView에 onAddIngredient 함수 전달
+        return <EmptyFridgeView tabName={tabName} color={color} onPress={onAddIngredient} />;
     }
 
     // FlatList 수정 (key, numColumns)
@@ -139,10 +150,10 @@ const IngredientListView: React.FC<IngredientListViewProps> = ({ isLoading, erro
             data={ingredients}
             renderItem={({ item }) => <IngredientGridItem item={item} />}
             keyExtractor={(item) => item.id.toString()}
-            key={tabName} // 1. 에러 해결을 위해 key 추가!
-            numColumns={4} // 2. 4열로 변경
+            key={tabName}
+            numColumns={4}
             contentContainerStyle={styles.gridContainer}
-            columnWrapperStyle={styles.gridRow} // 열 간격 조절
+            columnWrapperStyle={styles.gridRow}
             style={{ flex: 1 }}
         />
     );
@@ -261,6 +272,11 @@ export default function HomeScreen() {
         setActiveTab(prev => (prev === tabName ? null : tabName));
     };
 
+    // ✅ 재료 추가 페이지로 이동하는 함수
+    const goToAddIngredient = () => {
+        router.push('/ingredient/add');
+    };
+
     // --- 애니메이션 스타일 (기존과 동일) ---
     const summaryAnimatedStyle = useAnimatedStyle(() => ({
         transform: [{ translateY: summaryAnimation.value * screenHeight * 0.8 }],
@@ -356,12 +372,14 @@ export default function HomeScreen() {
                         style={styles.detailBackground}
                         resizeMode="stretch"
                     >
+                        {/* ✅ onAddIngredient 핸들러 전달 */}
                         <IngredientListView
                             isLoading={isListLoading}
                             error={isListError}
                             ingredients={storedIngredients}
                             tabName="fridge"
                             color={TAB_ACTIVE_COLORS.fridge}
+                            onAddIngredient={goToAddIngredient}
                         />
                     </ImageBackground>
                 </Animated.View>
@@ -371,12 +389,14 @@ export default function HomeScreen() {
                         style={styles.detailBackground}
                         resizeMode="stretch"
                     >
+                        {/* ✅ onAddIngredient 핸들러 전달 */}
                         <IngredientListView
                             isLoading={isListLoading}
                             error={isListError}
                             ingredients={storedIngredients}
                             tabName="freezer"
                             color={TAB_ACTIVE_COLORS.freezer}
+                            onAddIngredient={goToAddIngredient}
                         />
                     </ImageBackground>
                 </Animated.View>
@@ -386,12 +406,14 @@ export default function HomeScreen() {
                         style={styles.detailBackground}
                         resizeMode="stretch"
                     >
+                        {/* ✅ onAddIngredient 핸들러 전달 */}
                         <IngredientListView
                             isLoading={isListLoading}
                             error={isListError}
                             ingredients={storedIngredients}
                             tabName="room"
                             color={TAB_ACTIVE_COLORS.room}
+                            onAddIngredient={goToAddIngredient}
                         />
                     </ImageBackground>
                 </Animated.View>
@@ -443,23 +465,29 @@ export default function HomeScreen() {
                     </LinearGradient>
                 </Animated.View>
 
-                {/* 재료 추가 FAB */}
-                <Animated.View style={[styles.fab, fabAnimatedStyle]}>
-                    <TouchableOpacity
-                        style={styles.fabButton}
-                        onPress={() => router.push('/ingredient/add')}
-                    >
-                        <Ionicons name="add" size={24} color="#007AFF" />
-                        <Text style={styles.fabText}>재료 추가</Text>
-                    </TouchableOpacity>
-                </Animated.View>
+                {/* ✅ 재료 추가 FAB (조건부 렌더링) */}
+                {/* 탭이 활성화되어 있고, 리스트 로딩 중이 아니며, 재료가 1개 이상 있을 때만 FAB를 보여줍니다. */}
+                {activeTab && !isListLoading && storedIngredients.length > 0 && (
+                    <Animated.View style={[styles.fab, fabAnimatedStyle]}>
+                        <TouchableOpacity
+                            style={styles.fabButton}
+                            onPress={goToAddIngredient}
+                        >
+                            <Image
+                                source={require('../../assets/icons/plus.png')} // 1. 준비하신 이미지 경로
+                                style={styles.fabIcon} // 2. 새로운 스타일 적용
+                            />
+                            <Text style={styles.fabText}>재료 추가</Text>
+                        </TouchableOpacity>
+                    </Animated.View>
+                )}
 
             </View>
         </View>
     );
 }
 
-// --- 스타일시트 수정 ---
+// --- ✅ 스타일시트 수정 ---
 const styles = StyleSheet.create({
     container: {
         flex: 1,
@@ -637,9 +665,11 @@ const styles = StyleSheet.create({
     },
 
     // --- ✅ 상세 뷰 (재료 목록) 스타일 수정 ---
-    fridgeContentContainer: { // '비었어요' 뷰
+    emptyContainer: { // '비었어요' 뷰 (기존 fridgeContentContainer 대체)
         paddingTop: 60,
         alignItems: 'center',
+        flex: 1,
+        justifyContent: 'center',
     },
     emptyText: {
         fontSize: 20,
@@ -649,6 +679,20 @@ const styles = StyleSheet.create({
         textShadowColor: 'rgba(0, 0, 0, 0.25)',
         textShadowOffset: { width: 0, height: 2 },
         textShadowRadius: 4,
+    },
+    // ✅ '비었어요' 버튼 스타일 추가
+    emptyButton: {
+        marginTop: 40,
+        alignItems: 'center',
+    },
+    emptyButtonText: {
+        fontSize: 22,
+        fontWeight: 'bold',
+        marginTop: 8,
+        textShadowColor: 'rgba(0, 0, 0, 0.25)',
+        textShadowOffset: { width: 0, height: 2 },
+        textShadowRadius: 4,
+        paddingBottom: 450,
     },
     detailLoadingContainer: { // 목록 로딩
         flex: 1,
@@ -663,23 +707,23 @@ const styles = StyleSheet.create({
     },
     gridContainer: { // FlatList의 contentContainer
         paddingTop: 24,
-        paddingHorizontal: 20, // 4. 좌우 여백 수정
+        paddingHorizontal: 20,
         paddingBottom: 120,
     },
     gridRow: { // FlatList의 columnWrapperStyle
-        justifyContent: 'flex-start', // 2. 왼쪽 정렬
-        paddingHorizontal: 4, // 4. 행 좌우에 약간의 패딩
+        justifyContent: 'flex-start',
+        paddingHorizontal: 4,
     },
     gridItem: { // 재료 아이템 (둥근 사각형)
-        width: 90, //  3. 너비 90
-        height: 90, //  3. 높이 90
+        width: 90,
+        height: 90,
         borderRadius: 16,
         backgroundColor: '#656873',
         alignItems: 'center',
         justifyContent: 'center',
         padding: 4,
-        marginBottom: 12, // 3. 상하 간격
-        marginHorizontal: 4, // 4. 좌우 간격 (아이템 사이 8)
+        marginBottom: 12,
+        marginHorizontal: 4,
     },
     gridItemImage: {
         width: 48,
@@ -696,7 +740,7 @@ const styles = StyleSheet.create({
     // --- (FAB 스타일 - 기존과 동일) ---
     fab: {
         position: 'absolute',
-        bottom: 20,
+        bottom: 106,
         right: 20,
         zIndex: 5,
     },
@@ -714,9 +758,14 @@ const styles = StyleSheet.create({
         shadowRadius: 4,
     },
     fabText: {
-        color: '#007AFF',
+        color: '#000000',
         marginLeft: 8,
         fontWeight: 'bold',
         fontSize: 16,
+    },
+    fabIcon: {
+        width: 22, // 1. 아이콘 너비를 22로 줄였습니다.
+        height: 22, // 2. 아이콘 높이를 22로 줄였습니다.
+        resizeMode: 'contain',
     },
 });
