@@ -1,9 +1,10 @@
 // 홈 화면 - 냉장고 재료 관리 (피그마 디자인 반영)
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient'; // 그라데이션 라이브러리
 import { Ionicons } from '@expo/vector-icons'; // 임시 아이콘 (나중에 SVG로 교체)
 import axiosInstance from '@/api/axiosInstance';
+import Constants from 'expo-constants';
 
 // API 응답 타입 정의
 interface IngredientCountResponse {
@@ -19,7 +20,7 @@ interface IngredientCountResponse {
 
 export default function HomeScreen() {
     // 상단 탭 상태 (냉장고, 냉동고, 실온)
-    const [activeTab, setActiveTab] = useState<'fridge' | 'freezer' | 'room'>('fridge');
+    const [activeTab, setActiveTab] = useState<'fridge' | 'freezer' | 'room' | null>(null);
 
     // 각 저장 공간의 잔여 재료 개수 상태
     const [ingredientCount, setIngredientCount] = useState({
@@ -79,8 +80,11 @@ export default function HomeScreen() {
             >
                 {/* JUSTFRIDGE 로고 */}
                 <View style={styles.logoContainer}>
-                    <Text style={styles.logoJust}>JUST</Text>
-                    <Text style={styles.logoFridge}>FRIDGE</Text>
+                    <Image
+                        source={require('../../assets/icons/home_logo.png')}
+                        style={styles.logoImage}
+                        resizeMode="contain"
+                    />
                 </View>
 
                 {/* 탭 버튼들 (냉장고, 냉동고, 실온) */}
@@ -177,7 +181,7 @@ const styles = StyleSheet.create({
 
     // 상단 헤더 그라데이션
     headerGradient: {
-        height: 126,
+        height: 126 + Constants.statusBarHeight,
         borderBottomWidth: 2,
         borderBottomColor: '#2D303A',
         borderBottomLeftRadius: 4,
@@ -195,7 +199,12 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'center',
         alignItems: 'center',
-        marginTop: 33,
+        marginTop: 15 + Constants.statusBarHeight,
+        height: 30,
+    },
+    logoImage: {
+        width: 150, // 로고 너비 (조정 필요)
+        height: 30, // 로고 높이 (조정 필요)
     },
     logoJust: {
         fontSize: 22,
@@ -216,7 +225,7 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         alignItems: 'center',
         paddingHorizontal: 24,
-        marginTop: 17,
+        marginTop: 15,
     },
 
     // 탭 버튼
@@ -270,6 +279,11 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.25,
         shadowRadius: 4,
         elevation: 5,
+        borderWidth: 2,
+        borderTopColor: '#E4ECF1',
+        borderLeftColor: '#E4ECF1',
+        borderRightColor: '#E4ECF1',
+        borderBottomColor: '#E4ECF1',
     },
 
     // 반투명 그라데이션 오버레이
