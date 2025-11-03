@@ -33,30 +33,44 @@ interface IngredientCountResponse {
 
 // 탭별 배경 이미지 맵
 const TAB_BACKGROUNDS = {
-    fridge: require('../../assets/images/fridge_empty.png'), // 냉장고
+    fridge: require('../../assets/images/fridge.png'), // 냉장고
     freezer: require('../../assets/images/freezer.png'),    // 냉동고 (눈꽃)
     room: require('../../assets/images/room.png'),       // 실온 (어두움)
+};
+
+// 1. 탭별 "활성" 색상 맵 추가
+const TAB_ACTIVE_COLORS = {
+    fridge: '#5FE5FF',
+    freezer: '#5FE5FF',
+    room: '#FFAC5F',
 };
 
 // "냉장고가 비었어요" 뷰를 위한 컴포넌트
 type FridgeDetailViewProps = {
     tabName: 'fridge' | 'freezer' | 'room';
+    color: string; // ✅ 2. color prop 타입 추가
 };
 
-const FridgeDetailView: React.FC<FridgeDetailViewProps> = ({ tabName }) => {
-    const tabDisplayName = {
-        fridge: '냉장고',
-        freezer: '냉동고',
-        room: '실온',
+// 2. FridgeDetailView가 color prop을 받고, 조사('이'/'가')를 처리
+const FridgeDetailView: React.FC<FridgeDetailViewProps> = ({ tabName, color }) => {
+
+    // 2. '실온'만 '이'를 사용하도록 객체로 관리
+    const tabDisplayMessage = {
+        fridge: '냉장고가',
+        freezer: '냉동고가',
+        room: '실온이',
     }[tabName];
 
     return (
         <View style={styles.fridgeContentContainer}>
-            <Text style={styles.emptyText}>{tabDisplayName}가 비었어요</Text>
-            <Text style={styles.emptyText}>재료를 추가해주세요!</Text>
+            {/* 2. color prop 및 수정된 메시지 적용 */}
+            <Text style={[styles.emptyText, { color: color }]}>{tabDisplayMessage} 비었어요</Text>
+            <Text style={[styles.emptyText, { color: color }]}>재료를 추가해주세요!</Text>
             <TouchableOpacity style={styles.addButton}>
-                <Ionicons name="add" size={44} color="#FFFFFF" style={{ marginBottom: -5 }} />
-                <Text style={styles.addButtonText}>재료 추가하기</Text>
+                {/* 2. color prop 적용 */}
+                <Ionicons name="add" size={44} color={color} style={{ marginBottom: -5 }} />
+                {/* 2. color prop 적용 */}
+                <Text style={[styles.addButtonText, { color: color }]}>재료 추가하기</Text>
             </TouchableOpacity>
         </View>
     );
@@ -73,33 +87,25 @@ export default function HomeScreen() {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    // ✅ 1. 애니메이션 값을 여러 개로 분리
-    // 요약 뷰(하늘색)가 내려가는 애니메이션
+    // 애니메이션 값 분리
     const summaryAnimation = useSharedValue(0);
-    // 각 상세 뷰의 투명도
     const fridgeOpacity = useSharedValue(0);
     const freezerOpacity = useSharedValue(0);
     const roomOpacity = useSharedValue(0);
 
-    // ✅ 2. useEffect 로직 수정
     useEffect(() => {
         const animationConfig = {
             duration: 500,
             easing: Easing.out(Easing.exp),
         };
 
-        // 탭이 선택되면 (열림)
         if (activeTab) {
-            summaryAnimation.value = withTiming(1, animationConfig); // 요약 뷰 내리기
-            // 탭에 맞는 배경만 서서히 보이게
+            summaryAnimation.value = withTiming(1, animationConfig);
             fridgeOpacity.value = withTiming(activeTab === 'fridge' ? 1 : 0, animationConfig);
             freezerOpacity.value = withTiming(activeTab === 'freezer' ? 1 : 0, animationConfig);
             roomOpacity.value = withTiming(activeTab === 'room' ? 1 : 0, animationConfig);
-        }
-        // 탭이 해제되면 (닫힘)
-        else {
-            summaryAnimation.value = withTiming(0, animationConfig); // 요약 뷰 올리기
-            // 모든 배경 숨기기
+        } else {
+            summaryAnimation.value = withTiming(0, animationConfig);
             fridgeOpacity.value = withTiming(0, animationConfig);
             freezerOpacity.value = withTiming(0, animationConfig);
             roomOpacity.value = withTiming(0, animationConfig);
@@ -140,10 +146,6 @@ export default function HomeScreen() {
     };
 
     // --- 애니메이션 스타일 ---
-
-    // ✅ 3. 각 뷰에 대한 개별 애니메이션 스타일
-
-    // 요약 뷰 (Layer 1, 앞) : 하늘색 그라데이션 배경
     const summaryAnimatedStyle = useAnimatedStyle(() => {
         return {
             transform: [
@@ -154,7 +156,6 @@ export default function HomeScreen() {
         };
     });
 
-    // 상세 뷰 - 냉장고 (Layer 2, 뒤)
     const fridgeDetailStyle = useAnimatedStyle(() => {
         return {
             opacity: fridgeOpacity.value,
@@ -162,7 +163,6 @@ export default function HomeScreen() {
         };
     });
 
-    // 상세 뷰 - 냉동고 (Layer 2, 뒤)
     const freezerDetailStyle = useAnimatedStyle(() => {
         return {
             opacity: freezerOpacity.value,
@@ -170,7 +170,6 @@ export default function HomeScreen() {
         };
     });
 
-    // 상세 뷰 - 실온 (Layer 2, 뒤)
     const roomDetailStyle = useAnimatedStyle(() => {
         return {
             opacity: roomOpacity.value,
@@ -201,12 +200,16 @@ export default function HomeScreen() {
                     )}
                 </View>
 
+                {/* 3. 헤더 탭 텍스트 스타일 수정 */}
                 <View style={styles.tabContainer}>
                     <TouchableOpacity
                         style={[styles.tabButton, activeTab === 'fridge' && styles.activeTabButton]}
                         onPress={() => handleTabPress('fridge')}
                     >
-                        <Text style={[styles.tabText, activeTab === 'fridge' && styles.activeTabText]}>
+                        <Text style={[
+                            styles.tabText,
+                            activeTab === 'fridge' && [styles.activeTabText, { color: TAB_ACTIVE_COLORS.fridge }]
+                        ]}>
                             냉장고
                         </Text>
                     </TouchableOpacity>
@@ -214,7 +217,10 @@ export default function HomeScreen() {
                         style={[styles.tabButton, activeTab === 'freezer' && styles.activeTabButton]}
                         onPress={() => handleTabPress('freezer')}
                     >
-                        <Text style={[styles.tabText, activeTab === 'freezer' && styles.activeTabText]}>
+                        <Text style={[
+                            styles.tabText,
+                            activeTab === 'freezer' && [styles.activeTabText, { color: TAB_ACTIVE_COLORS.freezer }]
+                        ]}>
                             냉동고
                         </Text>
                     </TouchableOpacity>
@@ -222,24 +228,27 @@ export default function HomeScreen() {
                         style={[styles.tabButton, activeTab === 'room' && styles.activeTabButton]}
                         onPress={() => handleTabPress('room')}
                     >
-                        <Text style={[styles.tabText, activeTab === 'room' && styles.activeTabText]}>
+                        <Text style={[
+                            styles.tabText,
+                            activeTab === 'room' && [styles.activeTabText, { color: TAB_ACTIVE_COLORS.room }]
+                        ]}>
                             실온
                         </Text>
                     </TouchableOpacity>
                 </View>
             </LinearGradient>
 
-            {/* ✅ 4. 메인 콘텐츠 영역 (JSX 구조 변경) */}
+            {/* 메인 콘텐츠 영역 (애니메이션 컨테이너) */}
             <View style={styles.contentArea}>
 
-                {/* Layer 2: 상세 뷰 (3개 모두 렌더링, opacity: 0으로 숨김) */}
+                {/* 4. Layer 2: 상세 뷰들에 color prop 전달 */}
                 <Animated.View style={[styles.animatedContainer, fridgeDetailStyle]}>
                     <ImageBackground
                         source={TAB_BACKGROUNDS.fridge}
                         style={styles.detailBackground}
                         resizeMode="stretch"
                     >
-                        {activeTab === 'fridge' && <FridgeDetailView tabName="fridge" />}
+                        {activeTab === 'fridge' && <FridgeDetailView tabName="fridge" color={TAB_ACTIVE_COLORS.fridge} />}
                     </ImageBackground>
                 </Animated.View>
 
@@ -249,7 +258,7 @@ export default function HomeScreen() {
                         style={styles.detailBackground}
                         resizeMode="stretch"
                     >
-                        {activeTab === 'freezer' && <FridgeDetailView tabName="freezer" />}
+                        {activeTab === 'freezer' && <FridgeDetailView tabName="freezer" color={TAB_ACTIVE_COLORS.freezer} />}
                     </ImageBackground>
                 </Animated.View>
 
@@ -259,11 +268,11 @@ export default function HomeScreen() {
                         style={styles.detailBackground}
                         resizeMode="stretch"
                     >
-                        {activeTab === 'room' && <FridgeDetailView tabName="room" />}
+                        {activeTab === 'room' && <FridgeDetailView tabName="room" color={TAB_ACTIVE_COLORS.room} />}
                     </ImageBackground>
                 </Animated.View>
 
-                {/* Layer 1: 요약 뷰 (하늘색 배경) - 앞에 위치, 아래로 슬라이드됨 */}
+                {/* Layer 1: 요약 뷰 (하늘색 배경) */}
                 <Animated.View style={[styles.animatedContainer, summaryAnimatedStyle]}>
                     <LinearGradient
                         colors={['#8387A5', '#DAE4F4', '#96A3C6']}
@@ -315,7 +324,7 @@ export default function HomeScreen() {
     );
 }
 
-// 스타일시트 (이전과 동일)
+// 5. 스타일시트 수정
 const styles = StyleSheet.create({
     container: {
         flex: 1,
@@ -367,16 +376,25 @@ const styles = StyleSheet.create({
         backgroundColor: 'transparent',
     },
     activeTabButton: {
-        backgroundColor: 'rgba(255, 255, 255, 0.3)',
+        backgroundColor: '#2D303A', // 어두운 배경색 (전체 배경색과 동일)
+
+        // 이미지처럼 보이도록 테두리와 그림자 추가
+        borderWidth: 2,
+        borderColor: 'rgba(255, 255, 255, 0.3)', // 은은한 흰색 테두리
+        shadowColor: '#ffffff', // 흰색 그림자로 글로우 효과
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 0.3,
+        shadowRadius: 4,
+        elevation: 5, // Android용 그림자
     },
-    tabText: {
+    tabText: { // 비활성 탭 (기본)
         fontSize: 16,
         fontWeight: '600',
-        color: '#161616',
+        color: '#161616', // 비활성 색상
     },
-    activeTabText: {
-        color: '#161616',
+    activeTabText: { // 활성 탭 (fontWeight만)
         fontWeight: '700',
+        // 5. color 속성 제거
     },
     contentArea: {
         flex: 1,
@@ -408,7 +426,7 @@ const styles = StyleSheet.create({
         borderTopLeftRadius: 4,
         borderTopRightRadius: 4,
         overflow: 'hidden',
-        paddingBottom: 300, // ⭐️ 텍스트 위로 올리기
+        paddingBottom: 300,
     },
     countBoxWrapper: {
         marginTop: 58,
@@ -497,7 +515,7 @@ const styles = StyleSheet.create({
     emptyText: {
         fontSize: 20,
         fontWeight: 'bold',
-        color: '#FFFFFF',
+        // 5. color: '#FFFFFF' 제거
         textAlign: 'center',
         lineHeight: 28,
         textShadowColor: 'rgba(0, 0, 0, 0.25)',
@@ -512,7 +530,7 @@ const styles = StyleSheet.create({
     addButtonText: {
         fontSize: 18,
         fontWeight: 'bold',
-        color: '#FFFFFF',
+        // 5. color: '#FFFFFF' 제거
         marginTop: 2,
         textShadowColor: 'rgba(0, 0, 0, 0.25)',
         textShadowOffset: { width: 0, height: 2 },
