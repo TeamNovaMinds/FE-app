@@ -26,4 +26,31 @@ const useSignupStore = create((set) => ({
     }),
 }));
 
+// 로그인 상태를 관리하는 store
+export const useAuthStore = create((set) => ({
+    // 로그인 상태
+    isAuthenticated: false,
+    isLoading: true, // 앱 시작 시 토큰 확인 중
+
+    // 사용자 정보
+    user: null, // { nickname, email, ... }
+
+    // 로그인 처리
+    login: (userData) => set({
+        isAuthenticated: true,
+        user: userData,
+        isLoading: false,
+    }),
+
+    // 로그아웃 처리
+    logout: () => set({
+        isAuthenticated: false,
+        user: null,
+        isLoading: false,
+    }),
+
+    // 로딩 상태 변경
+    setLoading: (loading) => set({ isLoading: loading }),
+}));
+
 export default useSignupStore;

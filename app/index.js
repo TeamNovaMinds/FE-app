@@ -8,6 +8,8 @@ import * as WebBrowser from 'expo-web-browser';
 import { useAuthRequest } from 'expo-auth-session';
 // 💡 이제 axios 대신 우리가 만든 axiosInstance를 가져옵니다.
 import axiosInstance from '../api/axiosInstance';
+import { saveAuthData } from '../utils/tokenStorage';
+import { useAuthStore } from '../store/authStore';
 
 const redirectUri = 'justfridge://';
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
@@ -18,6 +20,7 @@ export default function LoginScreen() {
     const router = useRouter();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const { login } = useAuthStore();
 
     const [googleRequest, googleResponse, promptAsyncGoogle] = useAuthRequest({
         clientId: 'YOUR_GOOGLE_CLIENT_ID_PLACEHOLDER',
@@ -49,7 +52,21 @@ export default function LoginScreen() {
             });
 
             if (response.data.isSuccess) {
-                Alert.alert('로그인 성공!', `${response.data.result.nickname}님, 환영합니다!`);
+                const { accessToken, refreshToken, nickname, name, profileImg, profileCompleted } = response.data.result;
+
+                // 토큰과 사용자 정보 저장
+                await saveAuthData(accessToken, refreshToken, {
+                    nickname,
+                    name,
+                    email,
+                    profileImg,
+                    profileCompleted
+                });
+
+                // 로그인 상태 업데이트
+                login({ nickname, name, email, profileImg, profileCompleted });
+
+                Alert.alert('로그인 성공!', `${nickname}님, 환영합니다!`);
                 router.replace('/home');
             } else {
                 // 백엔드에서 보낸 에러 메시지를 그대로 사용

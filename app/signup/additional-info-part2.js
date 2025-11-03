@@ -4,7 +4,8 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView as NewSafeAreaView } from 'react-native-safe-area-context'; // 경고 메시지 해결
 import axiosInstance from '../../api/axiosInstance';
-import useSignupStore from '../../store/authStore';
+import useSignupStore, { useAuthStore } from '../../store/authStore';
+import { saveAuthData } from '../../utils/tokenStorage';
 
 // --- 임시 하드코딩 데이터 ---
 // ⚠️ 중요: 아이콘 이미지 파일을 assets/images 폴더에 추가해주세요!
@@ -27,6 +28,7 @@ const CATEGORIES = [
 export default function AdditionalInfoPart2Screen() {
     const router = useRouter();
     const store = useSignupStore();
+    const { login } = useAuthStore();
 
     const [selected, setSelected] = useState([]);
     const [isSigningUp, setIsSigningUp] = useState(false);
@@ -56,11 +58,28 @@ export default function AdditionalInfoPart2Screen() {
 
             await axiosInstance.post('/api/auth/signup', { email, password, name });
             await axiosInstance.post('/api/auth/additional-info-part1', { nickname, profileImgUrl });
-            await axiosInstance.post('/api/auth/additional-info-part2', { interestCategories: selected });
+            const response = await axiosInstance.post('/api/auth/additional-info-part2', { interestCategories: selected });
 
-            Alert.alert("회원가입 완료!", `${store.nickname}님 환영합니다!`);
-            store.reset();
-            router.replace('/home');
+            // 회원가입 완료 시 토큰 저장
+            if (response.data.isSuccess) {
+                const { accessToken, refreshToken, nickname: resNickname, name: resName, profileImg, profileCompleted } = response.data.result;
+
+                // 토큰과 사용자 정보 저장
+                await saveAuthData(accessToken, refreshToken, {
+                    nickname: resNickname,
+                    name: resName,
+                    email,
+                    profileImg,
+                    profileCompleted
+                });
+
+                // 로그인 상태 업데이트
+                login({ nickname: resNickname, name: resName, email, profileImg, profileCompleted });
+
+                Alert.alert("회원가입 완료!", `${resNickname}님 환영합니다!`);
+                store.reset();
+                router.replace('/home');
+            }
         } catch (error) {
             const errorMessage = error.response?.data?.message || '요청 중 문제가 발생했습니다.';
             Alert.alert('회원가입 오류', errorMessage);
