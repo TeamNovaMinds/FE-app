@@ -1,4 +1,4 @@
-// ✅ 하단 네비게이션 탭 레이아웃 (피그마 디자인 반영)
+// 하단 네비게이션 탭 레이아웃 (피그마 디자인 반영)
 import { Tabs } from 'expo-router';
 import React from 'react';
 import { Platform, Image } from 'react-native';
@@ -10,15 +10,15 @@ export default function TabLayout() {
     return (
         <Tabs
             screenOptions={{
-                tabBarActiveTintColor: '#4891FF', // ✅ 활성화된 탭: 청록색 (피그마 디자인)
-                tabBarInactiveTintColor: '#2D303A', // ✅ 비활성화된 탭: 어두운 회색
+                tabBarActiveTintColor: '#4891FF', // 활성화된 탭: 청록색 (피그마 디자인)
+                tabBarInactiveTintColor: '#2D303A', // 비활성화된 탭: 어두운 회색
                 headerShown: false,
                 tabBarButton: HapticTab,
                 tabBarBackground: TabBarBackground,
                 tabBarStyle: Platform.select({
                     ios: {
                         position: 'absolute',
-                        backgroundColor: '#FFFFFF', // ✅ 피그마 디자인: 흰색 배경
+                        backgroundColor: '#FFFFFF', // 피그마 디자인: 흰색 배경
                         borderTopLeftRadius: 24,
                         borderTopRightRadius: 24,
                         height: 76,
@@ -37,10 +37,10 @@ export default function TabLayout() {
                 tabBarLabelStyle: {
                     fontSize: 12,
                     fontWeight: '500',
-                    fontFamily: 'Pretendard', // ✅ 피그마 폰트 (없으면 시스템 폰트 사용)
+                    fontFamily: 'Pretendard', // 피그마 폰트 (없으면 시스템 폰트 사용)
                 },
             }}>
-            {/* ✅ 냉장고 탭 */}
+            {/* 냉장고 탭 */}
             <Tabs.Screen
                 name="home"
                 options={{
@@ -57,7 +57,7 @@ export default function TabLayout() {
                 }}
             />
 
-            {/* ✅ 레시피 탭 */}
+            {/* 레시피 탭 */}
             <Tabs.Screen
                 name="recipe"
                 options={{
@@ -74,7 +74,7 @@ export default function TabLayout() {
                 }}
             />
 
-            {/* ✅ 커뮤니티 탭 */}
+            {/* 커뮤니티 탭 */}
             <Tabs.Screen
                 name="community"
                 options={{
@@ -91,7 +91,7 @@ export default function TabLayout() {
                 }}
             />
 
-            {/* ✅ 마이페이지 탭 */}
+            {/* 마이페이지 탭 */}
             <Tabs.Screen
                 name="mypage"
                 options={{
