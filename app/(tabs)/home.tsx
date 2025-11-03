@@ -8,7 +8,7 @@ import {
     ActivityIndicator,
     Image,
     Dimensions,
-    ImageBackground // ImageBackground 임포트
+    ImageBackground
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -30,6 +30,13 @@ interface IngredientCountResponse {
         roomTempCount: number;
     };
 }
+
+// 탭별 배경 이미지 맵
+const TAB_BACKGROUNDS = {
+    fridge: require('../../assets/images/fridge_empty.png'), // 냉장고
+    freezer: require('../../assets/images/freezer.png'),    // 냉동고 (눈꽃)
+    room: require('../../assets/images/room.png'),       // 실온 (어두움)
+};
 
 // "냉장고가 비었어요" 뷰를 위한 컴포넌트
 type FridgeDetailViewProps = {
@@ -66,23 +73,36 @@ export default function HomeScreen() {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    // 애니메이션 값 (0: 요약 뷰, 1: 상세 뷰)
-    const contentAnimation = useSharedValue(0);
+    // ✅ 1. 애니메이션 값을 여러 개로 분리
+    // 요약 뷰(하늘색)가 내려가는 애니메이션
+    const summaryAnimation = useSharedValue(0);
+    // 각 상세 뷰의 투명도
+    const fridgeOpacity = useSharedValue(0);
+    const freezerOpacity = useSharedValue(0);
+    const roomOpacity = useSharedValue(0);
 
-    // activeTab 상태가 변경될 때 애니메이션 값 업데이트
+    // ✅ 2. useEffect 로직 수정
     useEffect(() => {
+        const animationConfig = {
+            duration: 500,
+            easing: Easing.out(Easing.exp),
+        };
+
+        // 탭이 선택되면 (열림)
         if (activeTab) {
-            // 탭이 선택되면 (열림)
-            contentAnimation.value = withTiming(1, {
-                duration: 500, // 열리는 속도
-                easing: Easing.out(Easing.exp),
-            });
-        } else {
-            // 탭이 해제되면 (닫힘)
-            contentAnimation.value = withTiming(0, {
-                duration: 500, // 닫히는 속도
-                easing: Easing.out(Easing.exp),
-            });
+            summaryAnimation.value = withTiming(1, animationConfig); // 요약 뷰 내리기
+            // 탭에 맞는 배경만 서서히 보이게
+            fridgeOpacity.value = withTiming(activeTab === 'fridge' ? 1 : 0, animationConfig);
+            freezerOpacity.value = withTiming(activeTab === 'freezer' ? 1 : 0, animationConfig);
+            roomOpacity.value = withTiming(activeTab === 'room' ? 1 : 0, animationConfig);
+        }
+        // 탭이 해제되면 (닫힘)
+        else {
+            summaryAnimation.value = withTiming(0, animationConfig); // 요약 뷰 올리기
+            // 모든 배경 숨기기
+            fridgeOpacity.value = withTiming(0, animationConfig);
+            freezerOpacity.value = withTiming(0, animationConfig);
+            roomOpacity.value = withTiming(0, animationConfig);
         }
     }, [activeTab]);
 
@@ -121,24 +141,40 @@ export default function HomeScreen() {
 
     // --- 애니메이션 스타일 ---
 
-    // 상세 뷰 (Layer 2, 뒤) : 어두운 fridge_empty.png 배경
-    const detailAnimatedStyle = useAnimatedStyle(() => {
-        return {
-            opacity: contentAnimation.value, // 0 -> 1 (서서히 나타남)
-            zIndex: 1, // 뒤에 위치
-        };
-    });
+    // ✅ 3. 각 뷰에 대한 개별 애니메이션 스타일
 
     // 요약 뷰 (Layer 1, 앞) : 하늘색 그라데이션 배경
     const summaryAnimatedStyle = useAnimatedStyle(() => {
         return {
             transform: [
-                // 0 -> screenHeight * 0.8 (아래로 내려감)
-                { translateY: contentAnimation.value * screenHeight * 0.8 }
+                { translateY: summaryAnimation.value * screenHeight * 0.8 }
             ],
-            zIndex: 2, // 앞에 위치
-            // 탭이 열리면(애니메이션 진행중) 투명하게 만들어서 상세 뷰가 비치도록
-            opacity: 1 - contentAnimation.value,
+            zIndex: 2,
+            opacity: 1 - summaryAnimation.value,
+        };
+    });
+
+    // 상세 뷰 - 냉장고 (Layer 2, 뒤)
+    const fridgeDetailStyle = useAnimatedStyle(() => {
+        return {
+            opacity: fridgeOpacity.value,
+            zIndex: 1,
+        };
+    });
+
+    // 상세 뷰 - 냉동고 (Layer 2, 뒤)
+    const freezerDetailStyle = useAnimatedStyle(() => {
+        return {
+            opacity: freezerOpacity.value,
+            zIndex: 1,
+        };
+    });
+
+    // 상세 뷰 - 실온 (Layer 2, 뒤)
+    const roomDetailStyle = useAnimatedStyle(() => {
+        return {
+            opacity: roomOpacity.value,
+            zIndex: 1,
         };
     });
 
@@ -193,17 +229,37 @@ export default function HomeScreen() {
                 </View>
             </LinearGradient>
 
-            {/* 메인 콘텐츠 영역 (애니메이션 컨테이너) */}
+            {/* ✅ 4. 메인 콘텐츠 영역 (JSX 구조 변경) */}
             <View style={styles.contentArea}>
 
-                {/* Layer 2: 상세 뷰 (어두운 배경) - 뒤에 위치 */}
-                <Animated.View style={[styles.animatedContainer, detailAnimatedStyle]}>
+                {/* Layer 2: 상세 뷰 (3개 모두 렌더링, opacity: 0으로 숨김) */}
+                <Animated.View style={[styles.animatedContainer, fridgeDetailStyle]}>
                     <ImageBackground
-                        source={require('../../assets/images/fridge_empty.png')} // 🚨 fridge_empty.png 경로
+                        source={TAB_BACKGROUNDS.fridge}
                         style={styles.detailBackground}
                         resizeMode="stretch"
                     >
-                        {activeTab && <FridgeDetailView tabName={activeTab} />}
+                        {activeTab === 'fridge' && <FridgeDetailView tabName="fridge" />}
+                    </ImageBackground>
+                </Animated.View>
+
+                <Animated.View style={[styles.animatedContainer, freezerDetailStyle]}>
+                    <ImageBackground
+                        source={TAB_BACKGROUNDS.freezer}
+                        style={styles.detailBackground}
+                        resizeMode="stretch"
+                    >
+                        {activeTab === 'freezer' && <FridgeDetailView tabName="freezer" />}
+                    </ImageBackground>
+                </Animated.View>
+
+                <Animated.View style={[styles.animatedContainer, roomDetailStyle]}>
+                    <ImageBackground
+                        source={TAB_BACKGROUNDS.room}
+                        style={styles.detailBackground}
+                        resizeMode="stretch"
+                    >
+                        {activeTab === 'room' && <FridgeDetailView tabName="room" />}
                     </ImageBackground>
                 </Animated.View>
 
@@ -214,7 +270,7 @@ export default function HomeScreen() {
                         locations={[0, 0.75, 1]}
                         start={{ x: 0, y: 0 }}
                         end={{ x: 1, y: 0 }}
-                        style={styles.contentGradient} // 그라데이션 자체
+                        style={styles.contentGradient}
                     >
                         {isLoading ? (
                             <View style={styles.loadingContainer}>
@@ -259,7 +315,7 @@ export default function HomeScreen() {
     );
 }
 
-// 5. 스타일시트 수정 및 추가
+// 스타일시트 (이전과 동일)
 const styles = StyleSheet.create({
     container: {
         flex: 1,
@@ -276,7 +332,7 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.25,
         shadowRadius: 4,
         elevation: 5,
-        zIndex: 10, // 헤더가 항상 위에 있도록
+        zIndex: 10,
     },
     logoContainer: {
         flexDirection: 'row',
@@ -322,16 +378,12 @@ const styles = StyleSheet.create({
         color: '#161616',
         fontWeight: '700',
     },
-
-    // 겹치는 애니메이션을 위한 부모 컨테이너
     contentArea: {
         flex: 1,
         position: 'relative',
-        paddingBottom: 86, // 탭바 높이만큼 공간 확보
-        overflow: 'hidden', // 뷰가 영역 밖으로 나가면 자르기
+        paddingBottom: 86,
+        overflow: 'hidden',
     },
-
-    // 요약 뷰와 상세 뷰에 공통으로 적용될 absolute 스타일
     animatedContainer: {
         position: 'absolute',
         left: 0,
@@ -339,32 +391,25 @@ const styles = StyleSheet.create({
         top: 0,
         bottom: 0,
     },
-
-    // Layer 1 (앞): 요약 뷰의 하늘색 그라데이션
-    contentGradient: {
+    contentGradient: { // 요약 뷰 (하늘색)
         flex: 1,
         borderTopWidth: 1,
         borderTopColor: '#A2AECE',
         borderTopLeftRadius: 4,
         borderTopRightRadius: 4,
-        // 자식(countBoxWrapper)을 정렬하기 위해
         alignItems: 'center',
     },
-
-    // Layer 2 (뒤): 상세 뷰의 어두운 이미지 배경
-    detailBackground: {
+    detailBackground: { // 상세 뷰 (이미지)
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        borderTopWidth: 1, // 그라데이션과 동일한 테두리
+        borderTopWidth: 1,
         borderTopColor: '#A2AECE',
         borderTopLeftRadius: 4,
         borderTopRightRadius: 4,
-        overflow: 'hidden', // 이미지 배경이 둥근 모서리를 넘지 않도록
-        paddingBottom: 300,
+        overflow: 'hidden',
+        paddingBottom: 300, // ⭐️ 텍스트 위로 올리기
     },
-
-    // --- 요약 뷰 내부 컴포넌트 ---
     countBoxWrapper: {
         marginTop: 58,
         width: '100%',
@@ -445,8 +490,6 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: 'bold',
     },
-
-    // --- 상세 뷰 내부 컴포넌트 ---
     fridgeContentContainer: {
         justifyContent: 'center',
         alignItems: 'center',
