@@ -10,7 +10,7 @@ export default function TabLayout() {
     return (
         <Tabs
             screenOptions={{
-                tabBarActiveTintColor: '#89FFF1', // ✅ 활성화된 탭: 청록색 (피그마 디자인)
+                tabBarActiveTintColor: '#4891FF', // ✅ 활성화된 탭: 청록색 (피그마 디자인)
                 tabBarInactiveTintColor: '#2D303A', // ✅ 비활성화된 탭: 어두운 회색
                 headerShown: false,
                 tabBarButton: HapticTab,

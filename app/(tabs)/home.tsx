@@ -72,6 +72,7 @@ export default function HomeScreen() {
             {/* ✅ 상단 헤더 영역 (그라데이션) */}
             <LinearGradient
                 colors={['#8387A5', '#DAE4F4', '#96A3C6']}
+                locations={[0, 0.75, 1]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={styles.headerGradient}
@@ -116,6 +117,7 @@ export default function HomeScreen() {
             {/* ✅ 메인 콘텐츠 영역 (그라데이션) */}
             <LinearGradient
                 colors={['#8387A5', '#DAE4F4', '#96A3C6']}
+                locations={[0, 0.75, 1]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={styles.contentGradient}
@@ -252,6 +254,7 @@ const styles = StyleSheet.create({
     countBoxWrapper: {
         marginTop: 58,
         paddingHorizontal: 38,
+        alignItems: 'center'
     },
 
     // ✅ 재료 개수 박스
