@@ -17,27 +17,53 @@ export default function TabLayout() {
                 tabBarBackground: TabBarBackground,
                 tabBarStyle: Platform.select({
                     ios: {
-                        position: 'absolute',
-                        backgroundColor: '#FFFFFF', // 피그마 디자인: 흰색 배경
-                        borderTopLeftRadius: 24,
-                        borderTopRightRadius: 24,
-                        height: 76,
-                        paddingHorizontal: 40,
+                        position: 'absolute',      // ✅ 1. 화면 위에 띄우기
+                        bottom: 0,                 // ✅ 2. 하단에 고정
+                        left: 0,                   // ✅ 3. 좌우 꽉 채우기
+                        right: 0,                  // ✅ 4.
+                        backgroundColor: 'transparent', // ✅ 5. iOS는 TabBarBackground(BlurView)를 위해 투명하게
+                        height: 86,
+                        paddingHorizontal: 30,
+                        paddingTop: 8,
+                        paddingBottom: 20,         // 홈 인디케이터 고려
+                        borderTopWidth: 0,         // 상단 보더 제거
+                        // ✅ added: 둥근 모서리 적용
+                        borderTopLeftRadius: 28,
+                        borderTopRightRadius: 28,
+                        overflow: 'hidden',        // 둥근 모서리 적용
+                        // ✅ added: 은은한 그림자
+                        shadowColor: '#000',
+                        shadowOpacity: 0.05,
+                        shadowRadius: 10,
+                        shadowOffset: { width: 0, height: -2 },
                     },
                     default: {
-                        backgroundColor: '#FFFFFF',
-                        borderTopLeftRadius: 24,
-                        borderTopRightRadius: 24,
-                        height: 76,
-                        paddingHorizontal: 40,
-                        elevation: 0,
+                        position: 'absolute',      // ✅ 1. 화면 위에 띄우기
+                        bottom: 0,                 // ✅ 2. 하단에 고정
+                        left: 0,                   // ✅ 3. 좌우 꽉 채우기
+                        right: 0,                  // ✅ 4.
+                        backgroundColor: '#FFFFFF', // ✅ 5. Android는 흰색 배경
+                        height: 86,
+                        paddingHorizontal: 30,
+                        paddingTop: 8,
+                        paddingBottom: 12,
                         borderTopWidth: 0,
+                        elevation: 10,             // ✅ 6. Android용 그림자
+                        // ✅ added: 둥근 모서리 적용
+                        borderTopLeftRadius: 28,
+                        borderTopRightRadius: 28,
+                        overflow: 'hidden',        // 둥근 모서리 적용
                     },
                 }),
+                tabBarItemStyle: { paddingVertical: 6 },
                 tabBarLabelStyle: {
                     fontSize: 12,
                     fontWeight: '500',
                     fontFamily: 'Pretendard', // 피그마 폰트 (없으면 시스템 폰트 사용)
+                    marginTop: 2,
+                },
+                tabBarIconStyle: {
+                    marginTop: -5,
                 },
             }}>
             {/* 냉장고 탭 */}
@@ -50,7 +76,7 @@ export default function TabLayout() {
                             source={focused
                                 ? require('../../assets/icons/fridge_on.png')
                                 : require('../../assets/icons/fridge_off.png')}
-                            style={{ width: 20, height: 20 }}
+                            style={{ width: 25, height: 25 }}
                             resizeMode="contain"
                         />
                     ),
@@ -67,7 +93,7 @@ export default function TabLayout() {
                             source={focused
                                 ? require('../../assets/icons/recipe_on.png')
                                 : require('../../assets/icons/recipe_off.png')}
-                            style={{ width: 24, height: 24 }}
+                            style={{ width: 29, height: 29 }}
                             resizeMode="contain"
                         />
                     ),
@@ -84,7 +110,7 @@ export default function TabLayout() {
                             source={focused
                                 ? require('../../assets/icons/community_on.png')
                                 : require('../../assets/icons/community_off.png')}
-                            style={{ width: 32, height: 32 }}
+                            style={{ width: 37, height: 37 }}
                             resizeMode="contain"
                         />
                     ),
@@ -101,7 +127,7 @@ export default function TabLayout() {
                             source={focused
                                 ? require('../../assets/icons/mypage_on.png')
                                 : require('../../assets/icons/mypage_off.png')}
-                            style={{ width: 32, height: 32 }}
+                            style={{ width: 37, height: 37 }}
                             resizeMode="contain"
                         />
                     ),

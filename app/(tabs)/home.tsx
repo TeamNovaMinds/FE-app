@@ -257,6 +257,7 @@ const styles = StyleSheet.create({
         borderTopColor: '#A2AECE',
         borderTopLeftRadius: 4,
         borderTopRightRadius: 4,
+        paddingBottom: 86,
     },
 
     // 재료 개수 박스 래퍼
