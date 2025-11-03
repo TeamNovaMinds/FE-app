@@ -18,6 +18,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import axiosInstance from '@/api/axiosInstance';
+import { Link } from 'expo-router';
 
 // --- 타입 정의 (실제 API 응답에 맞게 수정) ---
 interface AuthorInfo {
@@ -191,10 +192,12 @@ export default function RecipeScreen() {
                 columnWrapperStyle={styles.row}
                 ListEmptyComponent={renderListEmptyComponent}
             />
-            <TouchableOpacity style={styles.fab}>
-                <Ionicons name="add" size={24} color="#fff" />
-                <Text style={styles.fabText}>레시피 작성</Text>
-            </TouchableOpacity>
+            <Link href="/recipe/create" asChild>
+                <TouchableOpacity style={styles.fab}>
+                    <Ionicons name="add" size={24} color="#fff" />
+                    <Text style={styles.fabText}>레시피 작성</Text>
+                </TouchableOpacity>
+            </Link>
         </SafeAreaView>
     );
 }
