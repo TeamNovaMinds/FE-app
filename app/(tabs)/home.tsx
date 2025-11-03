@@ -121,7 +121,7 @@ export default function HomeScreen() {
 
     // --- 애니메이션 스타일 ---
 
-    // ✅ 상세 뷰 (Layer 2, 뒤) : 어두운 fridge_empty.png 배경
+    // 상세 뷰 (Layer 2, 뒤) : 어두운 fridge_empty.png 배경
     const detailAnimatedStyle = useAnimatedStyle(() => {
         return {
             opacity: contentAnimation.value, // 0 -> 1 (서서히 나타남)
@@ -129,7 +129,7 @@ export default function HomeScreen() {
         };
     });
 
-    // ✅ 요약 뷰 (Layer 1, 앞) : 하늘색 그라데이션 배경
+    // 요약 뷰 (Layer 1, 앞) : 하늘색 그라데이션 배경
     const summaryAnimatedStyle = useAnimatedStyle(() => {
         return {
             transform: [
@@ -193,7 +193,7 @@ export default function HomeScreen() {
                 </View>
             </LinearGradient>
 
-            {/* ✅ 메인 콘텐츠 영역 (애니메이션 컨테이너) */}
+            {/* 메인 콘텐츠 영역 (애니메이션 컨테이너) */}
             <View style={styles.contentArea}>
 
                 {/* Layer 2: 상세 뷰 (어두운 배경) - 뒤에 위치 */}
@@ -323,7 +323,7 @@ const styles = StyleSheet.create({
         fontWeight: '700',
     },
 
-    // ✅ 겹치는 애니메이션을 위한 부모 컨테이너
+    // 겹치는 애니메이션을 위한 부모 컨테이너
     contentArea: {
         flex: 1,
         position: 'relative',
@@ -331,7 +331,7 @@ const styles = StyleSheet.create({
         overflow: 'hidden', // 뷰가 영역 밖으로 나가면 자르기
     },
 
-    // ✅ 요약 뷰와 상세 뷰에 공통으로 적용될 absolute 스타일
+    // 요약 뷰와 상세 뷰에 공통으로 적용될 absolute 스타일
     animatedContainer: {
         position: 'absolute',
         left: 0,
@@ -340,7 +340,7 @@ const styles = StyleSheet.create({
         bottom: 0,
     },
 
-    // ✅ Layer 1 (앞): 요약 뷰의 하늘색 그라데이션
+    // Layer 1 (앞): 요약 뷰의 하늘색 그라데이션
     contentGradient: {
         flex: 1,
         borderTopWidth: 1,
@@ -351,7 +351,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
 
-    // ✅ Layer 2 (뒤): 상세 뷰의 어두운 이미지 배경
+    // Layer 2 (뒤): 상세 뷰의 어두운 이미지 배경
     detailBackground: {
         flex: 1,
         justifyContent: 'center',
