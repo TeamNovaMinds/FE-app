@@ -15,6 +15,7 @@ import {
     NativeSyntheticEvent,
     NativeScrollEvent,
     ActivityIndicator,
+    ImageBackground,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import axiosInstance from '@/api/axiosInstance';
@@ -34,6 +35,7 @@ interface Recipe {
     authorInfo: AuthorInfo;
     difficulty: string;
     cookingTimeMinutes: number;
+    servings : number;
 }
 
 type RecipeListItem = Recipe | { isEmpty: true; recipeId: string };
@@ -69,6 +71,9 @@ const RecipeCard: React.FC<{ item: RecipeListItem }> = ({ item }) => {
                     <Ionicons name="heart" size={14} color="#FF6347" />
                     <Text style={styles.cardLikesText}>{item.likeCount.toLocaleString()}</Text>
                 </View>
+                <Text style={styles.cardInfoText}>
+                    {item.servings ? `${item.servings}인분 기준` : '정보 없음'}
+                </Text>
                 <Text style={styles.cardInfoText}>조리시간 {item.cookingTimeMinutes}분</Text>
                 <Text style={styles.cardInfoText}>난이도 {item.difficulty}</Text>
             </View>
@@ -137,7 +142,14 @@ export default function RecipeScreen() {
 
     const renderHeader = () => (
         <View>
-            <View style={styles.topBanner}><Text style={styles.topBannerText}>유통기한 잘 확인하셨나요?</Text></View>
+            <ImageBackground
+                // ⚠️ 가지고 계신 이미지 파일 경로로 수정하세요!
+                source={require('../../assets/images/banner_recipe.png')}
+                style={styles.topBanner}
+                resizeMode="cover" // 이미지가 영역을 덮도록 설정
+            >
+                <Text style={styles.topBannerText}>유통기한 잘 확인하셨나요?</Text>
+            </ImageBackground>
             <View style={styles.carouselContainer}>
                 <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false} onScroll={handleScroll} scrollEventThrottle={16}>
                     {BANNERS.map((uri, index) => (
@@ -194,7 +206,12 @@ export default function RecipeScreen() {
             />
             <Link href="/recipe/create" asChild>
                 <TouchableOpacity style={styles.fab}>
-                    <Ionicons name="add" size={24} color="#fff" />
+                    {/* Ionicons 대신 Image 컴포넌트로 변경 */}
+                    <Image
+                        // ⚠️ 가지고 계신 아이콘 파일 경로로 수정하세요! (예: plus_icon.png)
+                        source={require('../../assets/icons/plus.png')}
+                        style={styles.fabIcon}
+                    />
                     <Text style={styles.fabText}>레시피 작성</Text>
                 </TouchableOpacity>
             </Link>
@@ -204,8 +221,8 @@ export default function RecipeScreen() {
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#FFFFFF' },
-    topBanner: { backgroundColor: '#89FFF1', padding: 12, alignItems: 'center' },
-    topBannerText: { fontSize: 16, fontWeight: 'bold', color: '#2D303A' },
+    topBanner: { height:60, padding: 16, alignItems: 'flex-start', justifyContent: 'center', },
+    topBannerText: { fontSize: 18, fontWeight: 'bold', color: '#FFFFFF',textShadowColor: 'rgba(0, 0, 0, 0.5)',textShadowOffset: { width: 1, height: 1 },textShadowRadius: 2, },
     carouselContainer: { height: 200 },
     bannerWrapper: { width: screenWidth, height: '100%' },
     bannerImage: { width: '100%', height: '100%', position: 'absolute' },
@@ -233,7 +250,8 @@ const styles = StyleSheet.create({
     cardLikes: { flexDirection: 'row', alignItems: 'center', marginBottom: 4 },
     cardLikesText: { marginLeft: 4, fontSize: 12, color: '#555' },
     cardInfoText: { fontSize: 11, color: '#888', marginTop: 2 },
-    fab: { position: 'absolute', bottom: 90, right: 20, flexDirection: 'row', alignItems: 'center', backgroundColor: '#89FFF1', paddingVertical: 10, paddingHorizontal: 16, borderRadius: 30, elevation: 5, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 4 },
+    fab: { position: 'absolute', bottom: 90, right: 20, flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFFFFF', paddingVertical: 10, paddingHorizontal: 16, borderRadius: 30, elevation: 5, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 4 },
+    fabIcon: { width: 24, height: 24,},
     fabText: { color: '#2D303A', marginLeft: 8, fontWeight: 'bold', fontSize: 16 },
     emptyContainer: { flex: 1, marginTop: 50, alignItems: 'center', justifyContent: 'center' },
     errorContainer: { flex: 1, marginTop: 50, alignItems: 'center', justifyContent: 'center', padding: 20 },

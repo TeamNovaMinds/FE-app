@@ -11,15 +11,15 @@ import {
     ScrollView,
     FlatList,
     ActivityIndicator,
+    // ✅ 1. Alert (임시 기능 알림용)
+    Alert,
 } from 'react-native';
 import { Link, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import axiosInstance from '@/api/axiosInstance';
-// ✅ 3. useAuthStore를 import
 import { useAuthStore } from '@/store/authStore';
 
 // --- 타입 정의 ---
-// ✅ 1. 'servings' 필드 추가
 interface SimpleRecipe {
     recipeId: number;
     title: string;
@@ -42,6 +42,7 @@ type TabKey = 'liked' | 'my-recipes' | 'my-posts';
  * 마이페이지 미리보기용 레시피 카드 컴포넌트 (React.memo 제거)
  */
 const RecipePreviewCard = ({ item }: { item: SimpleRecipe }) => {
+    // (이하 생략 - 기존 코드와 동일)
     return (
         <Link href={`/recipe/${item.recipeId}`} asChild>
             <TouchableOpacity style={styles.previewCard}>
@@ -56,7 +57,7 @@ const RecipePreviewCard = ({ item }: { item: SimpleRecipe }) => {
                         <Ionicons name="heart" size={14} color="#FF6347" />
                         <Text style={styles.cardLikesText}>{item.likeCount.toLocaleString()}</Text>
                     </View>
-                    {/* ✅ 1. '인분' 정보 표시 (null 체크 추가) */}
+
                     <Text style={styles.cardInfoText}>
                         {item.servings ? `${item.servings}인분 기준` : '정보 없음'}
                     </Text>
@@ -69,11 +70,8 @@ const RecipePreviewCard = ({ item }: { item: SimpleRecipe }) => {
 };
 
 export default function MyPageScreen() {
-    // ✅ 2. 'activeTab'을 닫힌 상태(null)로 시작
     const [activeTab, setActiveTab] = useState<TabKey | null>(null);
     const [isLoading, setIsLoading] = useState(false);
-
-    // ✅ 3. Zustand 스토어를 '훅'으로 호출하여 프로필 정보 가져오기
     const profile = useAuthStore((state) => state.user);
 
     const [likedRecipes, setLikedRecipes] = useState<SimpleRecipe[]>([]);
@@ -82,6 +80,7 @@ export default function MyPageScreen() {
 
     // --- 데이터 로드 함수 ---
     const fetchLikedRecipes = async () => {
+        // (이하 생략 - 기존 코드와 동일)
         setIsLoading(true);
         try {
             const response = await axiosInstance.get('/api/recipes', {
@@ -99,6 +98,7 @@ export default function MyPageScreen() {
     };
 
     const fetchMyRecipes = async (nickname: string | null | undefined) => {
+        // (이하 생략 - 기존 코드와 동일)
         if (!nickname) {
             setMyRecipes([]);
             return;
@@ -119,12 +119,11 @@ export default function MyPageScreen() {
         }
     };
 
-    // ✅ 2. 탭이 '열릴 때만' 데이터 로드
     const handleTabPress = (tabKey: TabKey) => {
+        // (이하 생략 - 기존 코드와 동일)
         const newActiveTab = activeTab === tabKey ? null : tabKey;
         setActiveTab(newActiveTab);
 
-        // 새 탭이 열릴 때 데이터 로드
         if (newActiveTab === 'liked') {
             fetchLikedRecipes();
         } else if (newActiveTab === 'my-recipes') {
@@ -135,15 +134,39 @@ export default function MyPageScreen() {
         }
     };
 
+    // ✅ 1. 프로필 사진 변경 핸들러 (임시)
+    const handleChangeProfileImage = () => {
+        // TODO: 이미지 픽커(Image Picker) 라이브러리 연동
+        // 예: ImagePicker.launchImageLibraryAsync(...)
+        Alert.alert(
+            "기능 구현 필요",
+            "프로필 사진 변경 기능을 여기에 연결해야 합니다."
+        );
+        // 선택된 이미지를 서버로 업로드하고, 성공 시 authStore의 user 상태를 업데이트
+    };
+
     // --- 렌더링 함수 ---
     const renderProfile = () => (
         <View style={styles.profileSection}>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Image
-                    source={profile?.profileImageUrl ? { uri: profile.profileImageUrl } : require('../../assets/images/logo.png')}
-                    style={styles.profileImage}
-                />
-                {/* ✅ 3. 닉네임 표시 (로그인 시 authStore에서 가져옴) */}
+                {/* ✅ 1. 프로필 이미지 + 변경 버튼 래퍼 */}
+                <View style={styles.profileImageContainer}>
+                    <Image
+                        source={profile?.profileImageUrl ? { uri: profile.profileImageUrl } : require('../../assets/images/logo.png')}
+                        style={styles.profileImage}
+                    />
+                    {/* ✅ 1. 프로필 사진 변경 버튼 */}
+                    <TouchableOpacity
+                        style={styles.profileEditButton}
+                        onPress={handleChangeProfileImage}
+                    >
+                        {/* ⚠️ 아이콘 파일명을 확인하세요! (예: camera_icon.png) */}
+                        <Image
+                            source={require('../../assets/icons/photoChange.png')}
+                            style={styles.profileEditIcon}
+                        />
+                    </TouchableOpacity>
+                </View>
                 <Text style={styles.nickname}>{profile?.nickname || '로그인하세요'}</Text>
             </View>
             <View style={styles.followSection}>
@@ -161,12 +184,20 @@ export default function MyPageScreen() {
 
     const renderPoints = () => (
         <View style={styles.pointSection}>
-            <Text style={styles.pointLabel}>보유 포인트</Text>
+            {/* ✅ 2. 포인트 아이콘 + 라벨 */}
+            <View style={styles.pointLabelContainer}>
+                {/* ⚠️ 아이콘 파일명을 확인하세요! (예: point_icon.png) */}
+                <Image
+                    source={require('../../assets/icons/point.png')}
+                    style={styles.pointIcon}
+                />
+                <Text style={styles.pointLabel}>보유 포인트</Text>
+            </View>
             <Text style={styles.pointValue}>0 P</Text>
         </View>
     );
 
-    // ✅ 2. 미리보기 리스트 렌더링 함수 (콜랩서블 내부용)
+    // ✅ 3. 미리보기 리스트 렌더링 함수 (콜랩서블 내부용)
     const renderPreviewList = (data: (SimpleRecipe | SimplePost)[], viewAllLink: string) => (
         <View style={styles.previewContainer}>
             {/* '전체보기' 버튼을 미리보기 리스트 *아래*로 이동 (디자인 참조) */}
@@ -182,7 +213,8 @@ export default function MyPageScreen() {
                     keyExtractor={(item) => (item as SimpleRecipe).recipeId?.toString() || (item as SimplePost).postId.toString()}
                     renderItem={({ item }) => <RecipePreviewCard item={item as SimpleRecipe} />}
                     ListEmptyComponent={<View style={styles.emptyContainer}><Text style={styles.emptyText}>항목이 없습니다.</Text></View>}
-                    contentContainerStyle={{ paddingHorizontal: 24 }}
+
+                    contentContainerStyle={{ paddingHorizontal: 0 }}
                 />
             )}
             <Link href={viewAllLink} asChild>
@@ -199,9 +231,9 @@ export default function MyPageScreen() {
                 {renderProfile()}
                 {renderPoints()}
 
-                {/* ✅ 2. 세로형 탭 리스트 (아코디언) */}
+                {/* 세로형 탭 리스트 (아코디언) */}
                 <View style={styles.tabListContainer}>
-                    {/* 좋아요 누른 레시피 */}
+                    {/* (이하 생략 - 기존 코드와 동일) */}
                     <TouchableOpacity
                         style={[styles.tabButton, activeTab === 'liked' && styles.activeTabButton]}
                         onPress={() => handleTabPress('liked')}>
@@ -210,7 +242,6 @@ export default function MyPageScreen() {
                     </TouchableOpacity>
                     {activeTab === 'liked' && renderPreviewList(likedRecipes, '/mypage/liked-recipes')}
 
-                    {/* 내가 등록한 레시피 */}
                     <TouchableOpacity
                         style={[styles.tabButton, activeTab === 'my-recipes' && styles.activeTabButton]}
                         onPress={() => handleTabPress('my-recipes')}>
@@ -219,7 +250,6 @@ export default function MyPageScreen() {
                     </TouchableOpacity>
                     {activeTab === 'my-recipes' && renderPreviewList(myRecipes, '/mypage/my-recipes')}
 
-                    {/* 내 게시물 */}
                     <TouchableOpacity
                         style={[styles.tabButton, activeTab === 'my-posts' && styles.activeTabButton]}
                         onPress={() => handleTabPress('my-posts')}>
@@ -228,7 +258,6 @@ export default function MyPageScreen() {
                     </TouchableOpacity>
                     {activeTab === 'my-posts' && renderPreviewList(myPosts, '/mypage/my-posts')}
 
-                    {/* 설정 (Link) */}
                     <Link href="/settings" asChild>
                         <TouchableOpacity style={styles.tabButton}>
                             <Text style={styles.tabText}>설정</Text>
@@ -245,18 +274,61 @@ const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#fff' },
     // 프로필
     profileSection: { padding: 24, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-    profileImage: { width: 60, height: 60, borderRadius: 30, backgroundColor: '#eee', marginRight: 12 },
+
+    // ✅ 1. 프로필 이미지 관련 스타일
+    profileImageContainer: {
+        position: 'relative', // 자식 요소의 absolute 포지셔닝 기준
+        marginRight: 12,
+    },
+    profileImage: {
+        width: 60,
+        height: 60,
+        borderRadius: 30,
+        backgroundColor: '#eee'
+    },
+    profileEditButton: {
+        position: 'absolute',
+        bottom: 0,
+        right: 0,
+        backgroundColor: '#fff', // 아이콘 배경
+        borderRadius: 12, // 원형 버튼
+        padding: 4, // 아이콘 주변 여백
+        // 그림자 (선택 사항)
+        elevation: 3,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.2,
+        shadowRadius: 2,
+    },
+    profileEditIcon: {
+        width: 16, // 아이콘 크기
+        height: 16, // 아이콘 크기
+    },
+
     nickname: { fontSize: 20, fontWeight: 'bold' },
     followSection: { flexDirection: 'row', gap: 16 },
     followBox: { alignItems: 'center' },
     followCount: { fontSize: 18, fontWeight: 'bold' },
     followLabel: { fontSize: 14, color: '#888' },
+
     // 포인트
     pointSection: { marginHorizontal: 24, padding: 16, backgroundColor: '#f8f8f8', borderRadius: 12, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+
+    // ✅ 2. 포인트 아이콘 관련 스타일
+    pointLabelContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    pointIcon: {
+        width: 20, // 아이콘 크기 (조정 필요)
+        height: 20, // 아이콘 크기 (조정 필요)
+        marginRight: 8,
+    },
+
     pointLabel: { fontSize: 16, fontWeight: '500' },
     pointValue: { fontSize: 18, fontWeight: 'bold', color: '#007AFF' },
 
-    // ✅ 2. 세로 탭 리스트 스타일
+    // 세로 탭 리스트 스타일
     tabListContainer: {
         marginHorizontal: 24,
         marginTop: 16,
@@ -269,9 +341,7 @@ const styles = StyleSheet.create({
         borderBottomWidth: 1,
         borderBottomColor: '#f0f0f0',
     },
-    activeTabButton: {
-        // 활성화 시 텍스트/아이콘 색만 변경
-    },
+    activeTabButton: {},
     tabText: {
         fontSize: 16,
         fontWeight: '500',
@@ -280,12 +350,12 @@ const styles = StyleSheet.create({
     activeTabText: {
         fontSize: 16,
         fontWeight: 'bold',
-        color: '#007AFF',
+        color: '#4891FF',
     },
 
     // 미리보기
     previewContainer: {
-        paddingVertical: 16, // 탭과 미리보기 사이 여백
+        paddingVertical: 16,
         borderBottomWidth: 1,
         borderBottomColor: '#f0f0f0',
     },
@@ -295,7 +365,7 @@ const styles = StyleSheet.create({
     viewAllText: {
         fontSize: 14,
         color: '#888',
-        textAlign: 'right', // 전체보기 버튼
+        textAlign: 'right',
     },
     previewCard: {
         width: 140,
