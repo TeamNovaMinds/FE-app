@@ -56,7 +56,7 @@ export default function HomeScreen() {
 
     // 재료 추가 페이지로 이동
     const goToAddIngredient = () => {
-        router.push('/ingredient/add');
+        router.push('/ingredient-search');
     };
 
     return (
