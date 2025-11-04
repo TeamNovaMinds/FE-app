@@ -135,6 +135,7 @@ export const styles = StyleSheet.create({
         fontWeight: '600',
         color: '#FCFCFC',
         textAlign: 'left',
+        lineHeight: 40,
     },
     countNumber: {
         fontSize: 20,
