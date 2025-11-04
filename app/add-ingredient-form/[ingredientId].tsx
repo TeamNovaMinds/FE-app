@@ -1,6 +1,6 @@
 // app/add-ingredient-form/[ingredientId].tsx
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
@@ -8,14 +8,20 @@ import {
     TextInput,
     TouchableOpacity,
     Alert,
-    Platform,
     ActivityIndicator,
+    Image, // ✅ Image 컴포넌트 임포트
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import axiosInstance from '@/api/axiosInstance';
 
 type StorageType = "ROOM_TEMPERATURE" | "REFRIGERATOR" | "FREEZER";
+
+interface ShelfLife {
+    fridgeDays: number;
+    freezerDays: number;
+    roomTempDays: number;
+}
 
 export default function AddIngredientFormScreen() {
     const router = useRouter();
@@ -25,6 +31,67 @@ export default function AddIngredientFormScreen() {
     const [quantity, setQuantity] = useState('1');
     const [expirationDate, setExpirationDate] = useState(''); // YYYY-MM-DD
     const [isLoading, setIsLoading] = useState(false);
+    const [isImageLoading, setIsImageLoading] = useState(true); // ✅ 이미지 로딩 상태
+
+    const [shelfLifeInfo, setShelfLifeInfo] = useState<ShelfLife | null>(null);
+    const [ingredientImageUrl, setIngredientImageUrl] = useState<string | null>(null); // ✅ 재료 이미지 URL 상태
+
+    const calculateExpiryDate = (days: number): string => {
+        if (!days || days <= 0) return '';
+        const today = new Date();
+        today.setDate(today.getDate() + days);
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}`;
+    };
+
+    useEffect(() => {
+        if (ingredientId) {
+            const fetchIngredientDetails = async () => {
+                setIsImageLoading(true); // ✅ 이미지 로딩 시작
+                try {
+                    const response = await axiosInstance.get(`/api/ingredients/${ingredientId}`);
+                    if (response.data.isSuccess && response.data.result) {
+                        const { shelfLife, imageUrl } = response.data.result;
+
+                        // ✅ 유통기한 정보 설정
+                        if (shelfLife) {
+                            setShelfLifeInfo(shelfLife);
+                            setExpirationDate(calculateExpiryDate(shelfLife.fridgeDays));
+                        }
+
+                        // ✅ 이미지 URL 설정
+                        if (imageUrl) {
+                            setIngredientImageUrl(imageUrl);
+                        }
+                    }
+                } catch (error) {
+                    console.error('재료 상세 정보 로드 실패:', error);
+                } finally {
+                    setIsImageLoading(false); // ✅ 이미지 로딩 종료
+                }
+            };
+            fetchIngredientDetails();
+        }
+    }, [ingredientId]);
+
+    const handleStorageTypeChange = (type: StorageType) => {
+        setStorageType(type);
+
+        if (shelfLifeInfo) {
+            let days = 0;
+            if (type === 'REFRIGERATOR') {
+                days = shelfLifeInfo.fridgeDays;
+            } else if (type === 'FREEZER') {
+                days = shelfLifeInfo.freezerDays;
+            } else if (type === 'ROOM_TEMPERATURE') {
+                days = shelfLifeInfo.roomTempDays;
+            }
+
+            setExpirationDate(calculateExpiryDate(days));
+        }
+    };
 
     const handleAddItem = async () => {
         const parsedQuantity = parseInt(quantity, 10);
@@ -50,8 +117,14 @@ export default function AddIngredientFormScreen() {
         try {
             const response = await axiosInstance.post('/api/refrigerators/stored-items', payload);
             if (response.data.isSuccess) {
-                Alert.alert('추가 완료', `${name} 재료를 추가했습니다.`);
-                router.replace('/(tabs)/home');
+                Alert.alert('추가 완료', `${decodeURIComponent(name)} 재료를 추가했습니다.`, [
+                    {
+                        text: '확인',
+                        onPress: () => {
+                            router.dismiss(2); // 현재 모달창 전부 닫기
+                        }
+                    }
+                ]);
             } else {
                 throw new Error(response.data.message);
             }
@@ -66,6 +139,22 @@ export default function AddIngredientFormScreen() {
     return (
         <SafeAreaView style={styles.container}>
             <View style={styles.content}>
+                {/* ✅ 재료 이미지 표시 */}
+                {isImageLoading ? (
+                    <View style={styles.imagePlaceholder}>
+                        <ActivityIndicator size="large" color="#007AFF" />
+                    </View>
+                ) : (
+                    ingredientImageUrl ? (
+                        <Image source={{ uri: ingredientImageUrl }} style={styles.ingredientImage} />
+                    ) : (
+                        // 이미지가 없을 경우 대체 아이콘이나 텍스트 표시 가능
+                        <View style={styles.imagePlaceholder}>
+                            <Text style={styles.noImageText}>이미지 없음</Text>
+                        </View>
+                    )
+                )}
+
                 <Text style={styles.ingredientName}>{decodeURIComponent(name)}</Text>
 
                 <Text style={styles.label}>보관 방식</Text>
@@ -77,7 +166,7 @@ export default function AddIngredientFormScreen() {
                                 styles.storageButton,
                                 storageType === type && styles.storageButtonActive,
                             ]}
-                            onPress={() => setStorageType(type)}
+                            onPress={() => handleStorageTypeChange(type)}
                         >
                             <Text style={[
                                 styles.storageText,
@@ -103,7 +192,7 @@ export default function AddIngredientFormScreen() {
                     style={styles.input}
                     value={expirationDate}
                     onChangeText={setExpirationDate}
-                    placeholder="YYYY-MM-DD"
+                    placeholder="YYYY-MM-DD (자동 계산)"
                     maxLength={10}
                 />
 
@@ -123,7 +212,6 @@ export default function AddIngredientFormScreen() {
     );
 }
 
-// 스타일 (동일)
 const styles = StyleSheet.create({
     container: {
         flex: 1,
@@ -132,6 +220,32 @@ const styles = StyleSheet.create({
     content: {
         flex: 1,
         padding: 24,
+    },
+    // ✅ 재료 이미지 스타일 추가
+    ingredientImage: {
+        width: 100,
+        height: 100,
+        borderRadius: 50, // 원형 이미지
+        alignSelf: 'center', // 가운데 정렬
+        marginBottom: 20, // 아래 여백
+        backgroundColor: '#E0E0E0', // 로딩 중 또는 이미지 없을 때 배경색
+        resizeMode: 'cover', // 이미지가 꽉 차게 보이도록
+    },
+    // ✅ 이미지 로딩 플레이스홀더 스타일
+    imagePlaceholder: {
+        width: 100,
+        height: 100,
+        borderRadius: 50,
+        alignSelf: 'center',
+        marginBottom: 20,
+        backgroundColor: '#E0E0E0',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    // ✅ 이미지 없을 때 텍스트 스타일
+    noImageText: {
+        color: '#666',
+        fontSize: 12,
     },
     ingredientName: {
         fontSize: 22,
