@@ -56,7 +56,13 @@ export default function HomeScreen() {
 
     // 재료 추가 페이지로 이동
     const goToAddIngredient = () => {
-        router.push('/ingredient-search');
+        // activeTab에 따라 storageType 파라미터 전달
+        const storageType = activeTab === 'fridge' ? 'REFRIGERATOR'
+            : activeTab === 'freezer' ? 'FREEZER'
+            : activeTab === 'room' ? 'ROOM_TEMPERATURE'
+            : 'REFRIGERATOR';
+
+        router.push(`/ingredient-search?storageType=${storageType}`);
     };
 
     return (

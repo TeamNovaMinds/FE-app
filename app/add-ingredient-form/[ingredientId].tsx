@@ -25,9 +25,15 @@ interface ShelfLife {
 
 export default function AddIngredientFormScreen() {
     const router = useRouter();
-    const { ingredientId, name } = useLocalSearchParams<{ ingredientId: string, name: string }>();
+    const { ingredientId, name, storageType: initialStorageType } = useLocalSearchParams<{
+        ingredientId: string;
+        name: string;
+        storageType?: string;
+    }>();
 
-    const [storageType, setStorageType] = useState<StorageType>('REFRIGERATOR');
+    const [storageType, setStorageType] = useState<StorageType>(
+        (initialStorageType as StorageType) || 'REFRIGERATOR'
+    );
     const [quantity, setQuantity] = useState('1');
     const [expirationDate, setExpirationDate] = useState(''); // YYYY-MM-DD
     const [isLoading, setIsLoading] = useState(false);
@@ -58,7 +64,15 @@ export default function AddIngredientFormScreen() {
                         // ✅ 유통기한 정보 설정
                         if (shelfLife) {
                             setShelfLifeInfo(shelfLife);
-                            setExpirationDate(calculateExpiryDate(shelfLife.fridgeDays));
+
+                            // initialStorageType에 따라 적절한 유통기한 계산
+                            let days = shelfLife.fridgeDays; // 기본값
+                            if (storageType === 'FREEZER') {
+                                days = shelfLife.freezerDays;
+                            } else if (storageType === 'ROOM_TEMPERATURE') {
+                                days = shelfLife.roomTempDays;
+                            }
+                            setExpirationDate(calculateExpiryDate(days));
                         }
 
                         // ✅ 이미지 URL 설정
@@ -74,7 +88,7 @@ export default function AddIngredientFormScreen() {
             };
             fetchIngredientDetails();
         }
-    }, [ingredientId]);
+    }, [ingredientId]); // storageType은 의존성에서 제거 (초기값만 사용)
 
     const handleStorageTypeChange = (type: StorageType) => {
         setStorageType(type);

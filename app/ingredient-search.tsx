@@ -14,7 +14,7 @@ import {
     Keyboard,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import axiosInstance from '@/api/axiosInstance';
 import debounce from 'lodash.debounce';
@@ -38,6 +38,7 @@ interface IngredientDTO {
 
 export default function IngredientSearchScreen() {
     const router = useRouter();
+    const { storageType } = useLocalSearchParams<{ storageType?: string }>();
     const [searchQuery, setSearchQuery] = useState('');
     const [results, setResults] = useState<IngredientDTO[]>([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -115,8 +116,12 @@ export default function IngredientSearchScreen() {
 
     // 아이템 선택 시 다음 폼 화면으로 이동
     const handleSelectIngredient = (item: IngredientDTO) => {
-        // [ingredientId].tsx 파일로 id와 name을 파라미터로 넘겨주며 이동
-        router.push(`/add-ingredient-form/${item.id}?name=${encodeURIComponent(item.name)}`);
+        // [ingredientId].tsx 파일로 id, name, storageType을 파라미터로 넘겨주며 이동
+        const params = new URLSearchParams({
+            name: item.name,
+            ...(storageType && { storageType })
+        });
+        router.push(`/add-ingredient-form/${item.id}?${params.toString()}`);
     };
 
     return (
