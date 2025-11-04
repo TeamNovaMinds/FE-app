@@ -1,308 +1,64 @@
 // 홈 화면 - 냉장고 재료 관리 (피그마 디자인 반영)
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
 import {
     View,
     Text,
-    StyleSheet,
     TouchableOpacity,
     ActivityIndicator,
     Image,
-    Dimensions,
     ImageBackground,
-    FlatList,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
-import axiosInstance from '@/api/axiosInstance';
-import Constants from 'expo-constants';
-import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 
-// 화면 높이/너비 가져오기
-const { height: screenHeight, width: screenWidth } = Dimensions.get('window');
+// 타입 및 상수
+import { TabName } from '@/src/features/home/types';
+import { TAB_BACKGROUNDS, TAB_ACTIVE_COLORS } from '@/src/features/home/constants';
 
-// --- API 응답 타입 정의 (기존과 동일) ---
-interface IngredientCountResponse {
-    isSuccess: boolean;
-    code: string;
-    message: string;
-    result: {
-        refrigeratorCount: number;
-        freezerCount: number;
-        roomTempCount: number;
-    };
-}
-interface StoredIngredient {
-    id: number;
-    ingredientId: number;
-    ingredientName: string;
-    imageUrl: string | null;
-    quantity: number;
-    storageType: string;
-    expirationDate: string;
-    version: number;
-    dday: string;
-}
-interface StoredIngredientResponse {
-    isSuccess: boolean;
-    code: string;
-    message: string;
-    result: {
-        addedCount: number;
-        storedIngredients: StoredIngredient[];
-    };
-}
-// --- (타입 정의 끝) ---
+// 스타일
+import { styles } from '@/src/features/home/styles';
 
-// (상수 정의 - 기존과 동일)
-const TAB_BACKGROUNDS = {
-    fridge: require('../../assets/images/fridge.png'),
-    freezer: require('../../assets/images/freezer.png'),
-    room: require('../../assets/images/room.png'),
-};
-const TAB_ACTIVE_COLORS = {
-    fridge: '#5FE5FF',
-    freezer: '#5FE5FF',
-    room: '#FFAC5F',
-};
-const STORAGE_TYPE_MAP = {
-    fridge: 'REFRIGERATOR',
-    freezer: 'FREEZER',
-    room: 'ROOM_TEMPERATURE',
-};
-type TabName = 'fridge' | 'freezer' | 'room';
+// 컴포넌트
+import { IngredientListView } from '@/src/features/home/components/IngredientListView';
 
-// --- ✅ (EmptyFridgeView 수정) ---
-type EmptyFridgeViewProps = {
-    tabName: TabName;
-    color: string;
-    onPress: () => void; // ✅ 1. 재료 추가 함수를 받을 prop 추가
-};
+// 커스텀 훅
+import { useIngredientData } from '@/src/features/home/hooks/useIngredientData';
+import { useTabAnimation } from '@/src/features/home/hooks/useTabAnimation';
 
-const EmptyFridgeView: React.FC<EmptyFridgeViewProps> = ({ tabName, color, onPress }) => {
-    const tabDisplayMessage = {
-        fridge: '냉장고가',
-        freezer: '냉동고가',
-        room: '실온이',
-    }[tabName];
-
-    return (
-        // ✅ 2. 최상위 컴포넌트를 TouchableOpacity에서 View로 변경
-        <View style={styles.emptyContainer}>
-            <Text style={[styles.emptyText, { color: color }]}>{tabDisplayMessage} 비었어요</Text>
-            <Text style={[styles.emptyText, { color: color }]}>재료를 추가해주세요!</Text>
-
-            {/* ✅ 3. 중앙 재료 추가하기 버튼만 TouchableOpacity로 감싸기 */}
-            <TouchableOpacity style={styles.emptyButton} onPress={onPress} activeOpacity={0.7}>
-                <Ionicons name="add" size={60} color={color} />
-                <Text style={[styles.emptyButtonText, { color: color }]}>재료 추가하기</Text>
-            </TouchableOpacity>
-        </View>
-    );
-};
-
-// --- (재료 그리드 아이템 - 기존과 동일) ---
-const IngredientGridItem: React.FC<{ item: StoredIngredient }> = ({ item }) => (
-    <TouchableOpacity style={styles.gridItem}>
-        <Image
-            source={item.imageUrl ? { uri: item.imageUrl } : require('../../assets/images/logo.png')} // Fallback image
-            style={styles.gridItemImage}
-        />
-        <Text style={styles.gridItemText} numberOfLines={1}>{item.ingredientName}</Text>
-    </TouchableOpacity>
-);
-
-// --- ✅ (재료 목록 뷰 수정) ---
-type IngredientListViewProps = {
-    isLoading: boolean;
-    error: string | null;
-    ingredients: StoredIngredient[];
-    tabName: TabName;
-    color: string;
-    onAddIngredient: () => void; // ✅ 1. 재료 추가 함수를 받을 prop 추가
-};
-
-const IngredientListView: React.FC<IngredientListViewProps> = ({ isLoading, error, ingredients, tabName, color, onAddIngredient }) => {
-    if (isLoading) {
-        return (
-            <View style={styles.detailLoadingContainer}>
-                <ActivityIndicator size="large" color={color} />
-            </View>
-        );
-    }
-
-    if (error) {
-        return (
-            <View style={styles.detailErrorContainer}>
-                <Text style={[styles.emptyText, { color: 'red' }]}>{error}</Text>
-            </View>
-        );
-    }
-
-    if (ingredients.length === 0) {
-        // ✅ 2. EmptyFridgeView에 onAddIngredient 함수 전달
-        return <EmptyFridgeView tabName={tabName} color={color} onPress={onAddIngredient} />;
-    }
-
-    // FlatList 수정 (key, numColumns)
-    return (
-        <FlatList
-            data={ingredients}
-            renderItem={({ item }) => <IngredientGridItem item={item} />}
-            keyExtractor={(item) => item.id.toString()}
-            key={tabName}
-            numColumns={4}
-            contentContainerStyle={styles.gridContainer}
-            columnWrapperStyle={styles.gridRow}
-            style={{ flex: 1 }}
-        />
-    );
-};
-
-// --- (메인 홈 스크린 - 로직은 기존과 동일) ---
 export default function HomeScreen() {
     const router = useRouter();
     const [activeTab, setActiveTab] = useState<TabName | null>(null);
-    const [ingredientCount, setIngredientCount] = useState({
-        fridge: 0,
-        freezer: 0,
-        room: 0,
-    });
-    const [isLoading, setIsLoading] = useState(true); // 요약(count) 로딩
-    const [error, setError] = useState<string | null>(null); // 요약(count) 에러
 
-    const [storedIngredients, setStoredIngredients] = useState<StoredIngredient[]>([]);
-    const [isListLoading, setIsListLoading] = useState(false); // 목록 로딩
-    const [isListError, setIsListError] = useState<string | null>(null); // 목록 에러
+    // 커스텀 훅 사용
+    const {
+        ingredientCount,
+        isLoading,
+        error,
+        storedIngredients,
+        isListLoading,
+        isListError,
+        fetchIngredientCount,
+    } = useIngredientData(activeTab);
 
-    // 애니메이션 값
-    const summaryAnimation = useSharedValue(0);
-    const fridgeOpacity = useSharedValue(0);
-    const freezerOpacity = useSharedValue(0);
-    const roomOpacity = useSharedValue(0);
+    const {
+        summaryAnimatedStyle,
+        fridgeDetailStyle,
+        freezerDetailStyle,
+        roomDetailStyle,
+        fabAnimatedStyle,
+    } = useTabAnimation(activeTab);
 
-    // 탭 변경 시 애니메이션 (기존과 동일)
-    useEffect(() => {
-        const animationConfig = {
-            duration: 500,
-            easing: Easing.out(Easing.exp),
-        };
-
-        if (activeTab) {
-            summaryAnimation.value = withTiming(1, animationConfig);
-            fridgeOpacity.value = withTiming(activeTab === 'fridge' ? 1 : 0, animationConfig);
-            freezerOpacity.value = withTiming(activeTab === 'freezer' ? 1 : 0, animationConfig);
-            roomOpacity.value = withTiming(activeTab === 'room' ? 1 : 0, animationConfig);
-        } else {
-            summaryAnimation.value = withTiming(0, animationConfig);
-            fridgeOpacity.value = withTiming(0, animationConfig);
-            freezerOpacity.value = withTiming(0, animationConfig);
-            roomOpacity.value = withTiming(0, animationConfig);
-        }
-    }, [activeTab]);
-
-    // 마운트 시 요약(count) 정보 가져오기 (기존과 동일)
-    useEffect(() => {
-        fetchIngredientCount();
-    }, []);
-
-    // activeTab 변경 시 재료 "목록" 가져오기 (기존과 동일)
-    useEffect(() => {
-        if (activeTab) {
-            fetchStoredIngredients(activeTab);
-        } else {
-            setStoredIngredients([]);
-            setIsListError(null);
-        }
-    }, [activeTab]);
-
-    // 요약(count) API (기존과 동일)
-    const fetchIngredientCount = async () => {
-        try {
-            setIsLoading(true);
-            setError(null);
-            const response = await axiosInstance.get<IngredientCountResponse>(
-                '/api/refrigerators/stored-items/count'
-            );
-            if (response.data.isSuccess) {
-                setIngredientCount({
-                    fridge: response.data.result.refrigeratorCount,
-                    freezer: response.data.result.freezerCount,
-                    room: response.data.result.roomTempCount,
-                });
-            } else {
-                setError('재료 개수를 불러오는데 실패했습니다.');
-            }
-        } catch (err) {
-            console.error('재료 개수 조회 에러:', err);
-            setError('재료 개수를 불러오는 중 오류가 발생했습니다.');
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    // 재료 "목록" API 호출 함수 (기존과 동일)
-    const fetchStoredIngredients = async (tabName: TabName) => {
-        setIsListLoading(true);
-        setIsListError(null);
-        setStoredIngredients([]);
-        try {
-            const storageType = STORAGE_TYPE_MAP[tabName];
-            const response = await axiosInstance.get<StoredIngredientResponse>(
-                '/api/refrigerators/stored-items',
-                { params: { storageType } }
-            );
-
-            if (response.data.isSuccess) {
-                setStoredIngredients(response.data.result.storedIngredients);
-            } else {
-                setIsListError(response.data.message || '재료를 불러오는데 실패했습니다.');
-            }
-        } catch (err: any) {
-            const message = err.response?.data?.message || '재료 목록을 불러오는 중 오류가 발생했습니다.';
-            console.error('재료 목록 조회 에러:', err);
-            setIsListError(message);
-        } finally {
-            setIsListLoading(false);
-        }
-    };
-
-    // 탭 핸들러 (기존과 동일)
+    // 탭 핸들러
     const handleTabPress = (tabName: TabName) => {
         setActiveTab(prev => (prev === tabName ? null : tabName));
     };
 
-    // ✅ 재료 추가 페이지로 이동하는 함수
+    // 재료 추가 페이지로 이동
     const goToAddIngredient = () => {
         router.push('/ingredient/add');
     };
 
-    // --- 애니메이션 스타일 (기존과 동일) ---
-    const summaryAnimatedStyle = useAnimatedStyle(() => ({
-        transform: [{ translateY: summaryAnimation.value * screenHeight * 0.8 }],
-        zIndex: 2,
-        opacity: 1 - summaryAnimation.value,
-    }));
-    const fridgeDetailStyle = useAnimatedStyle(() => ({
-        opacity: fridgeOpacity.value,
-        zIndex: 1,
-    }));
-    const freezerDetailStyle = useAnimatedStyle(() => ({
-        opacity: freezerOpacity.value,
-        zIndex: 1,
-    }));
-    const roomDetailStyle = useAnimatedStyle(() => ({
-        opacity: roomOpacity.value,
-        zIndex: 1,
-    }));
-    const fabAnimatedStyle = useAnimatedStyle(() => ({
-        opacity: summaryAnimation.value,
-        transform: [{ scale: summaryAnimation.value }],
-        pointerEvents: activeTab ? 'auto' : 'none',
-    }));
-
-
-    // --- 렌더링 (기존과 동일) ---
     return (
         <View style={styles.container}>
             {/* 상단 헤더 영역 */}
@@ -372,7 +128,6 @@ export default function HomeScreen() {
                         style={styles.detailBackground}
                         resizeMode="stretch"
                     >
-                        {/* ✅ onAddIngredient 핸들러 전달 */}
                         <IngredientListView
                             isLoading={isListLoading}
                             error={isListError}
@@ -383,13 +138,13 @@ export default function HomeScreen() {
                         />
                     </ImageBackground>
                 </Animated.View>
+
                 <Animated.View style={[styles.animatedContainer, freezerDetailStyle]}>
                     <ImageBackground
                         source={TAB_BACKGROUNDS.freezer}
                         style={styles.detailBackground}
                         resizeMode="stretch"
                     >
-                        {/* ✅ onAddIngredient 핸들러 전달 */}
                         <IngredientListView
                             isLoading={isListLoading}
                             error={isListError}
@@ -400,13 +155,13 @@ export default function HomeScreen() {
                         />
                     </ImageBackground>
                 </Animated.View>
+
                 <Animated.View style={[styles.animatedContainer, roomDetailStyle]}>
                     <ImageBackground
                         source={TAB_BACKGROUNDS.room}
                         style={styles.detailBackground}
                         resizeMode="stretch"
                     >
-                        {/* ✅ onAddIngredient 핸들러 전달 */}
                         <IngredientListView
                             isLoading={isListLoading}
                             error={isListError}
@@ -465,8 +220,7 @@ export default function HomeScreen() {
                     </LinearGradient>
                 </Animated.View>
 
-                {/* ✅ 재료 추가 FAB (조건부 렌더링) */}
-                {/* 탭이 활성화되어 있고, 리스트 로딩 중이 아니며, 재료가 1개 이상 있을 때만 FAB를 보여줍니다. */}
+                {/* 재료 추가 FAB */}
                 {activeTab && !isListLoading && storedIngredients.length > 0 && (
                     <Animated.View style={[styles.fab, fabAnimatedStyle]}>
                         <TouchableOpacity
@@ -474,298 +228,14 @@ export default function HomeScreen() {
                             onPress={goToAddIngredient}
                         >
                             <Image
-                                source={require('../../assets/icons/plus.png')} // 1. 준비하신 이미지 경로
-                                style={styles.fabIcon} // 2. 새로운 스타일 적용
+                                source={require('../../assets/icons/plus.png')}
+                                style={styles.fabIcon}
                             />
                             <Text style={styles.fabText}>재료 추가</Text>
                         </TouchableOpacity>
                     </Animated.View>
                 )}
-
             </View>
         </View>
     );
 }
-
-// --- ✅ 스타일시트 수정 ---
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#2D303A',
-    },
-    headerGradient: {
-        height: 126 + Constants.statusBarHeight,
-        borderBottomWidth: 2,
-        borderBottomColor: '#2D303A',
-        borderBottomLeftRadius: 4,
-        borderBottomRightRadius: 4,
-        shadowColor: '#070251',
-        shadowOffset: { width: -2, height: -2 },
-        shadowOpacity: 0.25,
-        shadowRadius: 4,
-        elevation: 5,
-        zIndex: 10,
-    },
-    logoContainer: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginTop: 15 + Constants.statusBarHeight,
-        height: 30,
-    },
-    logoImage: {
-        width: 150,
-        height: 30,
-    },
-    headerTitle: {
-        fontSize: 22,
-        fontWeight: 'bold',
-        color: '#000000',
-        letterSpacing: 1,
-    },
-    tabContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        paddingHorizontal: 24,
-        marginTop: 15,
-    },
-    tabButton: {
-        width: 100,
-        height: 44,
-        borderRadius: 12,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: 'transparent',
-    },
-    activeTabButton: {
-        backgroundColor: '#2D303A',
-        borderWidth: 2,
-        borderColor: 'rgba(255, 255, 255, 0.3)',
-        shadowColor: '#ffffff',
-        shadowOffset: { width: 0, height: 0 },
-        shadowOpacity: 0.3,
-        shadowRadius: 4,
-        elevation: 5,
-    },
-    tabText: {
-        fontSize: 16,
-        fontWeight: '600',
-        color: '#161616',
-    },
-    activeTabText: {
-        fontWeight: '700',
-    },
-    contentArea: {
-        flex: 1,
-        position: 'relative',
-        paddingBottom: 86, // 하단 탭바 높이
-        overflow: 'hidden',
-    },
-    animatedContainer: {
-        position: 'absolute',
-        left: 0,
-        right: 0,
-        top: 0,
-        bottom: 0,
-    },
-    contentGradient: { // 요약 뷰 (하늘색)
-        flex: 1,
-        borderTopWidth: 1,
-        borderTopColor: '#A2AECE',
-        borderTopLeftRadius: 4,
-        borderTopRightRadius: 4,
-        alignItems: 'center',
-    },
-    detailBackground: { // 상세 뷰 (이미지)
-        flex: 1,
-        borderTopWidth: 1,
-        borderTopColor: '#A2AECE',
-        borderTopLeftRadius: 4,
-        borderTopRightRadius: 4,
-        overflow: 'hidden',
-    },
-    // (요약 뷰 스타일 - 기존과 동일)
-    countBoxWrapper: {
-        marginTop: 58,
-        width: '100%',
-        alignItems: 'center',
-    },
-    countBox: {
-        width: 299,
-        height: 169,
-        backgroundColor: '#2D303A',
-        borderRadius: 12,
-        position: 'relative',
-        shadowColor: '#000000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.25,
-        shadowRadius: 4,
-        elevation: 5,
-        borderWidth: 2,
-        borderColor: '#E4ECF1',
-    },
-    countBoxOverlay: {
-        position: 'absolute',
-        width: '100%',
-        height: '100%',
-        borderRadius: 12,
-    },
-    countBoxContent: {
-        flex: 1,
-        justifyContent: 'space-around',
-        paddingVertical: 34,
-        paddingHorizontal: 24,
-    },
-    countLabel: {
-        fontSize: 20,
-        fontWeight: '600',
-        color: '#FCFCFC',
-        textAlign: 'left',
-    },
-    countNumber: {
-        fontSize: 20,
-        fontWeight: '700',
-        color: '#89FFF1',
-    },
-    loadingContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    loadingText: {
-        marginTop: 15,
-        fontSize: 16,
-        color: '#2D303A',
-        fontWeight: '500',
-    },
-    errorContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        paddingHorizontal: 20,
-    },
-    errorText: {
-        fontSize: 16,
-        color: '#FF5C5C',
-        textAlign: 'center',
-        marginBottom: 20,
-        fontWeight: '500',
-    },
-    retryButton: {
-        backgroundColor: '#89FFF1',
-        paddingVertical: 12,
-        paddingHorizontal: 30,
-        borderRadius: 8,
-    },
-    retryButtonText: {
-        color: '#2D303A',
-        fontSize: 16,
-        fontWeight: 'bold',
-    },
-
-    // --- ✅ 상세 뷰 (재료 목록) 스타일 수정 ---
-    emptyContainer: { // '비었어요' 뷰 (기존 fridgeContentContainer 대체)
-        paddingTop: 60,
-        alignItems: 'center',
-        flex: 1,
-        justifyContent: 'center',
-    },
-    emptyText: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        textAlign: 'center',
-        lineHeight: 28,
-        textShadowColor: 'rgba(0, 0, 0, 0.25)',
-        textShadowOffset: { width: 0, height: 2 },
-        textShadowRadius: 4,
-    },
-    // ✅ '비었어요' 버튼 스타일 추가
-    emptyButton: {
-        marginTop: 40,
-        alignItems: 'center',
-    },
-    emptyButtonText: {
-        fontSize: 22,
-        fontWeight: 'bold',
-        marginTop: 8,
-        textShadowColor: 'rgba(0, 0, 0, 0.25)',
-        textShadowOffset: { width: 0, height: 2 },
-        textShadowRadius: 4,
-        paddingBottom: 450,
-    },
-    detailLoadingContainer: { // 목록 로딩
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    detailErrorContainer: { // 목록 에러
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: 20,
-    },
-    gridContainer: { // FlatList의 contentContainer
-        paddingTop: 24,
-        paddingHorizontal: 20,
-        paddingBottom: 120,
-    },
-    gridRow: { // FlatList의 columnWrapperStyle
-        justifyContent: 'flex-start',
-        paddingHorizontal: 4,
-    },
-    gridItem: { // 재료 아이템 (둥근 사각형)
-        width: 90,
-        height: 90,
-        borderRadius: 16,
-        backgroundColor: '#656873',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: 4,
-        marginBottom: 12,
-        marginHorizontal: 4,
-    },
-    gridItemImage: {
-        width: 48,
-        height: 48,
-        resizeMode: 'contain',
-    },
-    gridItemText: {
-        color: '#FFFFFF',
-        fontWeight: '600',
-        fontSize: 13,
-        marginTop: 4,
-        textAlign: 'center',
-    },
-    // --- (FAB 스타일 - 기존과 동일) ---
-    fab: {
-        position: 'absolute',
-        bottom: 106,
-        right: 20,
-        zIndex: 5,
-    },
-    fabButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: '#FFFFFF',
-        paddingVertical: 10,
-        paddingHorizontal: 16,
-        borderRadius: 30,
-        elevation: 5,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.2,
-        shadowRadius: 4,
-    },
-    fabText: {
-        color: '#000000',
-        marginLeft: 8,
-        fontWeight: 'bold',
-        fontSize: 16,
-    },
-    fabIcon: {
-        width: 22, // 1. 아이콘 너비를 22로 줄였습니다.
-        height: 22, // 2. 아이콘 높이를 22로 줄였습니다.
-        resizeMode: 'contain',
-    },
-});

@@ -1,11 +1,10 @@
-// ✅ 홈 화면 - 냉장고 재료 관리 (피그마 디자인 반영)
+// 홈 화면 - 냉장고 재료 관리 (피그마 디자인 반영)
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient'; // ✅ added: 그라데이션 라이브러리
-import { Ionicons } from '@expo/vector-icons'; // ✅ 임시 아이콘 (나중에 SVG로 교체)
+import { LinearGradient } from 'expo-linear-gradient'; // added: 그라데이션 라이브러리
 import axiosInstance from '@/api/axiosInstance';
 
-// ✅ added: API 응답 타입 정의
+// added: API 응답 타입 정의
 interface IngredientCountResponse {
     isSuccess: boolean;
     code: string;
@@ -18,28 +17,28 @@ interface IngredientCountResponse {
 }
 
 export default function HomeScreen() {
-    // ✅ 상단 탭 상태 (냉장고, 냉동고, 실온)
+    // 상단 탭 상태 (냉장고, 냉동고, 실온)
     const [activeTab, setActiveTab] = useState<'fridge' | 'freezer' | 'room'>('fridge');
 
-    // ✅ 각 저장 공간의 잔여 재료 개수 상태
+    // 각 저장 공간의 잔여 재료 개수 상태
     const [ingredientCount, setIngredientCount] = useState({
         fridge: 0,
         freezer: 0,
         room: 0,
     });
 
-    // ✅ 로딩 상태
+    // 로딩 상태
     const [isLoading, setIsLoading] = useState(true);
 
-    // ✅ 에러 상태
+    // 에러 상태
     const [error, setError] = useState<string | null>(null);
 
-    // ✅ 컴포넌트 마운트 시 재료 개수 가져오기
+    // 컴포넌트 마운트 시 재료 개수 가져오기
     useEffect(() => {
         fetchIngredientCount();
     }, []);
 
-    // ✅ API 호출 함수
+    // API 호출 함수
     const fetchIngredientCount = async () => {
         try {
             setIsLoading(true);
@@ -67,9 +66,9 @@ export default function HomeScreen() {
     };
 
     return (
-        // ✅ 전체 배경: 어두운 회색 (#2D303A)
+        // 전체 배경: 어두운 회색 (#2D303A)
         <View style={styles.container}>
-            {/* ✅ 상단 헤더 영역 (그라데이션) */}
+            {/* 상단 헤더 영역 (그라데이션) */}
             <LinearGradient
                 colors={['#8387A5', '#DAE4F4', '#96A3C6']}
                 start={{ x: 0, y: 0 }}
@@ -113,7 +112,7 @@ export default function HomeScreen() {
                 </View>
             </LinearGradient>
 
-            {/* ✅ 메인 콘텐츠 영역 (그라데이션) */}
+            {/* 메인 콘텐츠 영역 (그라데이션) */}
             <LinearGradient
                 colors={['#8387A5', '#DAE4F4', '#96A3C6']}
                 start={{ x: 0, y: 0 }}
@@ -139,7 +138,7 @@ export default function HomeScreen() {
                     <View style={styles.countBoxWrapper}>
                         {/* 재료 개수 박스 */}
                         <View style={styles.countBox}>
-                            {/* ✅ 반투명 그라데이션 오버레이 */}
+                            {/* 반투명 그라데이션 오버레이 */}
                             <LinearGradient
                                 colors={['rgba(255, 255, 255, 0)', 'rgba(255, 255, 255, 0.08)', 'rgba(255, 255, 255, 0)']}
                                 start={{ x: 0, y: 0 }}
@@ -167,13 +166,13 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-    // ✅ 전체 컨테이너
+    // 전체 컨테이너
     container: {
         flex: 1,
         backgroundColor: '#2D303A', // 피그마의 전체 배경색
     },
 
-    // ✅ 상단 헤더 그라데이션
+    // 상단 헤더 그라데이션
     headerGradient: {
         height: 126,
         borderBottomWidth: 2,
@@ -188,7 +187,7 @@ const styles = StyleSheet.create({
         elevation: 5,
     },
 
-    // ✅ JUSTFRIDGE 로고
+    // JUSTFRIDGE 로고
     logoContainer: {
         flexDirection: 'row',
         justifyContent: 'center',
@@ -208,7 +207,7 @@ const styles = StyleSheet.create({
         letterSpacing: 1,
     },
 
-    // ✅ 탭 컨테이너
+    // 탭 컨테이너
     tabContainer: {
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -217,7 +216,7 @@ const styles = StyleSheet.create({
         marginTop: 17,
     },
 
-    // ✅ 탭 버튼
+    // 탭 버튼
     tabButton: {
         width: 100,
         height: 44,
@@ -239,7 +238,7 @@ const styles = StyleSheet.create({
         fontWeight: '700',
     },
 
-    // ✅ 메인 콘텐츠 그라데이션
+    // 메인 콘텐츠 그라데이션
     contentGradient: {
         flex: 1,
         borderTopWidth: 1,
@@ -248,13 +247,13 @@ const styles = StyleSheet.create({
         borderTopRightRadius: 4,
     },
 
-    // ✅ 재료 개수 박스 래퍼
+    // 재료 개수 박스 래퍼
     countBoxWrapper: {
         marginTop: 58,
         paddingHorizontal: 38,
     },
 
-    // ✅ 재료 개수 박스
+    // 재료 개수 박스
     countBox: {
         width: 299,
         height: 169,
@@ -269,7 +268,7 @@ const styles = StyleSheet.create({
         elevation: 5,
     },
 
-    // ✅ 반투명 그라데이션 오버레이
+    // 반투명 그라데이션 오버레이
     countBoxOverlay: {
         position: 'absolute',
         width: '100%',
@@ -277,7 +276,7 @@ const styles = StyleSheet.create({
         borderRadius: 12,
     },
 
-    // ✅ 재료 개수 박스 내용
+    // 재료 개수 박스 내용
     countBoxContent: {
         flex: 1,
         justifyContent: 'space-around',
@@ -297,7 +296,7 @@ const styles = StyleSheet.create({
         color: '#89FFF1', // 청록색 숫자
     },
 
-    // ✅ 로딩 컨테이너
+    // 로딩 컨테이너
     loadingContainer: {
         flex: 1,
         justifyContent: 'center',
@@ -310,7 +309,7 @@ const styles = StyleSheet.create({
         fontWeight: '500',
     },
 
-    // ✅ 에러 컨테이너
+    // 에러 컨테이너
     errorContainer: {
         flex: 1,
         justifyContent: 'center',
