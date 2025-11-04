@@ -9,7 +9,7 @@ import {
     TouchableOpacity,
     Alert,
     ActivityIndicator,
-    Image, // ✅ Image 컴포넌트 임포트
+    Image, // Image 컴포넌트 임포트
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -37,10 +37,10 @@ export default function AddIngredientFormScreen() {
     const [quantity, setQuantity] = useState('1');
     const [expirationDate, setExpirationDate] = useState(''); // YYYY-MM-DD
     const [isLoading, setIsLoading] = useState(false);
-    const [isImageLoading, setIsImageLoading] = useState(true); // ✅ 이미지 로딩 상태
+    const [isImageLoading, setIsImageLoading] = useState(true); // 이미지 로딩 상태
 
     const [shelfLifeInfo, setShelfLifeInfo] = useState<ShelfLife | null>(null);
-    const [ingredientImageUrl, setIngredientImageUrl] = useState<string | null>(null); // ✅ 재료 이미지 URL 상태
+    const [ingredientImageUrl, setIngredientImageUrl] = useState<string | null>(null); // 재료 이미지 URL 상태
 
     const calculateExpiryDate = (days: number): string => {
         if (!days || days <= 0) return '';
@@ -55,13 +55,13 @@ export default function AddIngredientFormScreen() {
     useEffect(() => {
         if (ingredientId) {
             const fetchIngredientDetails = async () => {
-                setIsImageLoading(true); // ✅ 이미지 로딩 시작
+                setIsImageLoading(true); // 이미지 로딩 시작
                 try {
                     const response = await axiosInstance.get(`/api/ingredients/${ingredientId}`);
                     if (response.data.isSuccess && response.data.result) {
                         const { shelfLife, imageUrl } = response.data.result;
 
-                        // ✅ 유통기한 정보 설정
+                        // 유통기한 정보 설정
                         if (shelfLife) {
                             setShelfLifeInfo(shelfLife);
 
@@ -75,7 +75,7 @@ export default function AddIngredientFormScreen() {
                             setExpirationDate(calculateExpiryDate(days));
                         }
 
-                        // ✅ 이미지 URL 설정
+                        // 이미지 URL 설정
                         if (imageUrl) {
                             setIngredientImageUrl(imageUrl);
                         }
@@ -83,7 +83,7 @@ export default function AddIngredientFormScreen() {
                 } catch (error) {
                     console.error('재료 상세 정보 로드 실패:', error);
                 } finally {
-                    setIsImageLoading(false); // ✅ 이미지 로딩 종료
+                    setIsImageLoading(false); // 이미지 로딩 종료
                 }
             };
             fetchIngredientDetails();
@@ -153,7 +153,7 @@ export default function AddIngredientFormScreen() {
     return (
         <SafeAreaView style={styles.container}>
             <View style={styles.content}>
-                {/* ✅ 재료 이미지 표시 */}
+                {/* 재료 이미지 표시 */}
                 {isImageLoading ? (
                     <View style={styles.imagePlaceholder}>
                         <ActivityIndicator size="large" color="#007AFF" />
@@ -235,7 +235,7 @@ const styles = StyleSheet.create({
         flex: 1,
         padding: 24,
     },
-    // ✅ 재료 이미지 스타일 추가
+    // 재료 이미지 스타일 추가
     ingredientImage: {
         width: 100,
         height: 100,
@@ -245,7 +245,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#E0E0E0', // 로딩 중 또는 이미지 없을 때 배경색
         resizeMode: 'cover', // 이미지가 꽉 차게 보이도록
     },
-    // ✅ 이미지 로딩 플레이스홀더 스타일
+    // 이미지 로딩 플레이스홀더 스타일
     imagePlaceholder: {
         width: 100,
         height: 100,
@@ -256,7 +256,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
     },
-    // ✅ 이미지 없을 때 텍스트 스타일
+    // 이미지 없을 때 텍스트 스타일
     noImageText: {
         color: '#666',
         fontSize: 12,

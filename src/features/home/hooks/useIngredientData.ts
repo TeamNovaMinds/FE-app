@@ -42,7 +42,7 @@ export const useIngredientData = (activeTab: TabName | null) => {
         } finally {
             setIsLoading(false);
         }
-    }, []); // ✅ 의존성 배열: 비어있음
+    }, []); // 의존성 배열: 비어있음
 
     // 재료 목록 API 호출
     const fetchStoredIngredients = useCallback(async (tabName: TabName) => {
@@ -68,16 +68,16 @@ export const useIngredientData = (activeTab: TabName | null) => {
         } finally {
             setIsListLoading(false);
         }
-    }, []); // ✅ 의존성 배열: 비어있음
+    }, []); // 의존성 배열: 비어있음
 
     const refetchData = useCallback(() => {
         fetchIngredientCount();
         if (activeTab) {
             fetchStoredIngredients(activeTab);
         }
-    }, [activeTab, fetchIngredientCount, fetchStoredIngredients]); // ✅ 의존성 추가
+    }, [activeTab, fetchIngredientCount, fetchStoredIngredients]); // 의존성 추가
 
-    // ✅ 화면이 포커스될 때마다 데이터 새로고침
+    // 화면이 포커스될 때마다 데이터 새로고침
     useFocusEffect(refetchData);
 
     // 마운트 시 요약(count) 정보 가져오기
@@ -89,7 +89,7 @@ export const useIngredientData = (activeTab: TabName | null) => {
             setStoredIngredients([]);
             setIsListError(null);
         }
-    }, [activeTab, fetchStoredIngredients]); // ✅ fetchStoredIngredients 추가
+    }, [activeTab, fetchStoredIngredients]); // fetchStoredIngredients 추가
 
     // activeTab 변경 시 재료 목록 가져오기
     useEffect(() => {

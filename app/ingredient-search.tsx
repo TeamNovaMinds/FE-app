@@ -19,7 +19,7 @@ import { Ionicons } from '@expo/vector-icons';
 import axiosInstance from '@/api/axiosInstance';
 import debounce from 'lodash.debounce';
 
-// ✅ 2. 제스처 핸들러와 리애니메이티드 임포트
+// 2. 제스처 핸들러와 리애니메이티드 임포트
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
     useSharedValue,
@@ -43,7 +43,7 @@ export default function IngredientSearchScreen() {
     const [results, setResults] = useState<IngredientDTO[]>([]);
     const [isLoading, setIsLoading] = useState(false);
 
-    // ✅ 3. 애니메이션과 제스처를 위한 값 추가
+    // 3. 애니메이션과 제스처를 위한 값 추가
     const translateY = useSharedValue(0); // 시트의 Y축 위치
     const context = useSharedValue({ y: 0 }); // 제스처 시작 위치
 
@@ -77,7 +77,7 @@ export default function IngredientSearchScreen() {
         fetchIngredients('');
     }, []);
 
-    // ✅ 4. 모달 닫기 함수 (키보드도 함께 내리기)
+    // 4. 모달 닫기 함수 (키보드도 함께 내리기)
     const closeModal = () => {
         Keyboard.dismiss();
         router.back();
@@ -88,7 +88,7 @@ export default function IngredientSearchScreen() {
         runOnJS(closeModal)();
     };
 
-    // ✅ 5. 아래로 스와이프하는 제스처 정의
+    // 5. 아래로 스와이프하는 제스처 정의
     const panGesture = Gesture.Pan()
         .onStart(() => {
             context.value = { y: translateY.value };
@@ -100,14 +100,14 @@ export default function IngredientSearchScreen() {
         .onEnd(() => {
             // 100픽셀 이상 끌어내렸으면 닫기
             if (translateY.value > 100) {
-                handleClose(); // ✅ 닫기 함수 호출
+                handleClose(); // 닫기 함수 호출
             } else {
                 // 100픽셀 미만이면 제자리로 부드럽게 복귀
                 translateY.value = withSpring(0, { damping: 15 });
             }
         });
 
-    // ✅ 6. 시트에 적용할 애니메이션 스타일
+    // 6. 시트에 적용할 애니메이션 스타일
     const animatedSheetStyle = useAnimatedStyle(() => {
         return {
             transform: [{ translateY: translateY.value }],

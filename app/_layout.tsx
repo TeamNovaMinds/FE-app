@@ -46,13 +46,13 @@ export default function RootLayout() {
   }
 
     return (
-        // ✅ 2. ThemeProvider를 GestureHandlerRootView로 감쌉니다. (크래시 해결)
+        // 2. ThemeProvider를 GestureHandlerRootView로 감쌉니다. (크래시 해결)
         <GestureHandlerRootView style={{ flex: 1 }}>
             <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
                 <Stack>
                     <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
 
-                    {/* ✅ 3. 재료 검색 (바텀 시트) 스크린 추가 (버튼 작동) */}
+                    {/* 3. 재료 검색 (바텀 시트) 스크린 추가 (버튼 작동) */}
                     <Stack.Screen
                         name="ingredient-search" // app/ingredient-search.tsx
                         options={{
@@ -64,7 +64,7 @@ export default function RootLayout() {
                         }}
                     />
 
-                    {/* ✅ 4. 재료 정보 입력 (모달) 스크린 추가 (버튼 작동) */}
+                    {/* 4. 재료 정보 입력 (모달) 스크린 추가 (버튼 작동) */}
                     <Stack.Screen
                         name="add-ingredient-form/[ingredientId]" // app/add-ingredient-form/[ingredientId].tsx
                         options={{
