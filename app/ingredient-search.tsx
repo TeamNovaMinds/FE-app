@@ -21,6 +21,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import axiosInstance from '@/api/axiosInstance';
 import debounce from 'lodash.debounce';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
@@ -62,6 +63,7 @@ const CATEGORIES = [
 
 export default function IngredientSearchScreen() {
     const router = useRouter();
+    const queryClient = useQueryClient();
     const { storageType } = useLocalSearchParams<{ storageType?: string; }>();
     const [searchQuery, setSearchQuery] = useState('');
     const [results, setResults] = useState<IngredientDTO[]>([]);
@@ -70,9 +72,32 @@ export default function IngredientSearchScreen() {
 
     // 3. 스토어에서 상태와 함수들 가져오기
     const { pendingItems, removeItem, clearItems } = usePendingIngredientsStore();
-    // 4. API 전송 로딩 상태 추가
-    const [isSubmitting, setIsSubmitting] = useState(false);
 
+    // React Query mutation for bulk adding ingredients
+    const addIngredientsMutation = useMutation({
+        mutationFn: async (items: PendingIngredient[]) => {
+            const response = await axiosInstance.post('/api/refrigerators/stored-items', {
+                items
+            });
+            if (!response.data.isSuccess) {
+                throw new Error(response.data.message);
+            }
+            return response.data;
+        },
+        onSuccess: () => {
+            // 캐시 무효화로 홈 화면이 자동으로 refetch되도록
+            queryClient.invalidateQueries({ queryKey: ['ingredientCount'] });
+            queryClient.invalidateQueries({ queryKey: ['storedIngredients'] });
+
+            Alert.alert('추가 완료', '선택한 재료들이 냉장고에 추가되었습니다.');
+            clearItems(); // 스토어 비우기
+            closeModal(); // 모달 닫기
+        },
+        onError: (error: any) => {
+            const message = error.response?.data?.message || '재료 추가 중 오류가 발생했습니다.';
+            Alert.alert('오류', message);
+        }
+    });
 
     const translateY = useSharedValue(0);
     const context = useSharedValue({ y: 0 });
@@ -161,30 +186,10 @@ export default function IngredientSearchScreen() {
         }
     };
 
-    // 6. 최종 '추가하기' 버튼 핸들러 (Bulk API 호출)
-    const handleBulkAdd = async () => {
+    // 6. 최종 '추가하기' 버튼 핸들러 (useMutation 사용)
+    const handleBulkAdd = () => {
         if (pendingItems.length === 0) return;
-
-        setIsSubmitting(true);
-        try {
-            // 7. 새로운 API 페이로드 형식으로 전송
-            const response = await axiosInstance.post('/api/refrigerators/stored-items', {
-                items: pendingItems
-            });
-
-            if (response.data.isSuccess) {
-                Alert.alert('추가 완료', '선택한 재료들이 냉장고에 추가되었습니다.');
-                clearItems(); // 스토어 비우기
-                closeModal(); // 모달 닫기 (홈 화면으로 이동)
-            } else {
-                throw new Error(response.data.message);
-            }
-        } catch (error: any) {
-            const message = error.response?.data?.message || '재료 추가 중 오류가 발생했습니다.';
-            Alert.alert('오류', message);
-        } finally {
-            setIsSubmitting(false);
-        }
+        addIngredientsMutation.mutate(pendingItems as PendingIngredient[]);
     };
 
     // (카테고리 렌더링 함수 ... 기존과 동일)
@@ -302,12 +307,12 @@ export default function IngredientSearchScreen() {
                             <TouchableOpacity
                                 style={[
                                     styles.addButton,
-                                    (pendingItems.length === 0 || isSubmitting) && styles.addButtonDisabled
+                                    (pendingItems.length === 0 || addIngredientsMutation.isPending) && styles.addButtonDisabled
                                 ]}
                                 onPress={handleBulkAdd}
-                                disabled={pendingItems.length === 0 || isSubmitting}
+                                disabled={pendingItems.length === 0 || addIngredientsMutation.isPending}
                             >
-                                {isSubmitting ? (
+                                {addIngredientsMutation.isPending ? (
                                     <ActivityIndicator color="#FFFFFF" />
                                 ) : (
                                     <Text style={styles.addButtonText}>
