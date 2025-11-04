@@ -13,7 +13,8 @@ import {
     Pressable,
     Keyboard,
     TouchableWithoutFeedback,
-    ScrollView, // 1. ScrollView 임포트
+    ScrollView,
+    Alert, // 1. Alert 임포트
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -21,7 +22,6 @@ import { Ionicons } from '@expo/vector-icons';
 import axiosInstance from '@/api/axiosInstance';
 import debounce from 'lodash.debounce';
 
-// 2. 제스처 핸들러와 리애니메이티드 임포트 (기존과 동일)
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
     useSharedValue,
@@ -30,7 +30,10 @@ import Animated, {
     runOnJS
 } from 'react-native-reanimated';
 
-// API 응답 타입 (기존과 동일)
+// 2. 스토어 임포트
+import { usePendingIngredientsStore } from '@/store/pendingIngredientsStore';
+
+// (기존 타입 정의)
 interface IngredientDTO {
     id: number;
     name: string;
@@ -38,19 +41,22 @@ interface IngredientDTO {
     imageUrl: string | null;
 }
 
-// 3. 카테고리 필터 데이터 추가 (두번째 이미지 참고)
-// 💡 API 명세에 맞게 key 값을 조정해야 할 수 있습니다. (예: 'MEAT', 'VEGETABLE')
+// 스토어 아이템 타입 정의
+interface PendingIngredient {
+    ingredientId: number;
+    storageType: string;
+    expirationDate?: string;
+    quantity: number;
+}
+// (기존 카테고리 정의)
 const CATEGORIES = [
     { key: 'ALL', name: '전체' },
+    { key: 'MEAT', name: '육류' },
     { key: 'VEGETABLE', name: '채소' },
     { key: 'FRUIT', name: '과일' },
-    { key: 'MEAT', name: '육류' },
-    { key: 'SEAFOOD', name: '수산물' },
     { key: 'DAIRY', name: '유제품' },
-    { key: 'GRAIN', name: '곡물' },
     { key: 'SEASONING', name: '조미료' },
-    { key: 'PROCESSED', name: '가공식품' },
-    // ...필요시 API에 정의된 다른 카테고리 추가
+    { key: 'FROZEN', name: '냉동' },
 ];
 
 
@@ -60,24 +66,25 @@ export default function IngredientSearchScreen() {
     const [searchQuery, setSearchQuery] = useState('');
     const [results, setResults] = useState<IngredientDTO[]>([]);
     const [isLoading, setIsLoading] = useState(false);
-
-    // 4. 활성 카테고리 상태 추가 (기본값 'ALL')
     const [activeCategory, setActiveCategory] = useState<string>('ALL');
 
-    // 애니메이션/제스처 값 (기존과 동일)
+    // 3. 스토어에서 상태와 함수들 가져오기
+    const { pendingItems, removeItem, clearItems } = usePendingIngredientsStore();
+    // 4. API 전송 로딩 상태 추가
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+
     const translateY = useSharedValue(0);
     const context = useSharedValue({ y: 0 });
 
-    // 5. 재료 검색 API 호출 수정 (category 파라미터 추가)
+    // (fetchIngredients, debouncedSearch, useEffects ... 기존과 동일)
     const fetchIngredients = async (keyword: string, category: string) => {
         setIsLoading(true);
         try {
             const params: any = {
                 keyword: keyword || undefined,
-                // 'ALL'이 아니면 category 파라미터 추가
                 category: category !== 'ALL' ? category : undefined,
             };
-
             const response = await axiosInstance.get('/api/ingredients', { params });
             if (response.data.isSuccess) {
                 setResults(response.data.result.ingredients);
@@ -88,32 +95,23 @@ export default function IngredientSearchScreen() {
             setIsLoading(false);
         }
     };
-
-    // 6. 디바운스 검색 함수 수정
     const debouncedSearch = useCallback(debounce(fetchIngredients, 300), []);
-
-    // 7. 검색어/카테고리 변경 시 디바운스 검색 호출
     useEffect(() => {
         debouncedSearch(searchQuery, activeCategory);
     }, [searchQuery, activeCategory, debouncedSearch]);
-
-    // 8. 마운트 시 '전체' 목록 로드
     useEffect(() => {
         fetchIngredients('', 'ALL');
     }, []);
 
-    // 모달 닫기 함수 (기존과 동일)
+    // (모달 닫기, 제스처, 애니메이션 스타일 ... 기존과 동일)
     const closeModal = () => {
         Keyboard.dismiss();
         router.back();
     };
-
     const handleClose = () => {
         'worklet';
         runOnJS(closeModal)();
     };
-
-    // 제스처 (기존과 동일)
     const panGesture = Gesture.Pan()
         .onStart(() => {
             context.value = { y: translateY.value };
@@ -128,24 +126,68 @@ export default function IngredientSearchScreen() {
                 translateY.value = withSpring(0, { damping: 15 });
             }
         });
-
-    // 애니메이션 스타일 (기존과 동일)
     const animatedSheetStyle = useAnimatedStyle(() => {
         return {
             transform: [{ translateY: translateY.value }],
         };
     });
 
-    // 재료 선택 (기존과 동일)
+
+    // 5. 재료 선택 핸들러 수정 (스토어 확인 로직 추가)
     const handleSelectIngredient = (item: IngredientDTO) => {
+        // 스토어에서 이 재료가 이미 선택되었는지 확인
+        const existingItem = (pendingItems as PendingIngredient[]).find((p: PendingIngredient) => p.ingredientId === item.id);
+
         const params = new URLSearchParams({
             name: item.name,
             ...(storageType && { storageType })
         });
-        router.push(`/add-ingredient-form/${item.id}?${params.toString()}`);
+        const url = `/add-ingredient-form/${item.id}?${params.toString()}`;
+
+        if (existingItem) {
+            // 이미 있으면 수정/삭제/취소 옵션 제공
+            Alert.alert(
+                "이미 추가된 재료",
+                "수정하거나 목록에서 삭제할 수 있습니다.",
+                [
+                    { text: "삭제", onPress: () => removeItem(item.id), style: "destructive" },
+                    { text: "수정", onPress: () => router.push(url) },
+                    { text: "취소", style: "cancel" }
+                ]
+            );
+        } else {
+            // 없으면 폼 화면으로 이동
+            router.push(url);
+        }
     };
 
-    // 9. 카테고리 필터 렌더링 함수
+    // 6. 최종 '추가하기' 버튼 핸들러 (Bulk API 호출)
+    const handleBulkAdd = async () => {
+        if (pendingItems.length === 0) return;
+
+        setIsSubmitting(true);
+        try {
+            // 7. 새로운 API 페이로드 형식으로 전송
+            const response = await axiosInstance.post('/api/refrigerators/stored-items', {
+                items: pendingItems
+            });
+
+            if (response.data.isSuccess) {
+                Alert.alert('추가 완료', '선택한 재료들이 냉장고에 추가되었습니다.');
+                clearItems(); // 스토어 비우기
+                closeModal(); // 모달 닫기 (홈 화면으로 이동)
+            } else {
+                throw new Error(response.data.message);
+            }
+        } catch (error: any) {
+            const message = error.response?.data?.message || '재료 추가 중 오류가 발생했습니다.';
+            Alert.alert('오류', message);
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    // (카테고리 렌더링 함수 ... 기존과 동일)
     const renderCategoryFilters = () => (
         <ScrollView
             horizontal
@@ -160,10 +202,7 @@ export default function IngredientSearchScreen() {
                         styles.filterButton,
                         activeCategory === category.key && styles.filterButtonActive
                     ]}
-                    onPress={() => {
-                        setActiveCategory(category.key);
-                        // 카테고리 변경 시 useEffect가 알아서 API를 다시 호출
-                    }}
+                    onPress={() => setActiveCategory(category.key)}
                 >
                     <Text style={[
                         styles.filterText,
@@ -179,9 +218,9 @@ export default function IngredientSearchScreen() {
     return (
         <Pressable style={styles.backdrop} onPress={handleClose}>
             <Animated.View style={[styles.sheetContainer, animatedSheetStyle]}>
-                {/* 배경 터치 이벤트 전파 방지 */}
                 <Pressable style={{ flex: 1 }}>
                     <SafeAreaView style={styles.safeArea}>
+                        {/* ... (검색창, 카테고리 필터 UI는 동일) ... */}
                         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
                             <View>
                                 <GestureDetector gesture={panGesture}>
@@ -189,7 +228,6 @@ export default function IngredientSearchScreen() {
                                         <View style={styles.grabber} />
                                     </View>
                                 </GestureDetector>
-
                                 <View style={styles.searchContainer}>
                                     <Ionicons name="search" size={20} color="#888" style={styles.searchIcon} />
                                     <TextInput
@@ -207,10 +245,10 @@ export default function IngredientSearchScreen() {
                             </View>
                         </TouchableWithoutFeedback>
 
-                        {/* 10. 카테고리 필터 UI 렌더링 */}
                         {renderCategoryFilters()}
 
-                        {/* 11. FlatList 수정: numColumns={4} 및 스타일 속성 추가 */}
+
+                        {/* 8. FlatList renderItem 수정 */}
                         {isLoading && results.length === 0 ? (
                             <ActivityIndicator size="large" style={{ marginTop: 20 }} />
                         ) : (
@@ -218,19 +256,39 @@ export default function IngredientSearchScreen() {
                                 data={results}
                                 keyExtractor={(item) => item.id.toString()}
                                 keyboardShouldPersistTaps="handled"
-                                style={{ flex: 1 }}
-                                numColumns={4} // 4열 그리드
-                                columnWrapperStyle={styles.gridRow} // 행 스타일
-                                contentContainerStyle={styles.gridContainer} // 전체 컨테이너 패딩
-                                renderItem={({ item }) => (
-                                    <TouchableOpacity style={styles.itemContainer} onPress={() => handleSelectIngredient(item)}>
-                                        <Image
-                                            source={item.imageUrl ? { uri: item.imageUrl } : require('../assets/images/logo.png')}
-                                            style={styles.itemImage}
-                                        />
-                                        <Text style={styles.itemName} numberOfLines={1}>{item.name}</Text>
-                                    </TouchableOpacity>
-                                )}
+                                style={{ flex: 1 }} // 9. FlatList가 남은 공간을 모두 차지하도록
+                                numColumns={4}
+                                columnWrapperStyle={styles.gridRow}
+                                contentContainerStyle={styles.gridContainer}
+                                renderItem={({ item }) => {
+                                    // 10. 스토어를 확인하여 선택 상태 결정
+                                    const isSelected = (pendingItems as PendingIngredient[]).some((p: PendingIngredient) => p.ingredientId === item.id);
+                                    return (
+                                        <TouchableOpacity
+                                            // 11. 선택 시 활성 스타일 적용
+                                            style={[
+                                                styles.itemContainer,
+                                                isSelected && styles.itemContainerActive
+                                            ]}
+                                            onPress={() => handleSelectIngredient(item)}
+                                        >
+                                            <Image
+                                                source={item.imageUrl ? { uri: item.imageUrl } : require('../assets/images/logo.png')}
+                                                style={styles.itemImage}
+                                            />
+                                            {/* 12. 선택 시 텍스트 스타일 적용 */}
+                                            <Text
+                                                style={[
+                                                    styles.itemName,
+                                                    isSelected && styles.itemNameActive
+                                                ]}
+                                                numberOfLines={1}
+                                            >
+                                                {item.name}
+                                            </Text>
+                                        </TouchableOpacity>
+                                    )
+                                }}
                                 ListEmptyComponent={
                                     <View style={styles.emptyContainer}>
                                         <Text>검색 결과가 없습니다.</Text>
@@ -238,6 +296,27 @@ export default function IngredientSearchScreen() {
                                 }
                             />
                         )}
+
+                        {/* 13. 최종 '추가하기' 버튼 UI 추가 */}
+                        <View style={styles.addButtonContainer}>
+                            <TouchableOpacity
+                                style={[
+                                    styles.addButton,
+                                    (pendingItems.length === 0 || isSubmitting) && styles.addButtonDisabled
+                                ]}
+                                onPress={handleBulkAdd}
+                                disabled={pendingItems.length === 0 || isSubmitting}
+                            >
+                                {isSubmitting ? (
+                                    <ActivityIndicator color="#FFFFFF" />
+                                ) : (
+                                    <Text style={styles.addButtonText}>
+                                        {pendingItems.length > 0 ? `${pendingItems.length}개 추가하기` : '추가하기'}
+                                    </Text>
+                                )}
+                            </TouchableOpacity>
+                        </View>
+
                     </SafeAreaView>
                 </Pressable>
             </Animated.View>
@@ -245,22 +324,22 @@ export default function IngredientSearchScreen() {
     );
 }
 
-// 12. 스타일 시트 전체 수정
+// 14. 스타일 시트 수정 (활성 스타일, 추가하기 버튼 스타일 추가)
 const styles = StyleSheet.create({
     backdrop: {
         flex: 1,
         justifyContent: 'flex-end',
-        backgroundColor: 'rgba(0, 0, 0, 0)', // 투명 배경
+        backgroundColor: 'rgba(0, 0, 0, 0)',
     },
     sheetContainer: {
-        height: '70%', // 원하는 높이 (예: 60%)
+        height: '60%',
         backgroundColor: '#FFFFFF',
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
-        overflow: 'hidden', // 둥근 모서리 적용
+        overflow: 'hidden',
     },
     safeArea: {
-        flex: 1, // 시트 컨테이너 내부를 채움
+        flex: 1,
     },
     grabberContainer: {
         paddingVertical: 10,
@@ -277,8 +356,8 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         backgroundColor: '#F0F0F0',
         borderRadius: 12,
-        marginHorizontal: 16, // 좌우 마진
-        marginBottom: 10, // 필터와의 간격
+        marginHorizontal: 16,
+        marginBottom: 10,
         paddingHorizontal: 12,
     },
     searchIcon: {
@@ -340,26 +419,55 @@ const styles = StyleSheet.create({
         marginBottom: 12,
         marginHorizontal: 6, // 아이템 간 가로 간격
     },
-    // 그리드 아이템 이미지 (기존 itemImage 수정)
-    itemImage: {
-        width: 48, // 이미지 크기
-        height: 48, // 이미지 크기
-        // 2. borderRadius: 30 (원형) 제거
-        backgroundColor: '#EEE', // 이미지 없을 때 배경
-        marginBottom: 4, // 텍스트와의 간격
-        resizeMode: 'contain', // 이미지가 잘리지 않게
+    // --- 💡 활성 아이템 스타일 ---
+    itemContainerActive: {
+        backgroundColor: '#62A1FF', // 피그마의 활성 색상
+        // 둥근 사각형이므로 borderWidth/borderColor는 필요 없음
     },
-    // 그리드 아이템 텍스트 (기존 itemName 수정)
+    itemImage: {
+        width: 48,
+        height: 48,
+        backgroundColor: 'transparent',
+        marginBottom: 4,
+        resizeMode: 'contain',
+    },
     itemName: {
         fontSize: 13,
         textAlign: 'center',
-        color: '#333', // 텍스트 색상
-        width: '100%', // 텍스트가 영역을 넘치지 않도록
+        color: '#333',
+        width: '100%',
+    },
+    // --- 💡 활성 아이템 텍스트 스타일 ---
+    itemNameActive: {
+        color: '#FFFFFF',
+        fontWeight: 'bold',
     },
     emptyContainer: {
         flex: 1,
         alignItems: 'center',
         justifyContent: 'center',
         marginTop: 50,
+    },
+    // --- 💡 추가하기 버튼 스타일 ---
+    addButtonContainer: {
+        padding: 16,
+        borderTopWidth: 1,
+        borderTopColor: '#F0F0F0',
+        backgroundColor: '#FFFFFF',
+    },
+    addButton: {
+        backgroundColor: '#62A1FF', // 활성 (파란색)
+        padding: 16,
+        borderRadius: 12,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    addButtonDisabled: {
+        backgroundColor: '#E0E0E0', // 비활성 (회색)
+    },
+    addButtonText: {
+        color: '#FFFFFF',
+        fontSize: 16,
+        fontWeight: 'bold',
     },
 });

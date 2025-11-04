@@ -17,6 +17,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import axiosInstance from '@/api/axiosInstance';
+import { usePendingIngredientsStore } from '@/store/pendingIngredientsStore'; // 1. 스토어 임포트
 
 type StorageType = "ROOM_TEMPERATURE" | "REFRIGERATOR" | "FREEZER";
 
@@ -34,16 +35,26 @@ export default function AddIngredientFormScreen() {
         storageType?: string;
     }>();
 
+    // 2. 스토어에서 함수 및 데이터 가져오기
+    const { addItem, getItem } = usePendingIngredientsStore();
+    // 3. 스토어에서 기존에 추가된 정보가 있는지 확인
+    const existingItem = getItem(Number(ingredientId));
+
     const [storageType, setStorageType] = useState<StorageType>(
-        (initialStorageType as StorageType) || 'REFRIGERATOR'
+        (existingItem?.storageType as StorageType) || // 4. 스토어 값 우선 적용
+        (initialStorageType as StorageType) ||
+        'REFRIGERATOR'
     );
-    const [quantity, setQuantity] = useState('1');
-    const [expirationDate, setExpirationDate] = useState(''); // YYYY-MM-DD
-    const [isLoading, setIsLoading] = useState(false);
-    const [isImageLoading, setIsImageLoading] = useState(true); // 이미지 로딩 상태
+    // 5. 스토어 값 우선 적용
+    const [quantity, setQuantity] = useState(existingItem?.quantity.toString() || '1');
+    const [expirationDate, setExpirationDate] = useState(existingItem?.expirationDate || ''); // YYYY-MM-DD
+
+    // 6. isLoading 상태 제거 (API 호출 안 함)
+    // const [isLoading, setIsLoading] = useState(false);
+    const [isImageLoading, setIsImageLoading] = useState(true);
 
     const [shelfLifeInfo, setShelfLifeInfo] = useState<ShelfLife | null>(null);
-    const [ingredientImageUrl, setIngredientImageUrl] = useState<string | null>(null); // 재료 이미지 URL 상태
+    const [ingredientImageUrl, setIngredientImageUrl] = useState<string | null>(null);
 
     const calculateExpiryDate = (days: number): string => {
         if (!days || days <= 0) return '';
@@ -58,17 +69,15 @@ export default function AddIngredientFormScreen() {
     useEffect(() => {
         if (ingredientId) {
             const fetchIngredientDetails = async () => {
-                setIsImageLoading(true); // 이미지 로딩 시작
+                setIsImageLoading(true);
                 try {
                     const response = await axiosInstance.get(`/api/ingredients/${ingredientId}`);
                     if (response.data.isSuccess && response.data.result) {
                         const { shelfLife, imageUrl } = response.data.result;
 
-                        // 유통기한 정보 설정
-                        if (shelfLife) {
+                        // 7. 스토어에 기존 값이 없을 때만 API 기반으로 유통기한 추천
+                        if (!existingItem && shelfLife) {
                             setShelfLifeInfo(shelfLife);
-
-                            // initialStorageType에 따라 적절한 유통기한 계산
                             let days = shelfLife.fridgeDays; // 기본값
                             if (storageType === 'FREEZER') {
                                 days = shelfLife.freezerDays;
@@ -78,7 +87,6 @@ export default function AddIngredientFormScreen() {
                             setExpirationDate(calculateExpiryDate(days));
                         }
 
-                        // 이미지 URL 설정
                         if (imageUrl) {
                             setIngredientImageUrl(imageUrl);
                         }
@@ -86,17 +94,18 @@ export default function AddIngredientFormScreen() {
                 } catch (error) {
                     console.error('재료 상세 정보 로드 실패:', error);
                 } finally {
-                    setIsImageLoading(false); // 이미지 로딩 종료
+                    setIsImageLoading(false);
                 }
             };
             fetchIngredientDetails();
         }
-    }, [ingredientId]); // storageType은 의존성에서 제거 (초기값만 사용)
+    }, [ingredientId]); // 8. 의존성 배열에서 getItem 제거 (마운트 시 1회만 실행)
 
     const handleStorageTypeChange = (type: StorageType) => {
         setStorageType(type);
 
-        if (shelfLifeInfo) {
+        // 9. 스토어에 값이 없을 때만 유통기한 자동 계산
+        if (!existingItem && shelfLifeInfo) {
             let days = 0;
             if (type === 'REFRIGERATOR') {
                 days = shelfLifeInfo.fridgeDays;
@@ -105,12 +114,12 @@ export default function AddIngredientFormScreen() {
             } else if (type === 'ROOM_TEMPERATURE') {
                 days = shelfLifeInfo.roomTempDays;
             }
-
             setExpirationDate(calculateExpiryDate(days));
         }
     };
 
-    const handleAddItem = async () => {
+    // 10. 함수명을 handleConfirmSelection로 변경 (API 호출 -> 스토어 저장)
+    const handleConfirmSelection = async () => {
         const parsedQuantity = parseInt(quantity, 10);
         if (isNaN(parsedQuantity) || parsedQuantity < 1) {
             Alert.alert('입력 오류', '재료 개수는 1 이상의 숫자여야 합니다.');
@@ -122,8 +131,7 @@ export default function AddIngredientFormScreen() {
             return;
         }
 
-        setIsLoading(true);
-
+        // 11. API 페이로드 생성
         const payload = {
             ingredientId: Number(ingredientId),
             storageType,
@@ -132,26 +140,20 @@ export default function AddIngredientFormScreen() {
         };
 
         try {
-            const response = await axiosInstance.post('/api/refrigerators/stored-items', payload);
-            if (response.data.isSuccess) {
-                Alert.alert('추가 완료', `${decodeURIComponent(name)} 재료를 추가했습니다.`, [
-                    {
-                        text: '확인',
-                        onPress: () => {
-                            router.dismiss(2); // 현재 모달창 전부 닫기
-                        }
-                    }
-                ]);
-            } else {
-                throw new Error(response.data.message);
-            }
+            // 12. API 대신 스토어에 아이템 추가
+            addItem(payload);
+
+            // 13. 성공 알림 없이 바로 이전 화면(검색 모달)으로 복귀
+            router.back();
+
         } catch (error: any) {
-            const message = error.response?.data?.message || '재료 추가 중 오류가 발생했습니다.';
-            Alert.alert('오류', message);
-        } finally {
-            setIsLoading(false);
+            Alert.alert('오류', '목록에 추가하는 중 오류가 발생했습니다.');
         }
+        // 14. finally 및 setIsLoading(false) 제거
     };
+
+    // 15. 버튼 텍스트 변경
+    const buttonText = existingItem ? "수정 완료" : "목록에 추가";
 
     return (
         <SafeAreaView style={styles.container}>
@@ -161,7 +163,7 @@ export default function AddIngredientFormScreen() {
                     contentContainerStyle={styles.content}
                     keyboardShouldPersistTaps="handled"
                 >
-                    {/* 재료 이미지 표시 */}
+                    {/* ... (이미지 및 나머지 UI는 동일) ... */}
                     {isImageLoading ? (
                         <View style={styles.imagePlaceholder}>
                             <ActivityIndicator size="large" color="#007AFF" />
@@ -217,16 +219,13 @@ export default function AddIngredientFormScreen() {
                         maxLength={10}
                     />
 
+                    {/* 16. 버튼 핸들러 및 텍스트 수정 */}
                     <TouchableOpacity
-                        style={[styles.submitButton, isLoading && styles.submitButtonDisabled]}
-                        onPress={handleAddItem}
-                        disabled={isLoading}
+                        style={styles.submitButton} // disabled 스타일 제거
+                        onPress={handleConfirmSelection}
+                        // disabled={isLoading} // isLoading 제거
                     >
-                        {isLoading ? (
-                            <ActivityIndicator color="#FFFFFF" />
-                        ) : (
-                            <Text style={styles.submitButtonText}>냉장고에 추가</Text>
-                        )}
+                        <Text style={styles.submitButtonText}>{buttonText}</Text>
                     </TouchableOpacity>
                 </ScrollView>
             </TouchableWithoutFeedback>
@@ -234,6 +233,7 @@ export default function AddIngredientFormScreen() {
     );
 }
 
+// ... (스타일은 기존과 동일)
 const styles = StyleSheet.create({
     container: {
         flex: 1,
@@ -246,17 +246,15 @@ const styles = StyleSheet.create({
         padding: 24,
         flexGrow: 1,
     },
-    // 재료 이미지 스타일 추가
     ingredientImage: {
         width: 100,
         height: 100,
-        borderRadius: 50, // 원형 이미지
-        alignSelf: 'center', // 가운데 정렬
-        marginBottom: 20, // 아래 여백
-        backgroundColor: '#E0E0E0', // 로딩 중 또는 이미지 없을 때 배경색
-        resizeMode: 'cover', // 이미지가 꽉 차게 보이도록
+        borderRadius: 50,
+        alignSelf: 'center',
+        marginBottom: 20,
+        backgroundColor: '#E0E0E0',
+        resizeMode: 'cover',
     },
-    // 이미지 로딩 플레이스홀더 스타일
     imagePlaceholder: {
         width: 100,
         height: 100,
@@ -267,7 +265,6 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
     },
-    // 이미지 없을 때 텍스트 스타일
     noImageText: {
         color: '#666',
         fontSize: 12,
