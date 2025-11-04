@@ -21,6 +21,7 @@ import { StoredIngredient, StoredIngredientResponse } from '@/src/features/home/
 import { ApiSuccessResponse, SuggestedRecipeListResponse } from '@/src/features/ingredient/types';
 import { RecipeCardSmall } from '@/src/features/ingredient/components/RecipeCardSmall';
 import { IngredientGridItem } from '@/src/features/home/components/IngredientGridItem';
+import Constants from "expo-constants";
 
 type StorageType = "REFRIGERATOR" | "FREEZER" | "ROOM_TEMPERATURE";
 
@@ -196,6 +197,7 @@ export default function IngredientDetailScreen() {
                                     />
                                     <View style={styles.detailTextContainer}>
                                         <Text style={styles.detailName}>{item.ingredientName}</Text>
+                                        <Text style={styles.detailQuantity}>수량: {item.quantity}개</Text>
                                         <Text style={styles.detailExpiry}>유통기한: {item.expirationDate || 'N/A'}</Text>
                                         <Text style={styles.detailDday}>D-day: {item.dday}</Text>
                                     </View>
@@ -204,7 +206,7 @@ export default function IngredientDetailScreen() {
 
                             {/* 추천 레시피 */}
                             <View style={styles.sectionContainer}>
-                                <Text style={styles.sectionTitle}>이 재료로 만들 수 있는 레시피</Text>
+                                <Text style={styles.sectionTitle}>추천 레시피</Text>
                                 {isRecipeLoading && allRecipes.length === 0 ? (
                                     <ActivityIndicator style={styles.listLoader} />
                                 ) : recipeError ? (
@@ -239,13 +241,16 @@ export default function IngredientDetailScreen() {
                                         showsHorizontalScrollIndicator={false}
                                         data={otherIngredients}
                                         renderItem={({ item }) => (
-                                            <IngredientGridItem
-                                                item={item}
-                                                onPress={(selectedItem) => router.replace({
-                                                    pathname: `/ingredient/${selectedItem.id}`,
-                                                    params: { ...selectedItem, storedItemId: selectedItem.id.toString() }
-                                                })}
-                                            />
+                                            <View style={{ marginLeft: 4, marginRight: 8 }}>
+                                                {/* ✅ home.tsx의 gridItem과 스타일을 맞추기 위해 여백 조정 */}
+                                                <IngredientGridItem
+                                                    item={item}
+                                                    onPress={(selectedItem) => router.replace({
+                                                        pathname: `/ingredient/${selectedItem.id}`,
+                                                        params: { ...selectedItem, storedItemId: selectedItem.id.toString() }
+                                                    })}
+                                                />
+                                            </View>
                                         )}
                                         keyExtractor={(item) => item.id.toString()}
                                         ListEmptyComponent={<Text style={styles.emptyText}>다른 재료가 없습니다.</Text>}
@@ -264,20 +269,40 @@ export default function IngredientDetailScreen() {
 
 // 스타일 (ingredient-search와 유사하게)
 const styles = StyleSheet.create({
+
+    safeArea: { flex: 1, backgroundColor: '#fff' },
+    container: { flex: 1, backgroundColor: '#FFFFFF' }, // 화면 배경색
+    headerGradient: {
+        height: 126 + Constants.statusBarHeight,
+        borderBottomWidth: 2,
+        borderBottomColor: '#2D303A',
+        borderBottomLeftRadius: 4,
+        borderBottomRightRadius: 4,
+        elevation: 5,
+        zIndex: 10,
+    },
+    headerTop: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginTop: 15 + Constants.statusBarHeight,
+        height: 30,
+        paddingHorizontal: 16,
+    },
+    backButton: {
+        width: 40,
+    },
     backdrop: {
         flex: 1,
         justifyContent: 'flex-end',
         backgroundColor: 'rgba(0, 0, 0, 0)',
     },
     sheetContainer: {
-        height: '85%', // 화면의 85% 높이
+        height: '81%', // 화면의 85% 높이
         backgroundColor: '#FFFFFF',
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
         overflow: 'hidden',
-    },
-    safeArea: {
-        flex: 1,
     },
     grabberContainer: {
         paddingVertical: 10,
@@ -309,12 +334,11 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: '#000',
     },
-    container: {
-        flex: 1,
-        backgroundColor: '#F4F6F8',
-    },
     sectionContainer: {
         marginTop: 24,
+        paddingBottom: 24,
+        borderBottomWidth: 1,
+        borderBottomColor: '#F0F0F0',
     },
     sectionTitle: {
         fontSize: 18,
@@ -350,6 +374,11 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: '#000',
         marginBottom: 4,
+    },
+    detailQuantity: {
+        fontSize: 14,
+        color: '#555',
+        marginBottom: 2,
     },
     detailExpiry: {
         fontSize: 14,
