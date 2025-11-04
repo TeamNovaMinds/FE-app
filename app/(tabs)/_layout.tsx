@@ -122,6 +122,7 @@ export default function TabLayout() {
                 name="mypage"
                 options={{
                     title: '마이페이지',
+                    headerShown: true,
                     tabBarIcon: ({ focused }) => (
                         <Image
                             source={focused
