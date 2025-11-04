@@ -249,7 +249,7 @@ const styles = StyleSheet.create({
     ingredientImage: {
         width: 100,
         height: 100,
-        borderRadius: 50,
+        borderRadius: 12,
         alignSelf: 'center',
         marginBottom: 20,
         backgroundColor: '#E0E0E0',
@@ -258,7 +258,7 @@ const styles = StyleSheet.create({
     imagePlaceholder: {
         width: 100,
         height: 100,
-        borderRadius: 50,
+        borderRadius: 12,
         alignSelf: 'center',
         marginBottom: 20,
         backgroundColor: '#E0E0E0',
