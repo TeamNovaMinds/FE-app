@@ -83,38 +83,82 @@ export default function HomeScreen() {
 
                 {/* 탭 버튼들 */}
                 <View style={styles.tabContainer}>
+                    {/* 냉장고 탭 */}
                     <TouchableOpacity
-                        style={[styles.tabButton, activeTab === 'fridge' && styles.activeTabButton]}
+                        style={styles.tabButton}
                         onPress={() => handleTabPress('fridge')}
                     >
-                        <Text style={[
-                            styles.tabText,
-                            activeTab === 'fridge' && [styles.activeTabText, { color: TAB_ACTIVE_COLORS.fridge }]
-                        ]}>
-                            냉장고
-                        </Text>
+                        {activeTab === 'fridge' ? (
+                            <ImageBackground
+                                source={require('../../assets/icons/active_tab_bg.png')}
+                                style={styles.activeTabBackground}
+                                imageStyle={styles.activeTabBackgroundImageStyle}
+                            >
+                                <Text style={[
+                                    styles.tabText,
+                                    styles.activeTabText,
+                                    { color: TAB_ACTIVE_COLORS.fridge }
+                                ]}>
+                                    냉장고
+                                </Text>
+                            </ImageBackground>
+                        ) : (
+                            <Text style={styles.tabText}>
+                                냉장고
+                            </Text>
+                        )}
                     </TouchableOpacity>
+
+                    {/* 냉동고 탭 */}
                     <TouchableOpacity
-                        style={[styles.tabButton, activeTab === 'freezer' && styles.activeTabButton]}
+                        style={styles.tabButton}
                         onPress={() => handleTabPress('freezer')}
                     >
-                        <Text style={[
-                            styles.tabText,
-                            activeTab === 'freezer' && [styles.activeTabText, { color: TAB_ACTIVE_COLORS.freezer }]
-                        ]}>
-                            냉동고
-                        </Text>
+                        {activeTab === 'freezer' ? (
+                            <ImageBackground
+                                source={require('../../assets/icons/active_tab_bg.png')}
+                                style={styles.activeTabBackground}
+                                imageStyle={styles.activeTabBackgroundImageStyle}
+                            >
+                                <Text style={[
+                                    styles.tabText,
+                                    styles.activeTabText,
+                                    { color: TAB_ACTIVE_COLORS.freezer }
+                                ]}>
+                                    냉동고
+                                </Text>
+                            </ImageBackground>
+                        ) : (
+                            <Text style={styles.tabText}>
+                                냉동고
+                            </Text>
+                        )}
                     </TouchableOpacity>
+
+                    {/* 실온 탭 */}
                     <TouchableOpacity
-                        style={[styles.tabButton, activeTab === 'room' && styles.activeTabButton]}
+                        style={styles.tabButton}
                         onPress={() => handleTabPress('room')}
                     >
-                        <Text style={[
-                            styles.tabText,
-                            activeTab === 'room' && [styles.activeTabText, { color: TAB_ACTIVE_COLORS.room }]
-                        ]}>
-                            실온
-                        </Text>
+                        {activeTab === 'room' ? (
+                            <ImageBackground
+                                source={require('../../assets/icons/active_tab_bg.png')}
+                                style={styles.activeTabBackground}
+                                imageStyle={styles.activeTabBackgroundImageStyle}
+                            >
+                                <Text style={[
+                                    styles.tabText,
+                                    styles.activeTabText,
+                                    { color: TAB_ACTIVE_COLORS.room }
+                                ]}>
+                                    실온
+                                </Text>
+                            </ImageBackground>
+                        ) : (
+                            <Text style={styles.tabText}>
+                                실온
+                            </Text>
+                        )}
                     </TouchableOpacity>
                 </View>
             </LinearGradient>
@@ -196,13 +240,13 @@ export default function HomeScreen() {
                             </View>
                         ) : (
                             <View style={styles.countBoxWrapper}>
-                                <View style={styles.countBox}>
-                                    <LinearGradient
-                                        colors={['rgba(255, 255, 255, 0)', 'rgba(255, 255, 255, 0.08)', 'rgba(255, 255, 255, 0)']}
-                                        start={{ x: 0, y: 0 }}
-                                        end={{ x: 1, y: 0 }}
-                                        style={styles.countBoxOverlay}
-                                    />
+                                {/* View + LinearGradient를 ImageBackground로 교체 */}
+                                <ImageBackground
+                                    source={require('../../assets/icons/summary_bg.png')} // 1. 저장한 이미지 경로
+                                    style={styles.countBox} // 2. 기존 countBox 스타일 재사용
+                                    imageStyle={styles.countBoxImageStyle} // 3. 이미지에 둥근 모서리 적용
+                                >
+                                    {/* 3. LinearGradient(countBoxOverlay)는 삭제 */}
                                     <View style={styles.countBoxContent}>
                                         <Text style={styles.countLabel}>
                                             냉장고 잔여 재료 : <Text style={styles.countNumber}>{ingredientCount.fridge}</Text>
@@ -214,7 +258,7 @@ export default function HomeScreen() {
                                             실온 잔여 재료 : <Text style={styles.countNumber}>{ingredientCount.room}</Text>
                                         </Text>
                                     </View>
-                                </View>
+                                </ImageBackground>
                             </View>
                         )}
                     </LinearGradient>

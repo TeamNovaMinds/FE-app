@@ -49,17 +49,17 @@ export const styles = StyleSheet.create({
         borderRadius: 12,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: 'transparent',
     },
-    activeTabButton: {
-        backgroundColor: '#2D303A',
-        borderWidth: 2,
-        borderColor: 'rgba(255, 255, 255, 0.3)',
-        shadowColor: '#ffffff',
-        shadowOffset: { width: 0, height: 0 },
-        shadowOpacity: 0.3,
-        shadowRadius: 4,
-        elevation: 5,
+    // ImageBackground에 적용할 스타일 (새로 추가)
+    activeTabBackground: {
+        width: '100%', // 부모(tabButton)의 크기를 따름
+        height: '100%', // 부모(tabButton)의 크기를 따름
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    // ImageBackground의 이미지 자체에 borderRadius를 적용 (새로 추가)
+    activeTabBackgroundImageStyle: {
+        borderRadius: 12, // tabButton과 동일한 값
     },
     tabText: {
         fontSize: 16,
@@ -107,28 +107,28 @@ export const styles = StyleSheet.create({
     countBox: {
         width: 299,
         height: 169,
-        backgroundColor: '#2D303A',
-        borderRadius: 12,
+        borderRadius: 12, // 삭제 (imageStyle로 이동)
         position: 'relative',
         shadowColor: '#000000',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.25,
         shadowRadius: 4,
         elevation: 5,
-        borderWidth: 2,
-        borderColor: '#E4ECF1',
+
+        // ImageBackground의 자식(countBoxContent)을 중앙 정렬하기 위해 추가
+        justifyContent: 'center',
+        alignItems: 'center',
     },
-    countBoxOverlay: {
-        position: 'absolute',
-        width: '100%',
-        height: '100%',
+
+    // ImageBackground의 이미지에 둥근 모서리를 적용하기 위해 새로 추가
+    countBoxImageStyle: {
         borderRadius: 12,
     },
+
     countBoxContent: {
-        flex: 1,
-        justifyContent: 'space-around',
         paddingVertical: 34,
         paddingHorizontal: 24,
+        width: '100%', // 텍스트가 올바르게 배치되도록 너비 100% 설정
     },
     countLabel: {
         fontSize: 20,
