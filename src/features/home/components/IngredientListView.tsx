@@ -12,6 +12,8 @@ type IngredientListViewProps = {
     tabName: TabName;
     color: string;
     onAddIngredient: () => void;
+    // ✅ 1. onItemPress prop 타입 추가
+    onItemPress: (item: StoredIngredient) => void;
 };
 
 export const IngredientListView: React.FC<IngredientListViewProps> = ({
@@ -20,7 +22,8 @@ export const IngredientListView: React.FC<IngredientListViewProps> = ({
     ingredients,
     tabName,
     color,
-    onAddIngredient
+    onAddIngredient,
+    onItemPress // ✅ 2. prop 받기
 }) => {
     // 💡 [수정] isLoading이 true이면서 동시에 재료가 0개일 때만 (즉, 첫 로딩 시) 전체 로딩 표시
     if (isLoading && ingredients.length === 0) {
@@ -48,7 +51,8 @@ export const IngredientListView: React.FC<IngredientListViewProps> = ({
     return (
         <FlatList
             data={ingredients}
-            renderItem={({ item }) => <IngredientGridItem item={item} />}
+            // ✅ 3. onItemPress prop 전달
+            renderItem={({ item }) => <IngredientGridItem item={item} onPress={onItemPress} />}
             keyExtractor={(item) => item.id.toString()}
             key={tabName}
             numColumns={4}

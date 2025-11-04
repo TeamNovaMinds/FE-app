@@ -87,6 +87,18 @@ export default function RootLayout() {
                             }}
                         />
 
+                        {/* 1. 재료 상세 스크린 추가 (바텀 시트 스타일) */}
+                        <Stack.Screen
+                            name="ingredient/[storedItemId]" // app/ingredient/[storedItemId].tsx
+                            options={{
+                                presentation: 'transparentModal', // 투명 모달
+                                animation: 'slide_from_bottom', // 아래에서 위로
+                                title: '재료 정보',
+                                headerShown: false, // 커스텀 헤더를 사용할 것이므로 false
+                                gestureEnabled: false, // 커스텀 제스처 사용을 위해 시스템 제스처 비활성화
+                            }}
+                        />
+
                         <Stack.Screen name="+not-found" />
                     </Stack>
                     <StatusBar style="auto" />

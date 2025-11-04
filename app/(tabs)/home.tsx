@@ -26,6 +26,8 @@ import { IngredientListView } from '@/src/features/home/components/IngredientLis
 import { useIngredientData } from '@/src/features/home/hooks/useIngredientData';
 import { useTabAnimation } from '@/src/features/home/hooks/useTabAnimation';
 
+import { StoredIngredient } from '@/src/features/home/types'; // ✅ 2. StoredIngredient 타입 임포트
+
 export default function HomeScreen() {
     const router = useRouter();
     const [activeTab, setActiveTab] = useState<TabName | null>(null);
@@ -63,6 +65,21 @@ export default function HomeScreen() {
             : 'REFRIGERATOR';
 
         router.push(`/ingredient-search?storageType=${storageType}`);
+    };
+
+    // ✅ 4. 재료 아이템 클릭 시 호출될 핸들러
+    const handleIngredientPress = (item: StoredIngredient) => {
+        // StoredIngredient 객체 전체를 params로 전달합니다.
+        // [storedItemId].tsx 파일이 item.id를 자동으로 받습니다.
+        router.push({
+            pathname: `/ingredient/${item.id}`,
+            params: {
+                // StoredIngredient의 모든 필드가 문자열로 변환되어 전달됩니다.
+                ...item,
+                // id는 pathname에서 이미 사용되었지만, 명확성을 위해 포함
+                storedItemId: item.id.toString(),
+            }
+        });
     };
 
     const hasNoCountData = ingredientCount.fridge === 0 && ingredientCount.freezer === 0 && ingredientCount.room === 0;
@@ -187,6 +204,7 @@ export default function HomeScreen() {
                             tabName="fridge"
                             color={TAB_ACTIVE_COLORS.fridge}
                             onAddIngredient={goToAddIngredient}
+                            onItemPress={handleIngredientPress} // ✅ 5. 핸들러 전달
                         />
                     </ImageBackground>
                 </Animated.View>
@@ -204,6 +222,7 @@ export default function HomeScreen() {
                             tabName="freezer"
                             color={TAB_ACTIVE_COLORS.freezer}
                             onAddIngredient={goToAddIngredient}
+                            onItemPress={handleIngredientPress} // ✅ 5. 핸들러 전달
                         />
                     </ImageBackground>
                 </Animated.View>
@@ -221,6 +240,7 @@ export default function HomeScreen() {
                             tabName="room"
                             color={TAB_ACTIVE_COLORS.room}
                             onAddIngredient={goToAddIngredient}
+                            onItemPress={handleIngredientPress} // ✅ 5. 핸들러 전달
                         />
                     </ImageBackground>
                 </Animated.View>
