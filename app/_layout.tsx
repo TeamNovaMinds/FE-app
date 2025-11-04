@@ -60,7 +60,7 @@ export default function RootLayout() {
                             animation: 'slide_from_bottom', // 아래에서 위로
                             title: '재료 검색',
                             headerShown: false,
-                            gestureEnabled: true, // iOS에서 전체 화면 스와이프로 닫기
+                            gestureEnabled: false, // 커스텀 제스처 사용을 위해 시스템 제스처 비활성화
                         }}
                     />
 

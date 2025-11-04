@@ -77,10 +77,14 @@ export default function IngredientSearchScreen() {
     }, []);
 
     // ✅ 4. 모달 닫기 함수 (키보드도 함께 내리기)
+    const closeModal = () => {
+        Keyboard.dismiss();
+        router.back();
+    };
+
     const handleClose = () => {
-        'worklet'; // Reanimated 스레드에서 실행됨을 명시
-        runOnJS(Keyboard.dismiss)(); // JS 스레드에서 키보드 내리기
-        runOnJS(router.back)(); // JS 스레드에서 라우터 뒤로가기
+        'worklet';
+        runOnJS(closeModal)();
     };
 
     // ✅ 5. 아래로 스와이프하는 제스처 정의
@@ -116,24 +120,21 @@ export default function IngredientSearchScreen() {
     };
 
     return (
-        // ✅ 3. 반투명 배경 (이걸 누르면 닫힘)
+        // 배경 (클릭 시 닫힘)
         <Pressable style={styles.backdrop} onPress={handleClose}>
-
-            {/* ✅ 8. 제스처를 감지할 GestureDetector 추가 */}
-            <GestureDetector gesture={panGesture}>
-
-                {/* ✅ 9. Pressable을 Animated.View로 변경하고 스타일 적용 */}
-                <Animated.View
-                    style={[styles.sheetContainer, animatedSheetStyle]}
-                    // 10. 이 뷰가 터치 이벤트를 받도록 설정 (배경 탭 방지)
-                    onStartShouldSetResponder={() => true}
-                >
+            {/* 시트 컨테이너 (애니메이션 적용) */}
+            <Animated.View style={[styles.sheetContainer, animatedSheetStyle]}>
+                {/* 배경 터치 이벤트 전파 방지 */}
+                <Pressable style={{ flex: 1 }}>
                     <SafeAreaView style={styles.safeArea}>
+                        {/* 손잡이 영역에만 제스처 적용 */}
+                        <GestureDetector gesture={panGesture}>
+                            <View style={styles.grabberContainer}>
+                                <View style={styles.grabber} />
+                            </View>
+                        </GestureDetector>
 
-                        {/* ✅ 11. 사용자가 끌 수 있음을 암시하는 손잡이(grabber) 추가 */}
-                        <View style={styles.grabber} />
-
-                        {/* 검색창 영역 (기존과 동일, autoFocus는 제거된 상태) */}
+                        {/* 검색창 */}
                         <View style={styles.searchContainer}>
                             <Ionicons name="search" size={20} color="#888" style={styles.searchIcon} />
                             <TextInput
@@ -141,7 +142,6 @@ export default function IngredientSearchScreen() {
                                 placeholder="재료 이름을 검색하세요..."
                                 value={searchQuery}
                                 onChangeText={setSearchQuery}
-                                // autoFocus={true} // (제거된 상태 유지)
                             />
                             {searchQuery.length > 0 && (
                                 <TouchableOpacity onPress={() => setSearchQuery('')}>
@@ -150,32 +150,32 @@ export default function IngredientSearchScreen() {
                             )}
                         </View>
 
-                    {/* 결과 목록 (기존과 동일) */}
-                    {isLoading && results.length === 0 ? (
-                        <ActivityIndicator size="large" style={{ marginTop: 20 }} />
-                    ) : (
-                        <FlatList
-                            data={results}
-                            keyExtractor={(item) => item.id.toString()}
-                            renderItem={({ item }) => (
-                                <TouchableOpacity style={styles.itemContainer} onPress={() => handleSelectIngredient(item)}>
-                                    <Image
-                                        source={item.imageUrl ? { uri: item.imageUrl } : require('../assets/images/logo.png')}
-                                        style={styles.itemImage}
-                                    />
-                                    <Text style={styles.itemName}>{item.name}</Text>
-                                </TouchableOpacity>
-                            )}
-                            ListEmptyComponent={
-                                <View style={styles.emptyContainer}>
-                                    <Text>검색 결과가 없습니다.</Text>
-                                </View>
-                            }
-                        />
-                    )}
+                        {/* 결과 목록 */}
+                        {isLoading && results.length === 0 ? (
+                            <ActivityIndicator size="large" style={{ marginTop: 20 }} />
+                        ) : (
+                            <FlatList
+                                data={results}
+                                keyExtractor={(item) => item.id.toString()}
+                                renderItem={({ item }) => (
+                                    <TouchableOpacity style={styles.itemContainer} onPress={() => handleSelectIngredient(item)}>
+                                        <Image
+                                            source={item.imageUrl ? { uri: item.imageUrl } : require('../assets/images/logo.png')}
+                                            style={styles.itemImage}
+                                        />
+                                        <Text style={styles.itemName}>{item.name}</Text>
+                                    </TouchableOpacity>
+                                )}
+                                ListEmptyComponent={
+                                    <View style={styles.emptyContainer}>
+                                        <Text>검색 결과가 없습니다.</Text>
+                                    </View>
+                                }
+                            />
+                        )}
                     </SafeAreaView>
-                </Animated.View>
-            </GestureDetector>
+                </Pressable>
+            </Animated.View>
         </Pressable>
     );
 }
@@ -197,14 +197,15 @@ const styles = StyleSheet.create({
     safeArea: {
         flex: 1, // 시트 컨테이너 내부를 채움
     },
-    grabber: { // ✅ 손잡이 스타일
+    grabberContainer: {
+        paddingVertical: 10,
+        alignItems: 'center',
+    },
+    grabber: {
         width: 40,
-            height: 5,
-            borderRadius: 2.5,
-            backgroundColor: '#C0C0C0', // 회색 손잡이
-            marginTop: 10,
-            marginBottom: 5,
-            alignSelf: 'center', // 중앙 정렬
+        height: 5,
+        borderRadius: 2.5,
+        backgroundColor: '#C0C0C0',
     },
     searchContainer: {
         flexDirection: 'row',
