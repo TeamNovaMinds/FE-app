@@ -1,338 +1,347 @@
-// ✅ 홈 화면 - 냉장고 재료 관리 (피그마 디자인 반영)
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient'; // ✅ added: 그라데이션 라이브러리
-import { Ionicons } from '@expo/vector-icons'; // ✅ 임시 아이콘 (나중에 SVG로 교체)
-import axiosInstance from '@/api/axiosInstance';
+// app/(tabs)/mypage.tsx
 
-// ✅ added: API 응답 타입 정의
-interface IngredientCountResponse {
-    isSuccess: boolean;
-    code: string;
-    message: string;
-    result: {
-        refrigeratorCount: number;
-        freezerCount: number;
-        roomTempCount: number;
-    };
+import React, { useState, useCallback } from 'react';
+import {
+    StyleSheet,
+    View,
+    Text,
+    SafeAreaView,
+    Image,
+    TouchableOpacity,
+    ScrollView,
+    FlatList,
+    ActivityIndicator,
+} from 'react-native';
+import { Link, useFocusEffect } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import axiosInstance from '@/api/axiosInstance';
+// ✅ 3. useAuthStore를 import
+import { useAuthStore } from '@/store/authStore';
+
+// --- 타입 정의 ---
+// ✅ 1. 'servings' 필드 추가
+interface SimpleRecipe {
+    recipeId: number;
+    title: string;
+    mainImageUrl: string | null;
+    authorInfo: { nickname: string };
+    likeCount: number;
+    servings: number;
+    cookingTimeMinutes: number;
+    difficulty: string;
 }
 
-export default function HomeScreen() {
-    // ✅ 상단 탭 상태 (냉장고, 냉동고, 실온)
-    const [activeTab, setActiveTab] = useState<'fridge' | 'freezer' | 'room'>('fridge');
+interface SimplePost {
+    postId: number;
+    title: string;
+}
 
-    // ✅ 각 저장 공간의 잔여 재료 개수 상태
-    const [ingredientCount, setIngredientCount] = useState({
-        fridge: 0,
-        freezer: 0,
-        room: 0,
-    });
+type TabKey = 'liked' | 'my-recipes' | 'my-posts';
 
-    // ✅ 로딩 상태
-    const [isLoading, setIsLoading] = useState(true);
+/**
+ * 마이페이지 미리보기용 레시피 카드 컴포넌트 (React.memo 제거)
+ */
+const RecipePreviewCard = ({ item }: { item: SimpleRecipe }) => {
+    return (
+        <Link href={`/recipe/${item.recipeId}`} asChild>
+            <TouchableOpacity style={styles.previewCard}>
+                <Image
+                    source={item.mainImageUrl ? { uri: item.mainImageUrl } : require('../../assets/images/logo.png')}
+                    style={styles.previewImage}
+                />
+                <Text style={styles.previewCardTitle} numberOfLines={1}>{item.title}</Text>
 
-    // ✅ 에러 상태
-    const [error, setError] = useState<string | null>(null);
+                <View style={styles.cardInfoContainer}>
+                    <View style={styles.cardLikes}>
+                        <Ionicons name="heart" size={14} color="#FF6347" />
+                        <Text style={styles.cardLikesText}>{item.likeCount.toLocaleString()}</Text>
+                    </View>
+                    {/* ✅ 1. '인분' 정보 표시 (null 체크 추가) */}
+                    <Text style={styles.cardInfoText}>
+                        {item.servings ? `${item.servings}인분 기준` : '정보 없음'}
+                    </Text>
+                    <Text style={styles.cardInfoText}>조리시간 {item.cookingTimeMinutes}분</Text>
+                    <Text style={styles.cardInfoText}>난이도 {item.difficulty}</Text>
+                </View>
+            </TouchableOpacity>
+        </Link>
+    );
+};
 
-    // ✅ 컴포넌트 마운트 시 재료 개수 가져오기
-    useEffect(() => {
-        fetchIngredientCount();
-    }, []);
+export default function MyPageScreen() {
+    // ✅ 2. 'activeTab'을 닫힌 상태(null)로 시작
+    const [activeTab, setActiveTab] = useState<TabKey | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
 
-    // ✅ API 호출 함수
-    const fetchIngredientCount = async () => {
+    // ✅ 3. Zustand 스토어를 '훅'으로 호출하여 프로필 정보 가져오기
+    const profile = useAuthStore((state) => state.user);
+
+    const [likedRecipes, setLikedRecipes] = useState<SimpleRecipe[]>([]);
+    const [myRecipes, setMyRecipes] = useState<SimpleRecipe[]>([]);
+    const [myPosts, setMyPosts] = useState<SimplePost[]>([]);
+
+    // --- 데이터 로드 함수 ---
+    const fetchLikedRecipes = async () => {
+        setIsLoading(true);
         try {
-            setIsLoading(true);
-            setError(null);
-
-            const response = await axiosInstance.get<IngredientCountResponse>(
-                '/api/refrigerators/stored-items/count'
-            );
-
+            const response = await axiosInstance.get('/api/recipes', {
+                params: { size: 5, isLiked: true }
+            });
             if (response.data.isSuccess) {
-                setIngredientCount({
-                    fridge: response.data.result.refrigeratorCount,
-                    freezer: response.data.result.freezerCount,
-                    room: response.data.result.roomTempCount,
-                });
-            } else {
-                setError('재료 개수를 불러오는데 실패했습니다.');
+                setLikedRecipes(response.data.result.recipes || []);
             }
-        } catch (err) {
-            console.error('재료 개수 조회 에러:', err);
-            setError('재료 개수를 불러오는 중 오류가 발생했습니다.');
+        } catch (error) {
+            console.error("좋아요 레시피 로드 실패:", error);
+            setLikedRecipes([]);
         } finally {
             setIsLoading(false);
         }
     };
 
-    return (
-        // ✅ 전체 배경: 어두운 회색 (#2D303A)
-        <View style={styles.container}>
-            {/* ✅ 상단 헤더 영역 (그라데이션) */}
-            <LinearGradient
-                colors={['#8387A5', '#DAE4F4', '#96A3C6']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.headerGradient}
-            >
-                {/* JUSTFRIDGE 로고 */}
-                <View style={styles.logoContainer}>
-                    <Text style={styles.logoJust}>JUST</Text>
-                    <Text style={styles.logoFridge}>FRIDGE</Text>
+    const fetchMyRecipes = async (nickname: string | null | undefined) => {
+        if (!nickname) {
+            setMyRecipes([]);
+            return;
+        }
+        setIsLoading(true);
+        try {
+            const response = await axiosInstance.get('/api/recipes', {
+                params: { size: 5, keyword: nickname }
+            });
+            if (response.data.isSuccess) {
+                setMyRecipes(response.data.result.recipes || []);
+            }
+        } catch (error) {
+            console.error("내 레시피 로드 실패:", error);
+            setMyRecipes([]);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    // ✅ 2. 탭이 '열릴 때만' 데이터 로드
+    const handleTabPress = (tabKey: TabKey) => {
+        const newActiveTab = activeTab === tabKey ? null : tabKey;
+        setActiveTab(newActiveTab);
+
+        // 새 탭이 열릴 때 데이터 로드
+        if (newActiveTab === 'liked') {
+            fetchLikedRecipes();
+        } else if (newActiveTab === 'my-recipes') {
+            fetchMyRecipes(profile?.nickname);
+        } else if (newActiveTab === 'my-posts') {
+            setIsLoading(false);
+            setMyPosts([]);
+        }
+    };
+
+    // --- 렌더링 함수 ---
+    const renderProfile = () => (
+        <View style={styles.profileSection}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Image
+                    source={profile?.profileImageUrl ? { uri: profile.profileImageUrl } : require('../../assets/images/logo.png')}
+                    style={styles.profileImage}
+                />
+                {/* ✅ 3. 닉네임 표시 (로그인 시 authStore에서 가져옴) */}
+                <Text style={styles.nickname}>{profile?.nickname || '로그인하세요'}</Text>
+            </View>
+            <View style={styles.followSection}>
+                <View style={styles.followBox}>
+                    <Text style={styles.followCount}>0</Text>
+                    <Text style={styles.followLabel}>팔로워</Text>
                 </View>
-
-                {/* 탭 버튼들 (냉장고, 냉동고, 실온) */}
-                <View style={styles.tabContainer}>
-                    <TouchableOpacity
-                        style={[styles.tabButton, activeTab === 'fridge' && styles.activeTabButton]}
-                        onPress={() => setActiveTab('fridge')}
-                    >
-                        <Text style={[styles.tabText, activeTab === 'fridge' && styles.activeTabText]}>
-                            냉장고
-                        </Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                        style={[styles.tabButton, activeTab === 'freezer' && styles.activeTabButton]}
-                        onPress={() => setActiveTab('freezer')}
-                    >
-                        <Text style={[styles.tabText, activeTab === 'freezer' && styles.activeTabText]}>
-                            냉동고
-                        </Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                        style={[styles.tabButton, activeTab === 'room' && styles.activeTabButton]}
-                        onPress={() => setActiveTab('room')}
-                    >
-                        <Text style={[styles.tabText, activeTab === 'room' && styles.activeTabText]}>
-                            실온
-                        </Text>
-                    </TouchableOpacity>
+                <View style={styles.followBox}>
+                    <Text style={styles.followCount}>0</Text>
+                    <Text style={styles.followLabel}>팔로잉</Text>
                 </View>
-            </LinearGradient>
-
-            {/* ✅ 메인 콘텐츠 영역 (그라데이션) */}
-            <LinearGradient
-                colors={['#8387A5', '#DAE4F4', '#96A3C6']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.contentGradient}
-            >
-                {isLoading ? (
-                    // 로딩 중
-                    <View style={styles.loadingContainer}>
-                        <ActivityIndicator size="large" color="#89FFF1" />
-                        <Text style={styles.loadingText}>재료 개수를 불러오는 중...</Text>
-                    </View>
-                ) : error ? (
-                    // 에러 발생
-                    <View style={styles.errorContainer}>
-                        <Text style={styles.errorText}>{error}</Text>
-                        <TouchableOpacity style={styles.retryButton} onPress={fetchIngredientCount}>
-                            <Text style={styles.retryButtonText}>다시 시도</Text>
-                        </TouchableOpacity>
-                    </View>
-                ) : (
-                    // 정상 데이터 표시
-                    <View style={styles.countBoxWrapper}>
-                        {/* 재료 개수 박스 */}
-                        <View style={styles.countBox}>
-                            {/* ✅ 반투명 그라데이션 오버레이 */}
-                            <LinearGradient
-                                colors={['rgba(255, 255, 255, 0)', 'rgba(255, 255, 255, 0.08)', 'rgba(255, 255, 255, 0)']}
-                                start={{ x: 0, y: 0 }}
-                                end={{ x: 1, y: 0 }}
-                                style={styles.countBoxOverlay}
-                            />
-
-                            <View style={styles.countBoxContent}>
-                                <Text style={styles.countLabel}>
-                                    냉장고 잔여 재료 : <Text style={styles.countNumber}>{ingredientCount.fridge}</Text>
-                                </Text>
-                                <Text style={styles.countLabel}>
-                                    냉동고 잔여 재료 : <Text style={styles.countNumber}>{ingredientCount.freezer}</Text>
-                                </Text>
-                                <Text style={styles.countLabel}>
-                                    실온 잔여 재료 : <Text style={styles.countNumber}>{ingredientCount.room}</Text>
-                                </Text>
-                            </View>
-                        </View>
-                    </View>
-                )}
-            </LinearGradient>
+            </View>
         </View>
+    );
+
+    const renderPoints = () => (
+        <View style={styles.pointSection}>
+            <Text style={styles.pointLabel}>보유 포인트</Text>
+            <Text style={styles.pointValue}>0 P</Text>
+        </View>
+    );
+
+    // ✅ 2. 미리보기 리스트 렌더링 함수 (콜랩서블 내부용)
+    const renderPreviewList = (data: (SimpleRecipe | SimplePost)[], viewAllLink: string) => (
+        <View style={styles.previewContainer}>
+            {/* '전체보기' 버튼을 미리보기 리스트 *아래*로 이동 (디자인 참조) */}
+            {isLoading ? (
+                <View style={styles.emptyContainer}>
+                    <ActivityIndicator size="small" color="#007AFF" />
+                </View>
+            ) : (
+                <FlatList
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    data={data}
+                    keyExtractor={(item) => (item as SimpleRecipe).recipeId?.toString() || (item as SimplePost).postId.toString()}
+                    renderItem={({ item }) => <RecipePreviewCard item={item as SimpleRecipe} />}
+                    ListEmptyComponent={<View style={styles.emptyContainer}><Text style={styles.emptyText}>항목이 없습니다.</Text></View>}
+                    contentContainerStyle={{ paddingHorizontal: 24 }}
+                />
+            )}
+            <Link href={viewAllLink} asChild>
+                <TouchableOpacity style={styles.viewAllButton}>
+                    <Text style={styles.viewAllText}>전체보기 &gt;</Text>
+                </TouchableOpacity>
+            </Link>
+        </View>
+    );
+
+    return (
+        <SafeAreaView style={styles.container}>
+            <ScrollView>
+                {renderProfile()}
+                {renderPoints()}
+
+                {/* ✅ 2. 세로형 탭 리스트 (아코디언) */}
+                <View style={styles.tabListContainer}>
+                    {/* 좋아요 누른 레시피 */}
+                    <TouchableOpacity
+                        style={[styles.tabButton, activeTab === 'liked' && styles.activeTabButton]}
+                        onPress={() => handleTabPress('liked')}>
+                        <Text style={[styles.tabText, activeTab === 'liked' && styles.activeTabText]}>좋아요 누른 레시피</Text>
+                        <Ionicons name={activeTab === 'liked' ? "chevron-up" : "chevron-down"} size={20} color={activeTab === 'liked' ? '#007AFF' : '#888'} />
+                    </TouchableOpacity>
+                    {activeTab === 'liked' && renderPreviewList(likedRecipes, '/mypage/liked-recipes')}
+
+                    {/* 내가 등록한 레시피 */}
+                    <TouchableOpacity
+                        style={[styles.tabButton, activeTab === 'my-recipes' && styles.activeTabButton]}
+                        onPress={() => handleTabPress('my-recipes')}>
+                        <Text style={[styles.tabText, activeTab === 'my-recipes' && styles.activeTabText]}>내가 등록한 레시피</Text>
+                        <Ionicons name={activeTab === 'my-recipes' ? "chevron-up" : "chevron-down"} size={20} color={activeTab === 'my-recipes' ? '#007AFF' : '#888'} />
+                    </TouchableOpacity>
+                    {activeTab === 'my-recipes' && renderPreviewList(myRecipes, '/mypage/my-recipes')}
+
+                    {/* 내 게시물 */}
+                    <TouchableOpacity
+                        style={[styles.tabButton, activeTab === 'my-posts' && styles.activeTabButton]}
+                        onPress={() => handleTabPress('my-posts')}>
+                        <Text style={[styles.tabText, activeTab === 'my-posts' && styles.activeTabText]}>내 게시물</Text>
+                        <Ionicons name={activeTab === 'my-posts' ? "chevron-up" : "chevron-down"} size={20} color={activeTab === 'my-posts' ? '#007AFF' : '#888'} />
+                    </TouchableOpacity>
+                    {activeTab === 'my-posts' && renderPreviewList(myPosts, '/mypage/my-posts')}
+
+                    {/* 설정 (Link) */}
+                    <Link href="/settings" asChild>
+                        <TouchableOpacity style={styles.tabButton}>
+                            <Text style={styles.tabText}>설정</Text>
+                            <Ionicons name="chevron-forward" size={20} color="#888" />
+                        </TouchableOpacity>
+                    </Link>
+                </View>
+            </ScrollView>
+        </SafeAreaView>
     );
 }
 
 const styles = StyleSheet.create({
-    // ✅ 전체 컨테이너
-    container: {
-        flex: 1,
-        backgroundColor: '#2D303A', // 피그마의 전체 배경색
-    },
+    container: { flex: 1, backgroundColor: '#fff' },
+    // 프로필
+    profileSection: { padding: 24, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+    profileImage: { width: 60, height: 60, borderRadius: 30, backgroundColor: '#eee', marginRight: 12 },
+    nickname: { fontSize: 20, fontWeight: 'bold' },
+    followSection: { flexDirection: 'row', gap: 16 },
+    followBox: { alignItems: 'center' },
+    followCount: { fontSize: 18, fontWeight: 'bold' },
+    followLabel: { fontSize: 14, color: '#888' },
+    // 포인트
+    pointSection: { marginHorizontal: 24, padding: 16, backgroundColor: '#f8f8f8', borderRadius: 12, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+    pointLabel: { fontSize: 16, fontWeight: '500' },
+    pointValue: { fontSize: 18, fontWeight: 'bold', color: '#007AFF' },
 
-    // ✅ 상단 헤더 그라데이션
-    headerGradient: {
-        height: 126,
-        borderBottomWidth: 2,
-        borderBottomColor: '#2D303A',
-        borderBottomLeftRadius: 4,
-        borderBottomRightRadius: 4,
-        // 피그마의 box-shadow 효과
-        shadowColor: '#070251',
-        shadowOffset: { width: -2, height: -2 },
-        shadowOpacity: 0.25,
-        shadowRadius: 4,
-        elevation: 5,
+    // ✅ 2. 세로 탭 리스트 스타일
+    tabListContainer: {
+        marginHorizontal: 24,
+        marginTop: 16,
     },
-
-    // ✅ JUSTFRIDGE 로고
-    logoContainer: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginTop: 33,
-    },
-    logoJust: {
-        fontSize: 22,
-        fontWeight: 'bold',
-        color: '#000000',
-        letterSpacing: 1,
-    },
-    logoFridge: {
-        fontSize: 22,
-        fontWeight: 'bold',
-        color: '#1298FF',
-        letterSpacing: 1,
-    },
-
-    // ✅ 탭 컨테이너
-    tabContainer: {
+    tabButton: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        paddingHorizontal: 24,
-        marginTop: 17,
-    },
-
-    // ✅ 탭 버튼
-    tabButton: {
-        width: 100,
-        height: 44,
-        borderRadius: 12,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: 'transparent',
+        paddingVertical: 18,
+        borderBottomWidth: 1,
+        borderBottomColor: '#f0f0f0',
     },
     activeTabButton: {
-        backgroundColor: 'rgba(255, 255, 255, 0.3)', // 활성화된 탭 배경
+        // 활성화 시 텍스트/아이콘 색만 변경
     },
     tabText: {
         fontSize: 16,
-        fontWeight: '600',
-        color: '#161616',
+        fontWeight: '500',
+        color: '#333',
     },
     activeTabText: {
-        color: '#161616',
-        fontWeight: '700',
-    },
-
-    // ✅ 메인 콘텐츠 그라데이션
-    contentGradient: {
-        flex: 1,
-        borderTopWidth: 1,
-        borderTopColor: '#A2AECE',
-        borderTopLeftRadius: 4,
-        borderTopRightRadius: 4,
-    },
-
-    // ✅ 재료 개수 박스 래퍼
-    countBoxWrapper: {
-        marginTop: 58,
-        paddingHorizontal: 38,
-    },
-
-    // ✅ 재료 개수 박스
-    countBox: {
-        width: 299,
-        height: 169,
-        backgroundColor: '#2D303A',
-        borderRadius: 12,
-        position: 'relative',
-        // 그림자 효과
-        shadowColor: '#000000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.25,
-        shadowRadius: 4,
-        elevation: 5,
-    },
-
-    // ✅ 반투명 그라데이션 오버레이
-    countBoxOverlay: {
-        position: 'absolute',
-        width: '100%',
-        height: '100%',
-        borderRadius: 12,
-    },
-
-    // ✅ 재료 개수 박스 내용
-    countBoxContent: {
-        flex: 1,
-        justifyContent: 'space-around',
-        paddingVertical: 34,
-        paddingHorizontal: 24,
-    },
-
-    countLabel: {
-        fontSize: 20,
-        fontWeight: '600',
-        color: '#FCFCFC',
-        textAlign: 'left',
-    },
-    countNumber: {
-        fontSize: 20,
-        fontWeight: '700',
-        color: '#89FFF1', // 청록색 숫자
-    },
-
-    // ✅ 로딩 컨테이너
-    loadingContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    loadingText: {
-        marginTop: 15,
-        fontSize: 16,
-        color: '#2D303A',
-        fontWeight: '500',
-    },
-
-    // ✅ 에러 컨테이너
-    errorContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        paddingHorizontal: 20,
-    },
-    errorText: {
-        fontSize: 16,
-        color: '#FF5C5C',
-        textAlign: 'center',
-        marginBottom: 20,
-        fontWeight: '500',
-    },
-    retryButton: {
-        backgroundColor: '#89FFF1',
-        paddingVertical: 12,
-        paddingHorizontal: 30,
-        borderRadius: 8,
-    },
-    retryButtonText: {
-        color: '#2D303A',
         fontSize: 16,
         fontWeight: 'bold',
+        color: '#007AFF',
+    },
+
+    // 미리보기
+    previewContainer: {
+        paddingVertical: 16, // 탭과 미리보기 사이 여백
+        borderBottomWidth: 1,
+        borderBottomColor: '#f0f0f0',
+    },
+    viewAllButton: {
+        paddingTop: 16,
+    },
+    viewAllText: {
+        fontSize: 14,
+        color: '#888',
+        textAlign: 'right', // 전체보기 버튼
+    },
+    previewCard: {
+        width: 140,
+        marginRight: 12,
+        backgroundColor: '#fff',
+        borderRadius: 12,
+        overflow: 'hidden',
+        elevation: 3,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+    },
+    previewImage: {
+        width: '100%',
+        height: 100,
+        backgroundColor: '#eee'
+    },
+    previewCardTitle: {
+        fontSize: 14,
+        fontWeight: 'bold',
+        marginTop: 8,
+        marginHorizontal: 8,
+    },
+    emptyContainer: { width: 200, height: 160, justifyContent: 'center', alignItems: 'center' },
+    emptyText: { color: '#aaa', fontSize: 14 },
+
+    // 카드 정보 스타일
+    cardInfoContainer: {
+        paddingHorizontal: 8,
+        paddingBottom: 8,
+        marginTop: 4,
+    },
+    cardLikes: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 4,
+    },
+    cardLikesText: {
+        marginLeft: 4,
+        fontSize: 12,
+        color: '#555',
+    },
+    cardInfoText: {
+        fontSize: 11,
+        color: '#888',
+        marginTop: 2,
     },
 });
