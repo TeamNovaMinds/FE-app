@@ -230,7 +230,7 @@ export const styles = StyleSheet.create({
         width: 90,
         height: 90,
         borderRadius: 16,
-        backgroundColor: '#656873',
+        backgroundColor: 'rgba(101, 104, 115, 0.3)',
         alignItems: 'center',
         justifyContent: 'center',
         padding: 4,
