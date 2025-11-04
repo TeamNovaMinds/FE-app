@@ -12,6 +12,7 @@ import {
     ActivityIndicator,
     Pressable,
     Keyboard,
+    TouchableWithoutFeedback,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -132,28 +133,32 @@ export default function IngredientSearchScreen() {
                 {/* 배경 터치 이벤트 전파 방지 */}
                 <Pressable style={{ flex: 1 }}>
                     <SafeAreaView style={styles.safeArea}>
-                        {/* 손잡이 영역에만 제스처 적용 */}
-                        <GestureDetector gesture={panGesture}>
-                            <View style={styles.grabberContainer}>
-                                <View style={styles.grabber} />
-                            </View>
-                        </GestureDetector>
+                        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+                            <View>
+                                {/* 손잡이 영역에만 제스처 적용 */}
+                                <GestureDetector gesture={panGesture}>
+                                    <View style={styles.grabberContainer}>
+                                        <View style={styles.grabber} />
+                                    </View>
+                                </GestureDetector>
 
-                        {/* 검색창 */}
-                        <View style={styles.searchContainer}>
-                            <Ionicons name="search" size={20} color="#888" style={styles.searchIcon} />
-                            <TextInput
-                                style={styles.searchInput}
-                                placeholder="재료 이름을 검색하세요..."
-                                value={searchQuery}
-                                onChangeText={setSearchQuery}
-                            />
-                            {searchQuery.length > 0 && (
-                                <TouchableOpacity onPress={() => setSearchQuery('')}>
-                                    <Ionicons name="close-circle" size={20} color="#888" style={styles.clearIcon} />
-                                </TouchableOpacity>
-                            )}
-                        </View>
+                                {/* 검색창 */}
+                                <View style={styles.searchContainer}>
+                                    <Ionicons name="search" size={20} color="#888" style={styles.searchIcon} />
+                                    <TextInput
+                                        style={styles.searchInput}
+                                        placeholder="재료 이름을 검색하세요..."
+                                        value={searchQuery}
+                                        onChangeText={setSearchQuery}
+                                    />
+                                    {searchQuery.length > 0 && (
+                                        <TouchableOpacity onPress={() => setSearchQuery('')}>
+                                            <Ionicons name="close-circle" size={20} color="#888" style={styles.clearIcon} />
+                                        </TouchableOpacity>
+                                    )}
+                                </View>
+                            </View>
+                        </TouchableWithoutFeedback>
 
                         {/* 결과 목록 */}
                         {isLoading && results.length === 0 ? (
@@ -162,6 +167,8 @@ export default function IngredientSearchScreen() {
                             <FlatList
                                 data={results}
                                 keyExtractor={(item) => item.id.toString()}
+                                keyboardShouldPersistTaps="handled"
+                                style={{ flex: 1 }}
                                 renderItem={({ item }) => (
                                     <TouchableOpacity style={styles.itemContainer} onPress={() => handleSelectIngredient(item)}>
                                         <Image

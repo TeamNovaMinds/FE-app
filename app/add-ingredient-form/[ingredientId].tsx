@@ -9,7 +9,10 @@ import {
     TouchableOpacity,
     Alert,
     ActivityIndicator,
-    Image, // Image 컴포넌트 임포트
+    Image,
+    ScrollView,
+    Keyboard,
+    TouchableWithoutFeedback,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -152,76 +155,81 @@ export default function AddIngredientFormScreen() {
 
     return (
         <SafeAreaView style={styles.container}>
-            <View style={styles.content}>
-                {/* 재료 이미지 표시 */}
-                {isImageLoading ? (
-                    <View style={styles.imagePlaceholder}>
-                        <ActivityIndicator size="large" color="#007AFF" />
-                    </View>
-                ) : (
-                    ingredientImageUrl ? (
-                        <Image source={{ uri: ingredientImageUrl }} style={styles.ingredientImage} />
-                    ) : (
-                        // 이미지가 없을 경우 대체 아이콘이나 텍스트 표시 가능
-                        <View style={styles.imagePlaceholder}>
-                            <Text style={styles.noImageText}>이미지 없음</Text>
-                        </View>
-                    )
-                )}
-
-                <Text style={styles.ingredientName}>{decodeURIComponent(name)}</Text>
-
-                <Text style={styles.label}>보관 방식</Text>
-                <View style={styles.storageContainer}>
-                    {(["REFRIGERATOR", "FREEZER", "ROOM_TEMPERATURE"] as StorageType[]).map((type) => (
-                        <TouchableOpacity
-                            key={type}
-                            style={[
-                                styles.storageButton,
-                                storageType === type && styles.storageButtonActive,
-                            ]}
-                            onPress={() => handleStorageTypeChange(type)}
-                        >
-                            <Text style={[
-                                styles.storageText,
-                                storageType === type && styles.storageTextActive
-                            ]}>
-                                {type === 'REFRIGERATOR' ? '냉장' : type === 'FREEZER' ? '냉동' : '실온'}
-                            </Text>
-                        </TouchableOpacity>
-                    ))}
-                </View>
-
-                <Text style={styles.label}>재료 개수</Text>
-                <TextInput
-                    style={styles.input}
-                    value={quantity}
-                    onChangeText={setQuantity}
-                    keyboardType="number-pad"
-                    placeholder="1"
-                />
-
-                <Text style={styles.label}>유통 기한 (선택)</Text>
-                <TextInput
-                    style={styles.input}
-                    value={expirationDate}
-                    onChangeText={setExpirationDate}
-                    placeholder="YYYY-MM-DD (자동 계산)"
-                    maxLength={10}
-                />
-
-                <TouchableOpacity
-                    style={[styles.submitButton, isLoading && styles.submitButtonDisabled]}
-                    onPress={handleAddItem}
-                    disabled={isLoading}
+            <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+                <ScrollView
+                    style={styles.scrollView}
+                    contentContainerStyle={styles.content}
+                    keyboardShouldPersistTaps="handled"
                 >
-                    {isLoading ? (
-                        <ActivityIndicator color="#FFFFFF" />
+                    {/* 재료 이미지 표시 */}
+                    {isImageLoading ? (
+                        <View style={styles.imagePlaceholder}>
+                            <ActivityIndicator size="large" color="#007AFF" />
+                        </View>
                     ) : (
-                        <Text style={styles.submitButtonText}>냉장고에 추가</Text>
+                        ingredientImageUrl ? (
+                            <Image source={{ uri: ingredientImageUrl }} style={styles.ingredientImage} />
+                        ) : (
+                            <View style={styles.imagePlaceholder}>
+                                <Text style={styles.noImageText}>이미지 없음</Text>
+                            </View>
+                        )
                     )}
-                </TouchableOpacity>
-            </View>
+
+                    <Text style={styles.ingredientName}>{decodeURIComponent(name)}</Text>
+
+                    <Text style={styles.label}>보관 방식</Text>
+                    <View style={styles.storageContainer}>
+                        {(["REFRIGERATOR", "FREEZER", "ROOM_TEMPERATURE"] as StorageType[]).map((type) => (
+                            <TouchableOpacity
+                                key={type}
+                                style={[
+                                    styles.storageButton,
+                                    storageType === type && styles.storageButtonActive,
+                                ]}
+                                onPress={() => handleStorageTypeChange(type)}
+                            >
+                                <Text style={[
+                                    styles.storageText,
+                                    storageType === type && styles.storageTextActive
+                                ]}>
+                                    {type === 'REFRIGERATOR' ? '냉장' : type === 'FREEZER' ? '냉동' : '실온'}
+                                </Text>
+                            </TouchableOpacity>
+                        ))}
+                    </View>
+
+                    <Text style={styles.label}>재료 개수</Text>
+                    <TextInput
+                        style={styles.input}
+                        value={quantity}
+                        onChangeText={setQuantity}
+                        keyboardType="number-pad"
+                        placeholder="1"
+                    />
+
+                    <Text style={styles.label}>유통 기한 (선택)</Text>
+                    <TextInput
+                        style={styles.input}
+                        value={expirationDate}
+                        onChangeText={setExpirationDate}
+                        placeholder="YYYY-MM-DD (자동 계산)"
+                        maxLength={10}
+                    />
+
+                    <TouchableOpacity
+                        style={[styles.submitButton, isLoading && styles.submitButtonDisabled]}
+                        onPress={handleAddItem}
+                        disabled={isLoading}
+                    >
+                        {isLoading ? (
+                            <ActivityIndicator color="#FFFFFF" />
+                        ) : (
+                            <Text style={styles.submitButtonText}>냉장고에 추가</Text>
+                        )}
+                    </TouchableOpacity>
+                </ScrollView>
+            </TouchableWithoutFeedback>
         </SafeAreaView>
     );
 }
@@ -231,9 +239,12 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#FFFFFF',
     },
-    content: {
+    scrollView: {
         flex: 1,
+    },
+    content: {
         padding: 24,
+        flexGrow: 1,
     },
     // 재료 이미지 스타일 추가
     ingredientImage: {
