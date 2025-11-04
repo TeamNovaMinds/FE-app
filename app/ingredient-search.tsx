@@ -13,6 +13,7 @@ import {
     Pressable,
     Keyboard,
     TouchableWithoutFeedback,
+    ScrollView, // 1. ScrollView 임포트
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -20,7 +21,7 @@ import { Ionicons } from '@expo/vector-icons';
 import axiosInstance from '@/api/axiosInstance';
 import debounce from 'lodash.debounce';
 
-// 2. 제스처 핸들러와 리애니메이티드 임포트
+// 2. 제스처 핸들러와 리애니메이티드 임포트 (기존과 동일)
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
     useSharedValue,
@@ -29,7 +30,7 @@ import Animated, {
     runOnJS
 } from 'react-native-reanimated';
 
-// API 응답 타입 (제공해주신 정보 기반)
+// API 응답 타입 (기존과 동일)
 interface IngredientDTO {
     id: number;
     name: string;
@@ -37,24 +38,47 @@ interface IngredientDTO {
     imageUrl: string | null;
 }
 
+// 3. 카테고리 필터 데이터 추가 (두번째 이미지 참고)
+// 💡 API 명세에 맞게 key 값을 조정해야 할 수 있습니다. (예: 'MEAT', 'VEGETABLE')
+const CATEGORIES = [
+    { key: 'ALL', name: '전체' },
+    { key: 'VEGETABLE', name: '채소' },
+    { key: 'FRUIT', name: '과일' },
+    { key: 'MEAT', name: '육류' },
+    { key: 'SEAFOOD', name: '수산물' },
+    { key: 'DAIRY', name: '유제품' },
+    { key: 'GRAIN', name: '곡물' },
+    { key: 'SEASONING', name: '조미료' },
+    { key: 'PROCESSED', name: '가공식품' },
+    // ...필요시 API에 정의된 다른 카테고리 추가
+];
+
+
 export default function IngredientSearchScreen() {
     const router = useRouter();
-    const { storageType } = useLocalSearchParams<{ storageType?: string }>();
+    const { storageType } = useLocalSearchParams<{ storageType?: string; }>();
     const [searchQuery, setSearchQuery] = useState('');
     const [results, setResults] = useState<IngredientDTO[]>([]);
     const [isLoading, setIsLoading] = useState(false);
 
-    // 3. 애니메이션과 제스처를 위한 값 추가
-    const translateY = useSharedValue(0); // 시트의 Y축 위치
-    const context = useSharedValue({ y: 0 }); // 제스처 시작 위치
+    // 4. 활성 카테고리 상태 추가 (기본값 'ALL')
+    const [activeCategory, setActiveCategory] = useState<string>('ALL');
 
-    // 재료 검색 API 호출
-    const fetchIngredients = async (keyword: string) => {
+    // 애니메이션/제스처 값 (기존과 동일)
+    const translateY = useSharedValue(0);
+    const context = useSharedValue({ y: 0 });
+
+    // 5. 재료 검색 API 호출 수정 (category 파라미터 추가)
+    const fetchIngredients = async (keyword: string, category: string) => {
         setIsLoading(true);
         try {
-            const response = await axiosInstance.get('/api/ingredients', {
-                params: { keyword: keyword || undefined },
-            });
+            const params: any = {
+                keyword: keyword || undefined,
+                // 'ALL'이 아니면 category 파라미터 추가
+                category: category !== 'ALL' ? category : undefined,
+            };
+
+            const response = await axiosInstance.get('/api/ingredients', { params });
             if (response.data.isSuccess) {
                 setResults(response.data.result.ingredients);
             }
@@ -65,20 +89,20 @@ export default function IngredientSearchScreen() {
         }
     };
 
-    // 디바운스 적용된 검색 함수
+    // 6. 디바운스 검색 함수 수정
     const debouncedSearch = useCallback(debounce(fetchIngredients, 300), []);
 
-    // 검색어가 변경될 때마다 디바운스 검색 호출
+    // 7. 검색어/카테고리 변경 시 디바운스 검색 호출
     useEffect(() => {
-        debouncedSearch(searchQuery);
-    }, [searchQuery, debouncedSearch]);
+        debouncedSearch(searchQuery, activeCategory);
+    }, [searchQuery, activeCategory, debouncedSearch]);
 
-    // 마운트 시 전체 목록 로드
+    // 8. 마운트 시 '전체' 목록 로드
     useEffect(() => {
-        fetchIngredients('');
+        fetchIngredients('', 'ALL');
     }, []);
 
-    // 4. 모달 닫기 함수 (키보드도 함께 내리기)
+    // 모달 닫기 함수 (기존과 동일)
     const closeModal = () => {
         Keyboard.dismiss();
         router.back();
@@ -89,35 +113,31 @@ export default function IngredientSearchScreen() {
         runOnJS(closeModal)();
     };
 
-    // 5. 아래로 스와이프하는 제스처 정의
+    // 제스처 (기존과 동일)
     const panGesture = Gesture.Pan()
         .onStart(() => {
             context.value = { y: translateY.value };
         })
         .onUpdate((event) => {
-            // 위로 스크롤(음수)하는 것은 막고, 아래로(양수)만 드래그되도록 함
             translateY.value = Math.max(0, context.value.y + event.translationY);
         })
         .onEnd(() => {
-            // 100픽셀 이상 끌어내렸으면 닫기
             if (translateY.value > 100) {
-                handleClose(); // 닫기 함수 호출
+                handleClose();
             } else {
-                // 100픽셀 미만이면 제자리로 부드럽게 복귀
                 translateY.value = withSpring(0, { damping: 15 });
             }
         });
 
-    // 6. 시트에 적용할 애니메이션 스타일
+    // 애니메이션 스타일 (기존과 동일)
     const animatedSheetStyle = useAnimatedStyle(() => {
         return {
             transform: [{ translateY: translateY.value }],
         };
     });
 
-    // 아이템 선택 시 다음 폼 화면으로 이동
+    // 재료 선택 (기존과 동일)
     const handleSelectIngredient = (item: IngredientDTO) => {
-        // [ingredientId].tsx 파일로 id, name, storageType을 파라미터로 넘겨주며 이동
         const params = new URLSearchParams({
             name: item.name,
             ...(storageType && { storageType })
@@ -125,24 +145,51 @@ export default function IngredientSearchScreen() {
         router.push(`/add-ingredient-form/${item.id}?${params.toString()}`);
     };
 
+    // 9. 카테고리 필터 렌더링 함수
+    const renderCategoryFilters = () => (
+        <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.filterScrollView}
+            contentContainerStyle={styles.filterContainer}
+        >
+            {CATEGORIES.map((category) => (
+                <TouchableOpacity
+                    key={category.key}
+                    style={[
+                        styles.filterButton,
+                        activeCategory === category.key && styles.filterButtonActive
+                    ]}
+                    onPress={() => {
+                        setActiveCategory(category.key);
+                        // 카테고리 변경 시 useEffect가 알아서 API를 다시 호출
+                    }}
+                >
+                    <Text style={[
+                        styles.filterText,
+                        activeCategory === category.key && styles.filterTextActive
+                    ]}>
+                        {category.name}
+                    </Text>
+                </TouchableOpacity>
+            ))}
+        </ScrollView>
+    );
+
     return (
-        // 배경 (클릭 시 닫힘)
         <Pressable style={styles.backdrop} onPress={handleClose}>
-            {/* 시트 컨테이너 (애니메이션 적용) */}
             <Animated.View style={[styles.sheetContainer, animatedSheetStyle]}>
                 {/* 배경 터치 이벤트 전파 방지 */}
                 <Pressable style={{ flex: 1 }}>
                     <SafeAreaView style={styles.safeArea}>
                         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
                             <View>
-                                {/* 손잡이 영역에만 제스처 적용 */}
                                 <GestureDetector gesture={panGesture}>
                                     <View style={styles.grabberContainer}>
                                         <View style={styles.grabber} />
                                     </View>
                                 </GestureDetector>
 
-                                {/* 검색창 */}
                                 <View style={styles.searchContainer}>
                                     <Ionicons name="search" size={20} color="#888" style={styles.searchIcon} />
                                     <TextInput
@@ -160,7 +207,10 @@ export default function IngredientSearchScreen() {
                             </View>
                         </TouchableWithoutFeedback>
 
-                        {/* 결과 목록 */}
+                        {/* 10. 카테고리 필터 UI 렌더링 */}
+                        {renderCategoryFilters()}
+
+                        {/* 11. FlatList 수정: numColumns={4} 및 스타일 속성 추가 */}
                         {isLoading && results.length === 0 ? (
                             <ActivityIndicator size="large" style={{ marginTop: 20 }} />
                         ) : (
@@ -169,13 +219,16 @@ export default function IngredientSearchScreen() {
                                 keyExtractor={(item) => item.id.toString()}
                                 keyboardShouldPersistTaps="handled"
                                 style={{ flex: 1 }}
+                                numColumns={4} // 4열 그리드
+                                columnWrapperStyle={styles.gridRow} // 행 스타일
+                                contentContainerStyle={styles.gridContainer} // 전체 컨테이너 패딩
                                 renderItem={({ item }) => (
                                     <TouchableOpacity style={styles.itemContainer} onPress={() => handleSelectIngredient(item)}>
                                         <Image
                                             source={item.imageUrl ? { uri: item.imageUrl } : require('../assets/images/logo.png')}
                                             style={styles.itemImage}
                                         />
-                                        <Text style={styles.itemName}>{item.name}</Text>
+                                        <Text style={styles.itemName} numberOfLines={1}>{item.name}</Text>
                                     </TouchableOpacity>
                                 )}
                                 ListEmptyComponent={
@@ -192,7 +245,7 @@ export default function IngredientSearchScreen() {
     );
 }
 
-// 6. 스타일 전체 수정
+// 12. 스타일 시트 전체 수정
 const styles = StyleSheet.create({
     backdrop: {
         flex: 1,
@@ -224,7 +277,8 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         backgroundColor: '#F0F0F0',
         borderRadius: 12,
-        margin: 16,
+        marginHorizontal: 16, // 좌우 마진
+        marginBottom: 10, // 필터와의 간격
         paddingHorizontal: 12,
     },
     searchIcon: {
@@ -238,23 +292,69 @@ const styles = StyleSheet.create({
     clearIcon: {
         marginLeft: 8,
     },
-    itemContainer: {
+    // 2. 카테고리 스크롤뷰 자체의 스타일 추가
+    filterScrollView: {
+        flexGrow: 0, // <-- 이 속성으로 스크롤뷰가 불필요하게 늘어나는 것을 방지합니다.
+    },
+    // 카테고리 필터 스타일
+    filterContainer: {
         flexDirection: 'row',
-        alignItems: 'center',
-        paddingVertical: 12,
-        paddingHorizontal: 20,
-        borderBottomWidth: 1,
-        borderBottomColor: '#F0F0F0',
+        paddingHorizontal: 16,
+        paddingBottom: 16, // 목록과의 간격
     },
-    itemImage: {
-        width: 40,
-        height: 40,
+    filterButton: {
+        paddingVertical: 6,
+        paddingHorizontal: 14,
         borderRadius: 20,
-        marginRight: 16,
-        backgroundColor: '#EEE',
+        backgroundColor: '#F0F0F0',
+        marginRight: 8,
     },
+    filterButtonActive: {
+        backgroundColor: '#007AFF', // 활성 탭 색상 (원하는 색으로 변경)
+    },
+    filterText: {
+        fontSize: 14,
+        color: '#555',
+    },
+    filterTextActive: {
+        color: '#FFFFFF',
+        fontWeight: 'bold',
+    },
+    // 그리드 스타일
+    gridContainer: {
+        paddingHorizontal: 12, // 그리드 전체의 좌우 패딩
+    },
+    gridRow: {
+        justifyContent: 'flex-start', // 아이템들을 왼쪽부터 정렬
+        paddingHorizontal: 4,
+    },
+    // 그리드 아이템 스타일 (기존 itemContainer 수정)
+    itemContainer: {
+        width: 90,  // 아이템 너비
+        height: 90, // 아이템 높이
+        borderRadius: 12, // 둥근 사각형
+        backgroundColor: '#F0F0F0', // 피그마와 유사한 배경색
+        alignItems: 'center',
+        justifyContent: 'center', // 내용물(이미지, 텍스트) 중앙 정렬
+        padding: 4,
+        marginBottom: 12,
+        marginHorizontal: 6, // 아이템 간 가로 간격
+    },
+    // 그리드 아이템 이미지 (기존 itemImage 수정)
+    itemImage: {
+        width: 48, // 이미지 크기
+        height: 48, // 이미지 크기
+        // 2. borderRadius: 30 (원형) 제거
+        backgroundColor: '#EEE', // 이미지 없을 때 배경
+        marginBottom: 4, // 텍스트와의 간격
+        resizeMode: 'contain', // 이미지가 잘리지 않게
+    },
+    // 그리드 아이템 텍스트 (기존 itemName 수정)
     itemName: {
-        fontSize: 16,
+        fontSize: 13,
+        textAlign: 'center',
+        color: '#333', // 텍스트 색상
+        width: '100%', // 텍스트가 영역을 넘치지 않도록
     },
     emptyContainer: {
         flex: 1,
