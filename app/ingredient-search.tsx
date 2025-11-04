@@ -253,7 +253,7 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(0, 0, 0, 0)', // 투명 배경
     },
     sheetContainer: {
-        height: '60%', // 원하는 높이 (예: 60%)
+        height: '70%', // 원하는 높이 (예: 60%)
         backgroundColor: '#FFFFFF',
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
@@ -310,7 +310,7 @@ const styles = StyleSheet.create({
         marginRight: 8,
     },
     filterButtonActive: {
-        backgroundColor: '#007AFF', // 활성 탭 색상 (원하는 색으로 변경)
+        backgroundColor: '#62A1FF', // 활성 탭 색상 (원하는 색으로 변경)
     },
     filterText: {
         fontSize: 14,
