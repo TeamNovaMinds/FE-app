@@ -48,7 +48,7 @@ export const useIngredientData = (activeTab: TabName | null) => {
     const fetchStoredIngredients = useCallback(async (tabName: TabName) => {
         setIsListLoading(true);
         setIsListError(null);
-        setStoredIngredients([]);
+        // setStoredIngredients([]);
         try {
             const storageType = STORAGE_TYPE_MAP[tabName];
             const response = await axiosInstance.get<StoredIngredientResponse>(

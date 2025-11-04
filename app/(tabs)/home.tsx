@@ -33,7 +33,7 @@ export default function HomeScreen() {
     // 커스텀 훅 사용
     const {
         ingredientCount,
-        isLoading,
+        isLoading, // 💡 [수정] 이 isLoading은 '요약' 로딩 상태입니다.
         error,
         storedIngredients,
         isListLoading,
@@ -64,6 +64,8 @@ export default function HomeScreen() {
 
         router.push(`/ingredient-search?storageType=${storageType}`);
     };
+
+    const hasNoCountData = ingredientCount.fridge === 0 && ingredientCount.freezer === 0 && ingredientCount.room === 0;
 
     return (
         <View style={styles.container}>
@@ -232,7 +234,8 @@ export default function HomeScreen() {
                         end={{ x: 1, y: 0 }}
                         style={styles.contentGradient}
                     >
-                        {isLoading ? (
+                        {/* 💡 [수정] isLoading이 true이면서 동시에 기존 카운트가 0일 때만 로딩 표시 */}
+                        {isLoading && hasNoCountData ? (
                             <View style={styles.loadingContainer}>
                                 <ActivityIndicator size="large" color="#89FFF1" />
                                 <Text style={styles.loadingText}>재료 개수를 불러오는 중...</Text>
