@@ -41,7 +41,7 @@ export const RecipeCardSmall: React.FC<RecipeCardSmallProps> = React.memo(({ ite
                     </View>
 
                     {/* ✅ 나머지 정보 (사진과 동일하게) */}
-                    <Text style={styles.cardInfoText}>1인분 기준</Text>
+                    <Text style={styles.cardInfoText}>{item.servings}인분 기준</Text>
                     <Text style={styles.cardInfoText}>
                         평균 조리시간 {item.cookingTimeMinutes}분
                     </Text>

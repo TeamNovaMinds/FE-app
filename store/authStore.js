@@ -51,6 +51,11 @@ export const useAuthStore = create((set) => ({
 
     // 로딩 상태 변경
     setLoading: (loading) => set({ isLoading: loading }),
+
+    // 사용자 정보 업데이트
+    updateUser: (updatedUserData) => set((state) => ({
+        user: { ...state.user, ...updatedUserData },
+    })),
 }));
 
 export default useSignupStore;

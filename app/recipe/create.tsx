@@ -20,6 +20,8 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import axiosInstance from '@/api/axiosInstance';
 import debounce from 'lodash.debounce';
+import * as ImagePicker from 'expo-image-picker';
+import { uploadImage, validateFileSize, validateFileType } from '@/utils/imageUpload';
 
 // --- (타입 정의 및 상수는 이전과 동일) ---
 interface Ingredient {
@@ -54,6 +56,7 @@ export default function CreateRecipeScreen() {
     const [modalResults, setModalResults] = useState<ApiIngredient[]>([]);
     const [modalLoading, setModalLoading] = useState(false);
     const [currentIngredientIndex, setCurrentIngredientIndex] = useState(0);
+    const [isImageUploading, setIsImageUploading] = useState(false);
 
     const scrollRef = useRef<KeyboardAwareScrollView>(null);
 
@@ -110,7 +113,68 @@ export default function CreateRecipeScreen() {
         setIsModalVisible(false);
     };
 
-    const handlePickImage = (type: 'main' | 'step', index?: number) => Alert.alert('준비 중', '이미지 업로드 기능은 준비 중입니다.');
+    const handlePickImage = async (type: 'main' | 'step', index?: number) => {
+        try {
+            // 갤러리 권한 요청
+            const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+            if (status !== 'granted') {
+                Alert.alert('권한 필요', '갤러리 접근 권한이 필요합니다.');
+                return;
+            }
+
+            // 이미지 선택
+            const result = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: 'images',
+                allowsEditing: true,
+                aspect: type === 'main' ? [16, 9] : [4, 3],
+                quality: 0.8,
+            });
+
+            if (result.canceled) {
+                return;
+            }
+
+            const selectedImage = result.assets[0];
+            const imageUri = selectedImage.uri;
+            const fileName = imageUri.split('/').pop() || 'image.jpg';
+
+            // 파일 타입 검증
+            if (!validateFileType(fileName)) {
+                Alert.alert('파일 형식 오류', 'jpg, jpeg, png, gif, webp 파일만 업로드 가능합니다.');
+                return;
+            }
+
+            // 파일 크기 검증 (fileSize가 있는 경우)
+            if (selectedImage.fileSize && !validateFileSize(selectedImage.fileSize)) {
+                Alert.alert('파일 크기 오류', '10MB 이하의 이미지만 업로드 가능합니다.');
+                return;
+            }
+
+            // 로딩 시작
+            setIsImageUploading(true);
+
+            // 이미지 업로드
+            const { imageUrl } = await uploadImage(imageUri, fileName);
+
+            // 업로드 성공 후 상태 업데이트
+            if (type === 'main') {
+                setMainImage(imageUrl);
+            } else if (type === 'step' && index !== undefined) {
+                const newSteps = [...steps];
+                newSteps[index].imageUrl = imageUrl;
+                setSteps(newSteps);
+            }
+
+            Alert.alert('성공', '이미지가 업로드되었습니다.');
+        } catch (error: any) {
+            console.error('이미지 업로드 오류:', error);
+            const errorMessage = error?.message || '이미지 업로드 중 오류가 발생했습니다.';
+            Alert.alert('업로드 실패', errorMessage);
+        } finally {
+            setIsImageUploading(false);
+        }
+    };
 
     const handleCreateRecipe = async () => {
         if (!title || !time || !difficulty || !servings || !description || ingredients.some(i => !i.ingredientId || !i.amount) || steps.some(s => !s.description)) {
@@ -172,8 +236,21 @@ export default function CreateRecipeScreen() {
                 keyboardShouldPersistTaps="handled"
                 // ✅ enableAutomaticScroll={false} 속성 제거! (자동 스크롤 다시 켬)
             >
-                <TouchableOpacity style={styles.imagePicker} onPress={() => handlePickImage('main')}>
-                    {mainImage ? <Image source={{ uri: mainImage }} style={styles.imagePreview} /> : (<><Ionicons name="camera" size={32} color="#888" /><Text style={styles.imagePickerText}>메인 사진 추가</Text></>)}
+                <TouchableOpacity
+                    style={styles.imagePicker}
+                    onPress={() => handlePickImage('main')}
+                    disabled={isImageUploading}
+                >
+                    {isImageUploading ? (
+                        <ActivityIndicator size="large" color="#007AFF" />
+                    ) : mainImage ? (
+                        <Image source={{ uri: mainImage }} style={styles.imagePreview} />
+                    ) : (
+                        <>
+                            <Ionicons name="camera" size={32} color="#888" />
+                            <Text style={styles.imagePickerText}>메인 사진 추가</Text>
+                        </>
+                    )}
                 </TouchableOpacity>
 
                 {/* ✅ onFocus 핸들러 제거 */}
@@ -227,19 +304,36 @@ export default function CreateRecipeScreen() {
                 {steps.map((item, index) => (
                     <View key={index} style={styles.stepContainer}>
                         <Text style={styles.stepNumber}>{index + 1}</Text>
-                        <View style={styles.stepContent}>
-                            <TextInput
-                                style={styles.stepInput}
-                                multiline
-                                placeholder="만드는 방법을 입력해주세요."
-                                value={item.description}
-                                onChangeText={(text) => handleStepChange(index, text)}
-                                // ✅ 여기만 onFocus 핸들러를 유지합니다. (함수 이름 변경)
-                                onFocus={handleStepInputFocus}
-                            />
-                            <TouchableOpacity style={styles.stepImagePicker} onPress={() => handlePickImage('step', index)}>
-                                <Ionicons name="camera-outline" size={28} color="#888" />
-                            </TouchableOpacity>
+                        <View style={styles.stepContentWrapper}>
+                            <View style={styles.stepContent}>
+                                <TextInput
+                                    style={styles.stepInput}
+                                    multiline
+                                    placeholder="만드는 방법을 입력해주세요."
+                                    value={item.description}
+                                    onChangeText={(text) => handleStepChange(index, text)}
+                                    // ✅ 여기만 onFocus 핸들러를 유지합니다. (함수 이름 변경)
+                                    onFocus={handleStepInputFocus}
+                                />
+                                <TouchableOpacity style={styles.stepImagePicker} onPress={() => handlePickImage('step', index)}>
+                                    <Ionicons name="camera-outline" size={28} color="#888" />
+                                </TouchableOpacity>
+                            </View>
+                            {item.imageUrl && (
+                                <View style={styles.stepImagePreviewContainer}>
+                                    <Image source={{ uri: item.imageUrl }} style={styles.stepImagePreview} />
+                                    <TouchableOpacity
+                                        style={styles.stepImageDeleteButton}
+                                        onPress={() => {
+                                            const newSteps = [...steps];
+                                            newSteps[index].imageUrl = null;
+                                            setSteps(newSteps);
+                                        }}
+                                    >
+                                        <Ionicons name="close-circle" size={24} color="#FF6347" />
+                                    </TouchableOpacity>
+                                </View>
+                            )}
                         </View>
                         {steps.length > 1 && (
                             <TouchableOpacity onPress={() => removeStep(index)} style={styles.deleteButton}>
@@ -334,9 +428,13 @@ const styles = StyleSheet.create({
     addButtonText: { color: '#555', fontWeight: '500', marginLeft: 4, fontSize: 15 },
     stepContainer: { flexDirection: 'row', marginBottom: 20, gap: 12, alignItems: 'flex-start' },
     stepNumber: { fontSize: 18, fontWeight: 'bold', color: '#007AFF', paddingTop: 10 },
-    stepContent: { flex: 1, flexDirection: 'row', borderBottomWidth: 1, borderColor: '#ddd' },
+    stepContentWrapper: { flex: 1 },
+    stepContent: { flexDirection: 'row', borderBottomWidth: 1, borderColor: '#ddd' },
     stepInput: { flex: 1, minHeight: 60, fontSize: 16, paddingTop: 10, paddingBottom: 12, textAlignVertical: 'top' },
     stepImagePicker: { padding: 10 },
+    stepImagePreviewContainer: { marginTop: 12, position: 'relative', width: '100%', height: 150, borderRadius: 8, overflow: 'hidden' },
+    stepImagePreview: { width: '100%', height: '100%', borderRadius: 8 },
+    stepImageDeleteButton: { position: 'absolute', top: 8, right: 8, backgroundColor: 'rgba(255, 255, 255, 0.9)', borderRadius: 12, padding: 2 },
     deleteButton: { justifyContent: 'center', paddingLeft: 8, paddingTop: 10 },
     ingredientButton: { justifyContent: 'center', paddingVertical: 12 },
     ingredientText: { fontSize: 16, color: '#000' },

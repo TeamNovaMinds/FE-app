@@ -17,6 +17,8 @@ import { Link, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import axiosInstance from '@/api/axiosInstance';
 import { useAuthStore } from '@/store/authStore';
+import * as ImagePicker from 'expo-image-picker';
+import { uploadImage, validateFileSize, validateFileType } from '@/utils/imageUpload';
 
 // --- (타입 정의, RecipePreviewCard 등은 기존과 동일) ---
 // ... (생략) ...
@@ -66,27 +68,139 @@ export default function MyPageScreen() {
     // ... (State, fetch/handle 함수 등 기존 코드와 동일) ...
     const [activeTab, setActiveTab] = useState<TabKey | null>(null);
     const [isLoading, setIsLoading] = useState(false);
+    const [isImageUploading, setIsImageUploading] = useState(false);
     const profile = useAuthStore((state) => state.user);
+    const updateUser = useAuthStore((state) => state.updateUser);
     const [likedRecipes, setLikedRecipes] = useState<SimpleRecipe[]>([]);
     const [myRecipes, setMyRecipes] = useState<SimpleRecipe[]>([]);
     const [myPosts, setMyPosts] = useState<SimplePost[]>([]);
 
-    const fetchLikedRecipes = async () => { /* ... */ };
-    const fetchMyRecipes = async (nickname: string | null | undefined) => { /* ... */ };
-    const handleTabPress = (tabKey: TabKey) => { /* ... */ };
-    const handleChangeProfileImage = () => { /* ... */ };
+    const fetchLikedRecipes = async () => {
+        try {
+            setIsLoading(true);
+            const response = await axiosInstance.get('/api/recipes/likes');
+            if (response.data.isSuccess) {
+                setLikedRecipes(response.data.result.recipes || []);
+            }
+        } catch (error) {
+            console.error('Failed to fetch liked recipes:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const fetchMyRecipes = async (nickname: string | null | undefined) => {
+        if (!nickname) return;
+        try {
+            setIsLoading(true);
+            const response = await axiosInstance.get(`/api/recipes?author=${nickname}`);
+            if (response.data.isSuccess) {
+                setMyRecipes(response.data.result.recipes || []);
+            }
+        } catch (error) {
+            console.error('Failed to fetch my recipes:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleTabPress = (tabKey: TabKey) => {
+        if (activeTab === tabKey) {
+            setActiveTab(null);
+        } else {
+            setActiveTab(tabKey);
+            if (tabKey === 'liked') {
+                fetchLikedRecipes();
+            } else if (tabKey === 'my-recipes') {
+                fetchMyRecipes(profile?.nickname);
+            }
+        }
+    };
+
+    const handleChangeProfileImage = async () => {
+        try {
+            // 갤러리 권한 요청
+            const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+            if (status !== 'granted') {
+                Alert.alert('권한 필요', '갤러리 접근 권한이 필요합니다.');
+                return;
+            }
+
+            // 이미지 선택
+            const result = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: 'images',
+                allowsEditing: true,
+                aspect: [1, 1],
+                quality: 0.8,
+            });
+
+            if (result.canceled) {
+                return;
+            }
+
+            const selectedImage = result.assets[0];
+            const imageUri = selectedImage.uri;
+            const fileName = imageUri.split('/').pop() || 'profile.jpg';
+
+            // 파일 타입 검증
+            if (!validateFileType(fileName)) {
+                Alert.alert('파일 형식 오류', 'jpg, jpeg, png, gif, webp 파일만 업로드 가능합니다.');
+                return;
+            }
+
+            // 파일 크기 검증 (fileSize가 있는 경우)
+            if (selectedImage.fileSize && !validateFileSize(selectedImage.fileSize)) {
+                Alert.alert('파일 크기 오류', '10MB 이하의 이미지만 업로드 가능합니다.');
+                return;
+            }
+
+            // 로딩 시작
+            setIsImageUploading(true);
+
+            // 이미지 업로드
+            const { imageUrl } = await uploadImage(imageUri, fileName);
+
+            // 백엔드에 프로필 이미지 URL 업데이트 요청
+            // NOTE: 실제 백엔드 API 엔드포인트에 맞게 수정이 필요합니다
+            const response = await axiosInstance.patch('/api/users/profile', {
+                profileImageUrl: imageUrl,
+            });
+
+            if (response.data.isSuccess) {
+                // 로컬 상태 업데이트
+                updateUser({ profileImageUrl: imageUrl });
+                Alert.alert('성공', '프로필 이미지가 변경되었습니다.');
+            } else {
+                throw new Error(response.data.message || '프로필 업데이트에 실패했습니다.');
+            }
+        } catch (error: any) {
+            console.error('프로필 이미지 변경 오류:', error);
+            const message = error.response?.data?.message || '프로필 이미지 변경 중 오류가 발생했습니다.';
+            Alert.alert('업로드 실패', message);
+        } finally {
+            setIsImageUploading(false);
+        }
+    };
 
     // ... (render 함수들은 이전 수정과 동일) ...
     const renderProfile = () => (
         <View style={styles.profileSection}>
             <View style={styles.profileImageContainer}>
-                <Image
-                    source={profile?.profileImageUrl ? { uri: profile.profileImageUrl } : require('../../assets/images/logo.png')}
-                    style={styles.profileImage}
-                />
+                {isImageUploading ? (
+                    <View style={[styles.profileImage, { justifyContent: 'center', alignItems: 'center' }]}>
+                        <ActivityIndicator size="large" color="#007AFF" />
+                    </View>
+                ) : (
+                    <Image
+                        source={profile?.profileImageUrl ? { uri: profile.profileImageUrl } : require('../../assets/images/logo.png')}
+                        style={styles.profileImage}
+                    />
+                )}
                 <TouchableOpacity
                     style={styles.profileEditButton}
                     onPress={handleChangeProfileImage}
+                    disabled={isImageUploading}
                 >
                     <Image
                         source={require('../../assets/icons/photoChange.png')}

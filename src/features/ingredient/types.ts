@@ -14,6 +14,7 @@ export interface SuggestedRecipeResponse {
     mainImageUrl: string | null;
     cookingTimeMinutes: number;
     difficulty: string; // "EASY", "NORMAL", "HARD" 등
+    servings: number; // 인분 수
     likeCount: number;
     commentCount: number;
     ingredients: IngredientInfo[];
