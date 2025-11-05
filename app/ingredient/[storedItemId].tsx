@@ -192,7 +192,7 @@ export default function IngredientDetailScreen() {
                                 <Text style={styles.sectionTitle}>재료 정보</Text>
                                 <View style={styles.detailCard}>
                                     <Image
-                                        source={item.imageUrl ? { uri: item.imageUrl } : require('../../assets/images/logo.png')}
+                                        source={item.imageUrl ? { uri: item.imageUrl } : require('../../assets/images/JustFridge_logo.png')}
                                         style={styles.detailImage}
                                     />
                                     <View style={styles.detailTextContainer}>

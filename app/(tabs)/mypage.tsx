@@ -44,7 +44,7 @@ const RecipePreviewCard = ({ item }: { item: SimpleRecipe }) => {
         <Link href={`/recipe/${item.recipeId}`} asChild>
             <TouchableOpacity style={styles.previewCard}>
                 <Image
-                    source={item.mainImageUrl ? { uri: item.mainImageUrl } : require('../../assets/images/logo.png')}
+                    source={item.mainImageUrl ? { uri: item.mainImageUrl } : require('../../assets/images/JustFridge_logo.png')}
                     style={styles.previewImage}
                 />
                 <Text style={styles.previewCardTitle} numberOfLines={1}>{item.title}</Text>
@@ -216,7 +216,7 @@ export default function MyPageScreen() {
                     </View>
                 ) : (
                     <Image
-                        source={profile?.profileImgUrl ? { uri: profile.profileImgUrl } : require('../../assets/images/logo.png')}
+                        source={profile?.profileImgUrl ? { uri: profile.profileImgUrl } : require('../../assets/images/JustFridge_logo.png')}
                         style={styles.profileImage}
                     />
                 )}
@@ -287,7 +287,11 @@ export default function MyPageScreen() {
                 <View style={styles.divider} />
                 {renderProfile()}
                 <Text style={styles.nicknameText}>
-                    {profile?.nickname ? `${profile.nickname} 님` : '로그인하세요'}
+                    {profile?.nickname ? (
+                        <>
+                            {profile.nickname}<Text style={styles.nimText}> 님</Text>
+                        </>
+                    ) : '로그인하세요'}
                 </Text>
                 {renderPoints()}
 
@@ -378,6 +382,10 @@ const styles = StyleSheet.create({
         marginTop: 2,
         marginBottom: 8,
         marginLeft: 4,
+    },
+    nimText: {
+        fontSize: 16,
+        fontWeight: 'normal',
     },
     followSection: {
         flexDirection: 'row',

@@ -73,7 +73,7 @@ export default function AdditionalInfoPart1Screen() {
 
                 <TouchableOpacity style={styles.profileImageContainer} onPress={handleImagePicker}>
                     <Image
-                        source={require('../../assets/images/logo.png')}
+                        source={require('../../assets/images/JustFridge_logo.png')}
                         style={styles.profileImage}
                     />
                     <View style={styles.cameraIconContainer}>

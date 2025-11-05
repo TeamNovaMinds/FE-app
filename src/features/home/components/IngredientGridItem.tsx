@@ -13,7 +13,7 @@ export const IngredientGridItem: React.FC<IngredientGridItemProps> = ({ item, on
     // ✅ 2. onPress 이벤트 연결
     <TouchableOpacity style={styles.gridItem} onPress={() => onPress(item)}>
         <Image
-            source={item.imageUrl ? { uri: item.imageUrl } : require('../../../../assets/images/logo.png')}
+            source={item.imageUrl ? { uri: item.imageUrl } : require('../../../../assets/images/JustFridge_logo.png')}
             style={styles.gridItemImage}
         />
         <Text style={styles.gridItemText} numberOfLines={1}>{item.ingredientName}</Text>

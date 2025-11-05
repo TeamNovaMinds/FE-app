@@ -24,7 +24,7 @@ export const RecipeCardSmall: React.FC<RecipeCardSmallProps> = React.memo(({ ite
         <Link href={`/recipe/${item.recipeId}`} asChild>
             <TouchableOpacity style={styles.card}>
                 <Image
-                    source={item.mainImageUrl ? { uri: item.mainImageUrl } : require('../../../../assets/images/logo.png')}
+                    source={item.mainImageUrl ? { uri: item.mainImageUrl } : require('../../../../assets/images/JustFridge_logo.png')}
                     style={styles.cardImage}
                 />
 

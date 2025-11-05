@@ -86,7 +86,7 @@ export default function LoginScreen() {
     return (
         <SafeAreaView style={styles.safeArea}>
             <View style={styles.container}>
-                <Image source={require('../assets/images/logo.png')} style={styles.logo} />
+                <Image source={require('../assets/images/JustFridge_logo.png')} style={styles.logo} />
                 <TextInput style={styles.input} placeholder="이메일" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize='none' />
                 <TextInput style={styles.input} placeholder="비밀번호" value={password} onChangeText={setPassword} secureTextEntry />
                 <TouchableOpacity style={styles.loginButton} onPress={handleEmailLogin}>

@@ -278,7 +278,7 @@ export default function IngredientSearchScreen() {
                                             onPress={() => handleSelectIngredient(item)}
                                         >
                                             <Image
-                                                source={item.imageUrl ? { uri: item.imageUrl } : require('../assets/images/logo.png')}
+                                                source={item.imageUrl ? { uri: item.imageUrl } : require('../assets/images/JustFridge_logo.png')}
                                                 style={styles.itemImage}
                                             />
                                             {/* 12. 선택 시 텍스트 스타일 적용 */}

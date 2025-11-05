@@ -64,7 +64,7 @@ const RecipeCard: React.FC<{ item: RecipeListItem }> = ({ item }) => {
         <Link href={`/recipe/${item.recipeId}`} asChild>
             <TouchableOpacity style={styles.cardContainer}>
                 <Image
-                    source={item.mainImageUrl ? { uri: item.mainImageUrl } : require('../../assets/images/logo.png')}
+                    source={item.mainImageUrl ? { uri: item.mainImageUrl } : require('../../assets/images/JustFridge_logo.png')}
                     style={styles.cardImage}
                 />
                 <Text style={styles.cardTitle} numberOfLines={1}>{item.title}</Text>
