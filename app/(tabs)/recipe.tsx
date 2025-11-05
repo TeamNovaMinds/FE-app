@@ -61,24 +61,26 @@ const RecipeCard: React.FC<{ item: RecipeListItem }> = ({ item }) => {
     }
 
     return (
-        <TouchableOpacity style={styles.cardContainer}>
-            <Image
-                source={item.mainImageUrl ? { uri: item.mainImageUrl } : require('../../assets/images/logo.png')}
-                style={styles.cardImage}
-            />
-            <Text style={styles.cardTitle} numberOfLines={1}>{item.title}</Text>
-            <View style={styles.cardInfoContainer}>
-                <View style={styles.cardLikes}>
-                    <Ionicons name="heart" size={14} color="#FF6347" />
-                    <Text style={styles.cardLikesText}>{item.likeCount.toLocaleString()}</Text>
+        <Link href={`/recipe/${item.recipeId}`} asChild>
+            <TouchableOpacity style={styles.cardContainer}>
+                <Image
+                    source={item.mainImageUrl ? { uri: item.mainImageUrl } : require('../../assets/images/logo.png')}
+                    style={styles.cardImage}
+                />
+                <Text style={styles.cardTitle} numberOfLines={1}>{item.title}</Text>
+                <View style={styles.cardInfoContainer}>
+                    <View style={styles.cardLikes}>
+                        <Ionicons name="heart" size={14} color="#FF6347" />
+                        <Text style={styles.cardLikesText}>{item.likeCount.toLocaleString()}</Text>
+                    </View>
+                    <Text style={styles.cardInfoText}>
+                        {item.servings ? `${item.servings}인분 기준` : '정보 없음'}
+                    </Text>
+                    <Text style={styles.cardInfoText}>조리시간 {item.cookingTimeMinutes}분</Text>
+                    <Text style={styles.cardInfoText}>난이도 {item.difficulty}</Text>
                 </View>
-                <Text style={styles.cardInfoText}>
-                    {item.servings ? `${item.servings}인분 기준` : '정보 없음'}
-                </Text>
-                <Text style={styles.cardInfoText}>조리시간 {item.cookingTimeMinutes}분</Text>
-                <Text style={styles.cardInfoText}>난이도 {item.difficulty}</Text>
-            </View>
-        </TouchableOpacity>
+            </TouchableOpacity>
+        </Link>
     );
 };
 

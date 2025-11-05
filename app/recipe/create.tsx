@@ -303,7 +303,7 @@ export default function CreateRecipeScreen() {
                 </View>
 
                 <Text style={styles.imageHintText}>
-                    '대표'라고 표시된 맨 앞 사진이 썸네일에서 보여지는 메인 이미지입니다.{'\n'}
+                    대표 라고 표시된 맨 앞 사진이 썸네일에서 보여지는 메인 이미지입니다.{'\n'}
                     사진을 터치하여 메인 이미지를 선택하실 수 있습니다.
                 </Text>
 
