@@ -4,8 +4,9 @@ import {
     Image, FlatList, ActivityIndicator, ScrollView, Pressable,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { useInfiniteQuery, useQuery, InfiniteData } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery, InfiniteData, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
+import { Alert } from 'react-native';
 import axiosInstance from '@/api/axiosInstance';
 
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
@@ -69,6 +70,7 @@ const fetchOtherIngredients = async (storageType: StorageType, currentItemId: nu
 
 export default function IngredientDetailScreen() {
     const router = useRouter();
+    const queryClient = useQueryClient();
 
     // 1. home.tsx에서 전달받은 파라미터 (string 타입으로 받음)
     const params = useLocalSearchParams<StoredIngredientParams>();
@@ -170,7 +172,51 @@ export default function IngredientDetailScreen() {
         };
     });
 
-    // 7. 메인 UI 렌더링
+    // 7. 재료 삭제 기능
+    const deleteMutation = useMutation({
+        mutationFn: async () => {
+            const response = await axiosInstance.delete('/api/refrigerators/stored-items', {
+                params: { ids: storedItemId }
+            });
+            return response.data;
+        },
+        onSuccess: () => {
+            // 냉장고 재료 목록 쿼리 무효화
+            queryClient.invalidateQueries({ queryKey: ['storedIngredients'] });
+            Alert.alert('삭제 완료', '재료가 삭제되었습니다.', [
+                {
+                    text: '확인',
+                    onPress: () => router.back()
+                }
+            ]);
+        },
+        onError: (error: any) => {
+            const errorMessage = error?.response?.data?.message || error?.message || '재료 삭제에 실패했습니다.';
+            Alert.alert('삭제 실패', errorMessage);
+            console.error('Delete error:', error?.response?.data || error);
+        }
+    });
+
+    const handleDelete = () => {
+        Alert.alert(
+            '삭제 확인',
+            `'${item.ingredientName}'을(를) 삭제하시겠습니까?`,
+            [
+                {
+                    text: '취소',
+                    style: 'cancel',
+                },
+                {
+                    text: '삭제',
+                    style: 'destructive',
+                    onPress: () => deleteMutation.mutate(),
+                },
+            ],
+            { cancelable: true }
+        );
+    };
+
+    // 8. 메인 UI 렌더링
     return (
         <Pressable style={styles.backdrop} onPress={handleClose}>
             <Animated.View style={[styles.sheetContainer, animatedSheetStyle]}>
@@ -189,7 +235,9 @@ export default function IngredientDetailScreen() {
                                 <Ionicons name="close" size={28} color="#000" />
                             </TouchableOpacity>
                             <Text style={styles.headerTitle}>재료 상세</Text>
-                            <View style={{ width: 40 }} />
+                            <TouchableOpacity onPress={handleDelete} style={styles.deleteButton}>
+                                <Ionicons name="trash-outline" size={24} color="#FF6B6B" />
+                            </TouchableOpacity>
                         </View>
 
                         <ScrollView style={styles.container}>
@@ -330,6 +378,12 @@ const styles = StyleSheet.create({
         borderBottomColor: '#F0F0F0',
     },
     closeButton: {
+        width: 40,
+        height: 40,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    deleteButton: {
         width: 40,
         height: 40,
         justifyContent: 'center',
