@@ -14,6 +14,7 @@ import {
     Modal,
     FlatList,
     findNodeHandle,
+    ScrollView,
 } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { useRouter } from 'expo-router';
@@ -42,8 +43,7 @@ interface ApiIngredient {
 export default function CreateRecipeScreen() {
     const router = useRouter();
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [mainImage, setMainImage] = useState<string | null>(null);
-    const [title, setTitle] = useState('');
+    const [mainImages, setMainImages] = useState<string[]>([]);    const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [recipeCategory, setRecipeCategory] = useState<string>('KOREAN');
     const [servings, setServings] = useState('');
@@ -129,6 +129,7 @@ export default function CreateRecipeScreen() {
                 allowsEditing: true,
                 aspect: type === 'main' ? [16, 9] : [4, 3],
                 quality: 0.8,
+                // allowsMultipleSelection: false, // (기본값)
             });
 
             if (result.canceled) {
@@ -159,7 +160,7 @@ export default function CreateRecipeScreen() {
 
             // 업로드 성공 후 상태 업데이트
             if (type === 'main') {
-                setMainImage(imageUrl);
+                setMainImages((prevImages) => [...prevImages, imageUrl]);
             } else if (type === 'step' && index !== undefined) {
                 const newSteps = [...steps];
                 newSteps[index].imageUrl = imageUrl;
@@ -176,6 +177,22 @@ export default function CreateRecipeScreen() {
         }
     };
 
+    const handleRemoveMainImage = (indexToRemove: number) => {
+        setMainImages((prevImages) => prevImages.filter((_, index) => index !== indexToRemove));
+    };
+
+    const handleSetMainImage = (indexToMakeMain: number) => {
+        // 이미 0번 인덱스(대표 사진)이면 아무것도 안 함
+        if (indexToMakeMain === 0) return;
+
+        setMainImages((prevImages) => {
+            const selectedImage = prevImages[indexToMakeMain];
+            const otherImages = prevImages.filter((_, index) => index !== indexToMakeMain);
+            // 선택한 이미지를 0번으로, 나머지를 뒤에 붙여 새 배열 생성
+            return [selectedImage, ...otherImages];
+        });
+    };
+
     const handleCreateRecipe = async () => {
         if (!title || !time || !difficulty || !servings || !description || ingredients.some(i => !i.ingredientId || !i.amount) || steps.some(s => !s.description)) {
             Alert.alert('입력 오류', '모든 필수 항목을 입력해주세요.');
@@ -188,7 +205,7 @@ export default function CreateRecipeScreen() {
                 cookingTimeMinutes: parseInt(time, 10),
                 difficulty,
                 servings: parseInt(servings, 10),
-                recipeImages: mainImage ? [mainImage] : [],
+                recipeImages: mainImages,
                 ingredients: ingredients.map(i => ({ ingredientId: i.ingredientId, amount: i.amount })),
                 orders: steps,
             };
@@ -236,22 +253,59 @@ export default function CreateRecipeScreen() {
                 keyboardShouldPersistTaps="handled"
                 // ✅ enableAutomaticScroll={false} 속성 제거! (자동 스크롤 다시 켬)
             >
-                <TouchableOpacity
-                    style={styles.imagePicker}
-                    onPress={() => handlePickImage('main')}
-                    disabled={isImageUploading}
-                >
-                    {isImageUploading ? (
-                        <ActivityIndicator size="large" color="#007AFF" />
-                    ) : mainImage ? (
-                        <Image source={{ uri: mainImage }} style={styles.imagePreview} />
-                    ) : (
-                        <>
-                            <Ionicons name="camera" size={32} color="#888" />
-                            <Text style={styles.imagePickerText}>메인 사진 추가</Text>
-                        </>
-                    )}
-                </TouchableOpacity>
+                <View style={styles.imagePickerContainer}>
+                    <ScrollView horizontal contentContainerStyle={styles.imageScrollContainer}>
+
+                        {/* 선택된 이미지 썸네일 목록 */}
+                        {mainImages.map((uri, index) => (
+                            <View key={index} style={styles.imageThumbnailContainer}>
+                                {/* 이미지를 탭하면 대표 사진으로 설정 */}
+                                <TouchableOpacity
+                                    onPress={() => handleSetMainImage(index)}
+                                    activeOpacity={0.8}
+                                >
+                                    <Image source={{ uri }} style={styles.imageThumbnail} />
+                                </TouchableOpacity>
+
+                                {/* 대표 사진(0번 인덱스)일 경우 배지 표시 */}
+                                {index === 0 && (
+                                    <View style={styles.mainImageBadge}>
+                                        <Text style={styles.mainImageBadgeText}>대표</Text>
+                                    </View>
+                                )}
+
+                                {/* 삭제 버튼 */}
+                                <TouchableOpacity
+                                    style={styles.imageDeleteButton}
+                                    onPress={() => handleRemoveMainImage(index)}
+                                >
+                                    <Ionicons name="close-circle" size={24} color="#FF6347" />
+                                </TouchableOpacity>
+                            </View>
+                        ))}
+
+                        {/* 사진 추가 버튼 */}
+                        <TouchableOpacity
+                            style={[styles.imagePickerButton, (isImageUploading) && styles.disabledButton]}
+                            onPress={() => handlePickImage('main')}
+                            disabled={isImageUploading}
+                        >
+                            {isImageUploading ? (
+                                <ActivityIndicator size="small" color="#007AFF" />
+                            ) : (
+                                <>
+                                    <Ionicons name="camera" size={32} color="#888" />
+                                    <Text style={styles.imagePickerText}>사진 추가</Text>
+                                </>
+                            )}
+                        </TouchableOpacity>
+                    </ScrollView>
+                </View>
+
+                <Text style={styles.imageHintText}>
+                    '대표'라고 표시된 맨 앞 사진이 썸네일에서 보여지는 메인 이미지입니다.{'\n'}
+                    사진을 터치하여 메인 이미지를 선택하실 수 있습니다.
+                </Text>
 
                 {/* ✅ onFocus 핸들러 제거 */}
                 <Text style={styles.label}>레시피 제목</Text>
@@ -400,7 +454,76 @@ const styles = StyleSheet.create({
         paddingHorizontal: 24,
         paddingBottom: 40
     },
-    imagePicker: { height: 180, backgroundColor: '#f8f8f8', borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginBottom: 24, borderWidth: 1, borderColor: '#eee' },
+    imagePickerContainer: {
+        marginTop: 16, // ⬅️ 헤더와 간격 추가
+        marginBottom: 8, // 24 -> 8 (안내 문구 공간 확보)
+    },
+    imageScrollContainer: {
+        paddingVertical: 10,
+        alignItems: 'center',
+    },
+
+    imageHintText: {
+        fontSize: 12,
+        color: '#888',
+        textAlign: 'center',
+        marginBottom: 16, // "레시피 제목" 라벨과의 간격
+    },
+
+    imageThumbnailContainer: {
+        position: 'relative',
+        width: 142,
+        height: 80,
+        borderRadius: 8,
+        marginRight: 12,
+        overflow: 'hidden',
+        backgroundColor: '#eee',
+    },
+    imageThumbnail: {
+        width: '100%',
+        height: '100%',
+    },
+
+    // ✅ 3. 대표 사진 배지 스타일
+    mainImageBadge: {
+        position: 'absolute',
+        top: 4,
+        left: 4,
+        backgroundColor: 'rgba(0, 122, 255, 0.9)', // (파란색)
+        borderRadius: 4,
+        paddingHorizontal: 6,
+        paddingVertical: 2,
+        zIndex: 1, // 삭제 버튼보다 아래
+    },
+    mainImageBadgeText: {
+        color: '#fff',
+        fontSize: 10,
+        fontWeight: 'bold',
+    },
+
+    // ✅ 3. 삭제 버튼 스타일 (zIndex 추가)
+    imageDeleteButton: {
+        position: 'absolute',
+        top: 4,
+        right: 4,
+        backgroundColor: 'rgba(255, 255, 255, 0.8)',
+        borderRadius: 12,
+        padding: 1,
+        zIndex: 2, // 배지보다 위에
+    },
+    imagePickerButton: {
+        width: 100,
+        height: 80,
+        backgroundColor: '#f8f8f8',
+        borderRadius: 12,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#eee',
+    },
+    disabledButton: {
+        opacity: 0.5,
+    },
     imagePickerText: { color: '#aaa', marginTop: 8, fontSize: 14 },
     imagePreview: { width: '100%', height: '100%', borderRadius: 12 },
     label: { fontSize: 14, fontWeight: '500', color: '#888', marginBottom: 8, marginTop: 12 },

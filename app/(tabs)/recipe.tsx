@@ -16,10 +16,11 @@ import {
     NativeScrollEvent,
     ActivityIndicator,
     ImageBackground,
+    RefreshControl,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import axiosInstance from '@/api/axiosInstance';
-import { Link } from 'expo-router';
+import { Link, useFocusEffect } from 'expo-router';
 
 // --- 타입 정의 (실제 API 응답에 맞게 수정) ---
 interface AuthorInfo {
@@ -93,10 +94,10 @@ export default function RecipeScreen() {
 
     const flatListRef = useRef<FlatList<RecipeListItem>>(null);
 
+    const [isRefreshing, setIsRefreshing] = useState(false);
     const fetchRecipes = useCallback(async () => {
         setIsLoading(true);
         setError(null);
-        setRecipes([]);
 
         const params: any = { keyword: submittedQuery || undefined, size: 20 };
 
@@ -129,8 +130,16 @@ export default function RecipeScreen() {
         }
     }, [activeFilter, submittedQuery]);
 
-    useEffect(() => {
-        fetchRecipes();
+    useFocusEffect(
+        useCallback(() => {
+            fetchRecipes();
+        }, [fetchRecipes])
+    );
+
+    const onRefresh = useCallback(async () => {
+        setIsRefreshing(true);
+        await fetchRecipes();
+        setIsRefreshing(false);
     }, [fetchRecipes]);
 
     const handleSearch = () => setSubmittedQuery(searchQuery);
@@ -200,9 +209,11 @@ export default function RecipeScreen() {
                 renderItem={({ item }) => <RecipeCard item={item} />}
                 keyExtractor={(item) => item.recipeId.toString()}
                 numColumns={2}
-                contentContainerStyle={{ flexGrow: 1 }}
+                contentContainerStyle={styles.listContentContainer}
                 columnWrapperStyle={styles.row}
                 ListEmptyComponent={renderListEmptyComponent}
+                onRefresh={onRefresh}
+                refreshing={isRefreshing}
             />
             <Link href="/recipe/create" asChild>
                 <TouchableOpacity style={styles.fab}>
@@ -240,10 +251,27 @@ const styles = StyleSheet.create({
     activeFilterButton: { backgroundColor: '#2D303A' },
     filterText: { fontSize: 14, color: '#555' },
     activeFilterText: { color: '#fff', fontWeight: 'bold' },
-    listContainer: { paddingHorizontal: 8, flexGrow: 1 },
-    row: { justifyContent: 'space-between' },
-    cardContainer: { flex: 1, margin: 8, backgroundColor: '#fff', borderRadius: 12, overflow: 'hidden', elevation: 3, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4 },
-    emptyCard: { backgroundColor: 'transparent', elevation: 0, shadowOpacity: 0 },
+    listContentContainer: {
+        flexGrow: 1,
+        paddingBottom: 150, // (하단 스크롤 여백)
+    },
+    row: { justifyContent: 'space-between', paddingHorizontal: 8,},
+    cardContainer: {
+        flex: 1,
+        margin: 8,
+        backgroundColor: '#fff',
+        borderRadius: 12,
+        overflow: 'hidden',
+
+        // ⬅️ 그림자 및 테두리 조정
+        borderWidth: 1, // 얇은 테두리 추가
+        borderColor: '#E0E0E0', // 연한 회색 테두리
+        elevation: 4, // 그림자 깊이 약간 증가
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.15, // 그림자 불투명도 약간 증가
+        shadowRadius: 5, // 그림자 반경 약간 증가
+    },    emptyCard: { backgroundColor: 'transparent', elevation: 0, shadowOpacity: 0 },
     cardImage: { width: '100%', height: 120, backgroundColor: '#eee' },
     cardTitle: { fontSize: 16, fontWeight: 'bold', marginHorizontal: 8, marginTop: 8 },
     cardInfoContainer: { paddingHorizontal: 8, paddingBottom: 8, marginTop: 4 },
