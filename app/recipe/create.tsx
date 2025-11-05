@@ -53,6 +53,13 @@ const RECIPE_CATEGORIES = [
     { value: 'DRINK', label: '음료/술' },
 ];
 
+// 난이도 상수 정의
+const DIFFICULTY_OPTIONS = [
+    { value: 'EASY', label: '쉬움' },
+    { value: 'MEDIUM', label: '보통' },
+    { value: 'HARD', label: '어려움' },
+];
+
 export default function CreateRecipeScreen() {
     const router = useRouter();
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -70,6 +77,7 @@ export default function CreateRecipeScreen() {
     const [modalLoading, setModalLoading] = useState(false);
     const [currentIngredientIndex, setCurrentIngredientIndex] = useState(0);
     const [isImageUploading, setIsImageUploading] = useState(false);
+    const [isDifficultyDropdownOpen, setIsDifficultyDropdownOpen] = useState(false);
 
     const scrollRef = useRef<KeyboardAwareScrollView>(null);
 
@@ -367,7 +375,47 @@ export default function CreateRecipeScreen() {
                     </View>
                     <View style={styles.flexInput}>
                         <Text style={styles.label}>난이도</Text>
-                        <TextInput style={styles.input} placeholder="EASY" value={difficulty} onChangeText={setDifficulty} autoCapitalize="characters" />
+                        <View>
+                            <TouchableOpacity
+                                style={styles.dropdownButton}
+                                onPress={() => setIsDifficultyDropdownOpen(!isDifficultyDropdownOpen)}
+                            >
+                                <Text style={styles.dropdownButtonText}>
+                                    {DIFFICULTY_OPTIONS.find(opt => opt.value === difficulty)?.label || '선택'}
+                                </Text>
+                                <Ionicons
+                                    name={isDifficultyDropdownOpen ? "chevron-up" : "chevron-down"}
+                                    size={20}
+                                    color="#888"
+                                />
+                            </TouchableOpacity>
+                            {isDifficultyDropdownOpen && (
+                                <View style={styles.dropdownList}>
+                                    {DIFFICULTY_OPTIONS.map((option) => (
+                                        <TouchableOpacity
+                                            key={option.value}
+                                            style={styles.dropdownItem}
+                                            onPress={() => {
+                                                setDifficulty(option.value);
+                                                setIsDifficultyDropdownOpen(false);
+                                            }}
+                                        >
+                                            <Text
+                                                style={[
+                                                    styles.dropdownItemText,
+                                                    difficulty === option.value && styles.dropdownItemTextActive
+                                                ]}
+                                            >
+                                                {option.label}
+                                            </Text>
+                                            {difficulty === option.value && (
+                                                <Ionicons name="checkmark" size={20} color="#1298FF" />
+                                            )}
+                                        </TouchableOpacity>
+                                    ))}
+                                </View>
+                            )}
+                        </View>
                     </View>
                 </View>
 
@@ -626,6 +674,53 @@ const styles = StyleSheet.create({
     ingredientButton: { justifyContent: 'center', paddingVertical: 12 },
     ingredientText: { fontSize: 16, color: '#000' },
     ingredientPlaceholder: { fontSize: 16, color: '#c7c7cd' },
+    // 드롭다운 스타일
+    dropdownButton: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        borderBottomWidth: 1,
+        borderColor: '#ddd',
+        paddingVertical: 12,
+        marginBottom: 16,
+    },
+    dropdownButtonText: {
+        fontSize: 16,
+        color: '#000',
+    },
+    dropdownList: {
+        position: 'absolute',
+        top: 50,
+        left: 0,
+        right: 0,
+        backgroundColor: '#fff',
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: '#ddd',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.15,
+        shadowRadius: 4,
+        elevation: 5,
+        zIndex: 1000,
+    },
+    dropdownItem: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingVertical: 12,
+        paddingHorizontal: 16,
+        borderBottomWidth: 1,
+        borderBottomColor: '#f0f0f0',
+    },
+    dropdownItemText: {
+        fontSize: 16,
+        color: '#000',
+    },
+    dropdownItemTextActive: {
+        color: '#1298FF',
+        fontWeight: '600',
+    },
     // --- Modal Styles ---
     modalContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)' },
     modalContent: { width: '90%', maxHeight: '80%', backgroundColor: 'white', borderRadius: 12, padding: 20, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4, elevation: 5 },
