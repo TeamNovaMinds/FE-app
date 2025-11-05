@@ -102,7 +102,7 @@ export default function MyPageScreen() {
     const fetchLikedRecipes = async () => {
         try {
             setIsLoading(true);
-            const response = await axiosInstance.get('/api/recipes/likes');
+            const response = await axiosInstance.get('/api/recipes/liked');
             if (response.data.isSuccess) {
                 setLikedRecipes(response.data.result.recipes || []);
             }
@@ -113,11 +113,10 @@ export default function MyPageScreen() {
         }
     };
 
-    const fetchMyRecipes = async (nickname: string | null | undefined) => {
-        if (!nickname) return;
+    const fetchMyRecipes = async () => {
         try {
             setIsLoading(true);
-            const response = await axiosInstance.get(`/api/recipes?author=${nickname}`);
+            const response = await axiosInstance.get('/api/recipes/my');
             if (response.data.isSuccess) {
                 setMyRecipes(response.data.result.recipes || []);
             }
@@ -136,7 +135,7 @@ export default function MyPageScreen() {
             if (tabKey === 'liked') {
                 fetchLikedRecipes();
             } else if (tabKey === 'my-recipes') {
-                fetchMyRecipes(profile?.nickname);
+                fetchMyRecipes();
             }
         }
     };
