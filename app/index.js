@@ -112,7 +112,7 @@ const styles = StyleSheet.create({
     container: { flex: 1, paddingHorizontal: 30, justifyContent: 'center', alignItems: 'center' },
     logo: { width: 400, height: 100, resizeMode: 'contain', marginBottom: 60 },
     input: { width: '100%', height: 50, borderWidth: 1, borderColor: '#E0E0E0', borderRadius: 8, paddingHorizontal: 15, marginBottom: 12, fontSize: 16 },
-    loginButton: { width: '100%', height: 50, backgroundColor: '#3498db', borderRadius: 8, justifyContent: 'center', alignItems: 'center', marginTop: 10 },
+    loginButton: { width: '100%', height: 50, backgroundColor: '#1298FF', borderRadius: 8, justifyContent: 'center', alignItems: 'center', marginTop: 10 },
     loginButtonText: { color: '#FFFFFF', fontSize: 18, fontWeight: 'bold' },
     linksContainer: { flexDirection: 'row', marginTop: 20, alignItems: 'center' },
     linkText: { fontSize: 14, color: '#757575' },
