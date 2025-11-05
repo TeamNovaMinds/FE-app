@@ -27,6 +27,13 @@ const fetchStoredIngredientsAPI = async (tabName: TabName): Promise<StoredIngred
     );
 
     if (response.data.isSuccess) {
+        // 디버깅: API 응답 확인
+        console.log('=== API Response ===');
+        console.log('storedIngredients:', JSON.stringify(response.data.result.storedIngredients, null, 2));
+        if (response.data.result.storedIngredients.length > 0) {
+            console.log('First item ingredientName:', response.data.result.storedIngredients[0].ingredientName);
+            console.log('First item imageUrl:', response.data.result.storedIngredients[0].imageUrl);
+        }
         return response.data.result.storedIngredients;
     }
     throw new Error(response.data.message || '재료를 불러오는데 실패했습니다.');

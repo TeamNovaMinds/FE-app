@@ -23,7 +23,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 const { width } = Dimensions.get('window');
 
 export default function RecipeDetailScreen() {
-    const { recipeId } = useLocalSearchParams();
+    const params = useLocalSearchParams();
+    const recipeId = Array.isArray(params.recipeId) ? params.recipeId[0] : params.recipeId;
     const router = useRouter();
     const navigation = useNavigation();
     const queryClient = useQueryClient();
@@ -36,8 +37,11 @@ export default function RecipeDetailScreen() {
     } = useQuery({
         queryKey: ['recipe', recipeId],
         queryFn: async () => {
-            const response = await axiosInstance.get(`api/recipes/${recipeId}`);
+            const response = await axiosInstance.get(`/api/recipes/${recipeId}`);
             if (response.data.isSuccess) {
+                // 디버깅: API 응답 확인
+                console.log('=== Recipe Detail API Response ===');
+                console.log('Recipe Ingredients:', JSON.stringify(response.data.result.recipeIngredientDTOs, null, 2));
                 return response.data.result;
             }
             throw new Error(response.data.message || '레시피를 불러오는 데 실패했습니다.');
@@ -50,7 +54,7 @@ export default function RecipeDetailScreen() {
     // useMutation으로 좋아요 기능 구현
     const likeMutation = useMutation({
         mutationFn: async () => {
-            await axiosInstance.post(`api/recipes/${recipeId}/like`);
+            await axiosInstance.post(`/api/recipes/${recipeId}/like`);
         },
         onMutate: async () => {
             // Optimistic Update: 서버 응답 전에 UI 즉시 업데이트
@@ -70,17 +74,20 @@ export default function RecipeDetailScreen() {
 
             return { previousRecipe };
         },
-        onError: (err, variables, context) => {
+        onError: (err: any, variables, context) => {
             // 실패 시 이전 상태로 롤백
             if (context?.previousRecipe) {
                 queryClient.setQueryData(['recipe', recipeId], context.previousRecipe);
             }
-            Alert.alert('좋아요 처리에 실패했습니다.');
-            console.error(err);
+            const errorMessage = err?.response?.data?.message || err?.message || '좋아요 처리에 실패했습니다.';
+            Alert.alert('오류', errorMessage);
+            console.error('Like error:', err?.response?.data || err);
         },
         onSettled: () => {
             // 성공/실패와 관계없이 쿼리 무효화하여 최신 데이터 가져오기
             queryClient.invalidateQueries({ queryKey: ['recipe', recipeId] });
+            // 목록 화면도 업데이트되도록 레시피 목록 쿼리 무효화
+            queryClient.invalidateQueries({ queryKey: ['recipes'] });
         },
     });
 
@@ -109,7 +116,7 @@ export default function RecipeDetailScreen() {
                     style: 'destructive',
                     onPress: async () => {
                         try {
-                            await axiosInstance.delete(`api/recipes/${recipeId}`);
+                            await axiosInstance.delete(`/api/recipes/${recipeId}`);
                             Alert.alert('삭제 완료', '레시피가 삭제되었습니다.');
                             router.back();
                         } catch (e) {
@@ -273,7 +280,23 @@ export default function RecipeDetailScreen() {
             <Text style={styles.sectionTitle}>재료</Text>
             {recipe?.recipeIngredientDTOs.map((item: RecipeIngredient, index: number) => (
                 <View key={`ingredient-${item.ingredientId}-${index}`} style={styles.ingredientItem}>
-                    <Text style={styles.ingredientName}>{item.description}</Text>
+                    {/* 재료 이미지 */}
+                    {item.imageUrl && (
+                        <Image
+                            source={{ uri: item.imageUrl }}
+                            style={styles.ingredientImage}
+                        />
+                    )}
+                    <View style={styles.ingredientTextContainer}>
+                        {/* 재료 이름 (있으면 이름 표시, 없으면 description 사용) */}
+                        <Text style={styles.ingredientName}>
+                            {item.name || item.description}
+                        </Text>
+                        {/* description이 name과 다르면 보조 설명으로 표시 */}
+                        {item.name && item.description && item.name !== item.description && (
+                            <Text style={styles.ingredientDescription}>{item.description}</Text>
+                        )}
+                    </View>
                     <Text style={styles.ingredientAmount}>{item.amount}</Text>
                 </View>
             ))}
@@ -499,18 +522,36 @@ const styles = StyleSheet.create({
     },
     ingredientItem: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
+        alignItems: 'center',
         paddingVertical: 10,
         borderBottomWidth: 1,
         borderBottomColor: '#eee',
     },
+    ingredientImage: {
+        width: 50,
+        height: 50,
+        borderRadius: 8,
+        marginRight: 12,
+        backgroundColor: '#f0f0f0',
+    },
+    ingredientTextContainer: {
+        flex: 1,
+        marginRight: 8,
+    },
     ingredientName: {
         fontSize: 16,
         color: '#333',
+        fontWeight: '600',
+    },
+    ingredientDescription: {
+        fontSize: 14,
+        color: '#777',
+        marginTop: 2,
     },
     ingredientAmount: {
         fontSize: 16,
         color: '#777',
+        fontWeight: '500',
     },
     stepItem: {
         marginBottom: 24,

@@ -96,6 +96,12 @@ export default function HomeScreen() {
 
     // ✅ 4. 재료 아이템 클릭 시 호출될 핸들러
     const handleIngredientPress = (item: StoredIngredient) => {
+        // 디버깅: 전달하는 item 데이터 확인
+        console.log('=== handleIngredientPress ===');
+        console.log('item:', JSON.stringify(item, null, 2));
+        console.log('ingredientName:', item.ingredientName);
+        console.log('imageUrl:', item.imageUrl);
+
         // StoredIngredient 객체 전체를 params로 전달합니다.
         // [storedItemId].tsx 파일이 item.id를 자동으로 받습니다.
         router.push({

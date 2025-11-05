@@ -12,6 +12,8 @@ export interface RecipeImage {
 
 export interface RecipeIngredient {
     ingredientId: number;
+    name?: string; // 재료 이름
+    imageUrl?: string; // 재료 이미지
     description: string;
     amount: string;
 }
