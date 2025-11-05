@@ -18,8 +18,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import axiosInstance from '@/api/axiosInstance';
 import { Link } from 'expo-router';
-// ✅ [수정] useInfiniteQuery, InfiniteData 임포트
-import { useQuery, useInfiniteQuery, InfiniteData } from '@tanstack/react-query';
+import { useInfiniteQuery, InfiniteData } from '@tanstack/react-query';
 
 // --- 타입 정의 (API 응답과 일치) ---
 interface AuthorInfo {
@@ -42,14 +41,14 @@ interface Recipe {
     // createdAt: string;
 }
 
-// ✅ [수정] 백엔드 DTO와 일치하는 응답 래퍼 타입 정의
+// 백엔드 DTO와 일치하는 응답 래퍼 타입 정의
 interface RecipeListResponse {
     recipes: Recipe[];
     hasNext: boolean;
     nextCursor: number | null; // DTO에서 Long 타입이므로 number | null로 매핑
 }
 
-// ✅ [수정] FlatList의 data 타입 (짝수/홀수 처리를 위해)
+// FlatList의 data 타입 (짝수/홀수 처리를 위해)
 type RecipeListItem = Recipe | { isEmpty: true; recipeId: string };
 
 // --- 상수 정의 ---
@@ -127,7 +126,7 @@ const RecipeCard: React.FC<{ item: RecipeListItem }> = ({ item }) => {
                         <Text style={styles.authorName} numberOfLines={1}>{item.authorInfo.nickname}</Text>
                     </View>
 
-                    {/* 2-3. ⬇️ [수정] 인분/시간/난이도 (별도 라인) */}
+                    {/* 2-3. 인분/시간/난이도 */}
                     <Text style={styles.cardDetailText}>{item.servings}인분 기준</Text>
                     <Text style={styles.cardDetailText}>평균 조리시간 {item.cookingTimeMinutes}분</Text>
                     <Text style={styles.cardDetailText}>조리 난이도 {formatDifficulty(item.difficulty)}</Text>
@@ -138,7 +137,7 @@ const RecipeCard: React.FC<{ item: RecipeListItem }> = ({ item }) => {
 };
 // --- ⬆️ 레시피 카드 컴포넌트 끝 ---
 
-// --- ✅ [수정] API 호출 함수를 밖으로 분리 ---
+// --- API 호출 함수를 밖으로 분리 ---
 const fetchRecipes = async ({
                                 pageParam, // cursorId
                                 queryParams, // keyword, sortBy, category 등
@@ -163,8 +162,6 @@ const fetchRecipes = async ({
     throw new Error(response.data.message || '레시피를 불러오는 데 실패했습니다.');
 };
 
-
-// --- 레시피 페이지 메인 컴포넌트 (변경 없음) ---
 export default function RecipeScreen() {
     const [searchQuery, setSearchQuery] = useState('');
     const [submittedQuery, setSubmittedQuery] = useState('');
@@ -173,7 +170,7 @@ export default function RecipeScreen() {
 
     const flatListRef = useRef<FlatList<RecipeListItem>>(null);
 
-// ✅ [수정] queryParams에서 size와 cursorId를 제거 (fetchRecipes 함수에서 관리)
+// queryParams에서 size와 cursorId를 제거 (fetchRecipes 함수에서 관리)
     const queryParams = useMemo(() => {
         const params: any = { keyword: submittedQuery || undefined };
         if (CATEGORY_MAP[activeFilter]) {
@@ -185,7 +182,7 @@ export default function RecipeScreen() {
         return params;
     }, [activeFilter, submittedQuery]);
 
-// ✅ [수정] useQuery를 useInfiniteQuery로 변경
+// useQuery를 useInfiniteQuery로 변경
     const {
         data, // data 객체에는 이제 pages와 pageParams가 포함됨
         isLoading,
@@ -213,7 +210,7 @@ export default function RecipeScreen() {
         placeholderData: (previousData) => previousData,
     });
 
-// ✅ [수정] data.pages를 flatMap으로 펼쳐서 하나의 배열로 만듦
+// data.pages를 flatMap으로 펼쳐서 하나의 배열로 만듦
     const fetchedRecipes = useMemo(() =>
             data?.pages.flatMap((page) => page.recipes) ?? [],
         [data]
@@ -277,7 +274,7 @@ export default function RecipeScreen() {
         </View>
     );
 
-// ✅ [수정] ListEmptyComponent 로직 (recipes.length === 0)
+// ListEmptyComponent 로직 (recipes.length === 0)
     const renderListEmptyComponent = () => {
         // 💡 첫 로딩 (데이터가 아예 없을 때)
         if (isLoading && recipes.length === 0) {
@@ -299,7 +296,7 @@ export default function RecipeScreen() {
         return null;
     };
 
-    // ✅ [수정] ListFooterComponent 추가 (다음 페이지 로딩)
+    // ListFooterComponent 추가 (다음 페이지 로딩)
     const renderListFooterComponent = () => {
         if (isFetchingNextPage) {
             return <ActivityIndicator size="small" color="#888" style={{ marginVertical: 20 }} />;
@@ -312,7 +309,7 @@ export default function RecipeScreen() {
             <FlatList
                 ref={flatListRef}
                 ListHeaderComponent={renderHeader}
-                data={recipes} // ✅ [수정] data={recipes} (기존과 동일)
+                data={recipes}
                 renderItem={({ item }) => <RecipeCard item={item} />}
                 keyExtractor={(item) => item.recipeId.toString()}
                 numColumns={2}
@@ -321,12 +318,12 @@ export default function RecipeScreen() {
                     recipes.length === 0 && styles.listContentContainerEmpty // 비어있을 때만 flexGrow: 1 적용
                 ]}
                 columnWrapperStyle={styles.row}
-                ListEmptyComponent={renderListEmptyComponent} // ✅ [수정] (기존과 동일)
+                ListEmptyComponent={renderListEmptyComponent}
                 onRefresh={onRefresh}
                 refreshing={isLoading} // 💡 refreshing은 useInfiniteQuery의 isLoading을 사용
 
-                // --- ✅ [수정] 무한 스크롤을 위한 props 추가 ---
-                onEndReachedThreshold={0.5} // 목록의 50% 지점에 도달했을 때
+                // --- 무한 스크롤을 위한 props 추가 ---
+                onEndReachedThreshold={0.8} // 목록의 80% 지점에 도달했을 때
                 onEndReached={() => {
                     // 💡 다음 페이지가 있고, 현재 로딩 중이 아닐 때
                     if (hasNextPage && !isFetchingNextPage) {
@@ -349,7 +346,7 @@ export default function RecipeScreen() {
     );
 }
 
-// --- ⬇️ [수정] 스타일시트 (카드 디자인 변경) ---
+// --- 스타일시트 (카드 디자인 변경) ---
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#FFFFFF' },
     // ... (헤더 스타일은 변경 없음) ...
@@ -435,12 +432,12 @@ const styles = StyleSheet.create({
     cardTitle: {
         fontSize: 16,
         fontWeight: 'bold',
-        marginBottom: 8, // ⬅️ [수정] 제목-작성자 간격
+        marginBottom: 8, // 제목-작성자 간격
     },
     authorContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 12, // ⬅️ [수정] 작성자-상세정보 간격
+        marginBottom: 12, // 작성자-상세정보 간격
     },
     authorImage: {
         width: 24,
@@ -455,14 +452,12 @@ const styles = StyleSheet.create({
         flex: 1,
     },
 
-    // ⬇️ [수정] 인분/시간/난이도 (개별 라인)
+    // 인분/시간/난이도 (개별 라인)
     cardDetailText: {
-        fontSize: 13, // ⬅️ 디자인 시안에 맞게 폰트 크기 조정
-        color: '#555', // ⬅️ 디자인 시안에 맞게 색상 조정
-        marginTop: 4, // ⬅️ 각 라인 사이의 간격
+        fontSize: 13, // 디자인 시안에 맞게 폰트 크기 조정
+        color: '#555', // 디자인 시안에 맞게 색상 조정
+        marginTop: 4, // 각 라인 사이의 간격
     },
-
-    // ⬇️ [삭제] cardExtraInfoContainer, cardExtraInfoText, cardExtraInfoDivider는 더 이상 사용되지 않음
 
     // --- (FAB, 에러/로딩 스타일 변경 없음) ---
     fab: { position: 'absolute', bottom: 106, right: 20, flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFFFFF', paddingVertical: 10, paddingHorizontal: 16, borderRadius: 30, elevation: 5, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 4 },
