@@ -40,6 +40,19 @@ interface ApiIngredient {
     name: string;
 }
 
+// 카테고리 상수 정의
+const RECIPE_CATEGORIES = [
+    { value: 'KOREAN', label: '한식' },
+    { value: 'CHINESE', label: '중식' },
+    { value: 'JAPANESE', label: '일식' },
+    { value: 'WESTERN', label: '양식' },
+    { value: 'ASIAN', label: '아시안' },
+    { value: 'DESSERT', label: '디저트' },
+    { value: 'BAKERY', label: '베이커리' },
+    { value: 'SNACK', label: '간식' },
+    { value: 'DRINK', label: '음료/술' },
+];
+
 export default function CreateRecipeScreen() {
     const router = useRouter();
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -315,9 +328,33 @@ export default function CreateRecipeScreen() {
                 <Text style={styles.label}>레시피 설명</Text>
                 <TextInput style={styles.inputDescription} placeholder="이 레시피에 대해 간단히 설명해주세요." value={description} onChangeText={setDescription} multiline />
 
-                {/* ✅ onFocus 핸들러 제거 */}
                 <Text style={styles.label}>카테고리</Text>
-                <TextInput style={styles.input} placeholder="예: KOREAN" value={recipeCategory} onChangeText={setRecipeCategory} autoCapitalize="characters" />
+                <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.categoryScrollContainer}
+                    style={styles.categoryScrollView}
+                >
+                    {RECIPE_CATEGORIES.map((category) => (
+                        <TouchableOpacity
+                            key={category.value}
+                            style={[
+                                styles.categoryButton,
+                                recipeCategory === category.value && styles.activeCategoryButton
+                            ]}
+                            onPress={() => setRecipeCategory(category.value)}
+                        >
+                            <Text
+                                style={[
+                                    styles.categoryText,
+                                    recipeCategory === category.value && styles.activeCategoryText
+                                ]}
+                            >
+                                {category.label}
+                            </Text>
+                        </TouchableOpacity>
+                    ))}
+                </ScrollView>
 
                 <View style={styles.row}>
                     <View style={styles.flexInput}>
@@ -546,6 +583,33 @@ const styles = StyleSheet.create({
     },
     row: { flexDirection: 'row', gap: 16 },
     flexInput: { flex: 1 },
+    // 카테고리 버튼 스타일
+    categoryScrollView: {
+        marginBottom: 16,
+    },
+    categoryScrollContainer: {
+        paddingVertical: 4,
+    },
+    categoryButton: {
+        paddingVertical: 8,
+        paddingHorizontal: 16,
+        borderRadius: 20,
+        backgroundColor: '#f0f0f0',
+        marginRight: 8,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    activeCategoryButton: {
+        backgroundColor: '#1298FF',
+    },
+    categoryText: {
+        fontSize: 14,
+        color: '#555',
+    },
+    activeCategoryText: {
+        color: '#fff',
+        fontWeight: 'bold',
+    },
     sectionTitle: { fontSize: 18, fontWeight: '600', marginTop: 24, marginBottom: 12, borderTopWidth: 1, borderTopColor: '#f0f0f0', paddingTop: 24 },
     addButton: { flexDirection: 'row', padding: 12, borderRadius: 8, alignItems: 'center', justifyContent: 'center', marginTop: 8, marginBottom: 16, borderWidth: 1, borderColor: '#eee' },
     addButtonText: { color: '#555', fontWeight: '500', marginLeft: 4, fontSize: 15 },
