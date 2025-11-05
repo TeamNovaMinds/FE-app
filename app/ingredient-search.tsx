@@ -57,7 +57,7 @@ const CATEGORIES = [
     { key: 'FRUIT', name: '과일' },
     { key: 'DAIRY', name: '유제품' },
     { key: 'SEASONING', name: '조미료' },
-    { key: 'FROZEN', name: '냉동' },
+    { key: 'PROCESSED', name: '가공식품' },
 ];
 
 // 💡 2. API 호출 함수를 컴포넌트 밖으로 분리
@@ -422,6 +422,8 @@ const styles = StyleSheet.create({
         borderRadius: 20,
         backgroundColor: '#F0F0F0',
         marginRight: 8,
+        // ✅ 1. 텍스트를 수직 중앙 정렬하기 위해 추가
+        justifyContent: 'center',
     },
     filterButtonActive: {
         backgroundColor: '#1298FF', // 활성 탭 색상 (원하는 색으로 변경)

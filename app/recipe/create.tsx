@@ -17,7 +17,7 @@ import {
     ScrollView,
 } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-import { useRouter } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import axiosInstance from '@/api/axiosInstance';
 import debounce from 'lodash.debounce';
@@ -276,13 +276,28 @@ export default function CreateRecipeScreen() {
 
     return (
         <SafeAreaView style={styles.container}>
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => router.back()}><Ionicons name="arrow-back" size={24} color="#333" /></TouchableOpacity>
-                <Text style={styles.headerTitle}>레시피 등록</Text>
-                <TouchableOpacity onPress={handleCreateRecipe} disabled={isSubmitting}>
-                    {isSubmitting ? <ActivityIndicator color="#007AFF" /> : <Text style={styles.submitButtonText}>등록</Text>}
-                </TouchableOpacity>
-            </View>
+            <Stack.Screen
+                options={{
+                    title: '레시피 등록',
+                    headerBackTitle: '레시피 목록',
+                    // ✅ 1. headerRight 부분을 수정합니다.
+                    headerRight: () => (
+                        <TouchableOpacity
+                            onPress={handleCreateRecipe}
+                            disabled={isSubmitting}
+                            // ✅ 2. 버튼 자체에 정렬 및 여백 스타일을 적용합니다.
+                            style={styles.headerRightButton}
+                        >
+                            {isSubmitting ? (
+                                // ✅ 3. ActivityIndicator에서 개별 스타일을 제거합니다.
+                                <ActivityIndicator color="#007AFF" />
+                            ) : (
+                                <Text style={styles.headerSubmitButtonText}>등록</Text>
+                            )}
+                        </TouchableOpacity>
+                    ),
+                }}
+            />
 
             <KeyboardAwareScrollView
                 ref={scrollRef}
@@ -605,9 +620,18 @@ export default function CreateRecipeScreen() {
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#fff' },
     flexContainer: { flex: 1 },
-    header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#f0f0f0', backgroundColor: '#fff' },
-    headerTitle: { fontSize: 18, fontWeight: '600', color: '#000' },
-    submitButtonText: { fontSize: 16, color: '#007AFF', fontWeight: '600' },
+    // ✅ 5. '등록' 버튼을 감싸는 컨테이너 스타일
+    headerRightButton: {
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingHorizontal: 16, // 오른쪽 여백
+
+    },
+    headerSubmitButtonText: {
+        fontSize: 16,
+        color: '#007AFF',
+        fontWeight: '600',
+    },
     scrollContainer: {
         flexGrow: 1,
         paddingHorizontal: 24,
@@ -830,6 +854,7 @@ const styles = StyleSheet.create({
     },
     modalCategoryScrollView: {
         flexGrow: 0,
+        flexShrink: 0,
     },
     modalCategoryScrollContainer: {
         flexDirection: 'row',
