@@ -257,7 +257,7 @@ export default function RecipeScreen() {
                         source={require('../../assets/icons/plus.png')}
                         style={styles.fabIcon}
                     />
-                    <Text style={styles.fabText}>레시피 작성</Text>
+                    <Text style={styles.fabText}>레시피 등록</Text>
                 </TouchableOpacity>
             </Link>
         </SafeAreaView>
@@ -378,9 +378,9 @@ const styles = StyleSheet.create({
     // ⬇️ [삭제] cardExtraInfoContainer, cardExtraInfoText, cardExtraInfoDivider는 더 이상 사용되지 않음
 
     // --- (FAB, 에러/로딩 스타일 변경 없음) ---
-    fab: { position: 'absolute', bottom: 90, right: 20, flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFFFFF', paddingVertical: 10, paddingHorizontal: 16, borderRadius: 30, elevation: 5, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 4 },
-    fabIcon: { width: 24, height: 24,},
-    fabText: { color: '#2D303A', marginLeft: 8, fontWeight: 'bold', fontSize: 16 },
+    fab: { position: 'absolute', bottom: 106, right: 20, flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFFFFF', paddingVertical: 10, paddingHorizontal: 16, borderRadius: 30, elevation: 5, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 4 },
+    fabIcon: { width: 22, height: 22, resizeMode: 'contain' },
+    fabText: { color: '#000000', marginLeft: 8, fontWeight: 'bold', fontSize: 16 },
     emptyContainer: { flex: 1, marginTop: 50, alignItems: 'center', justifyContent: 'center' },
     errorContainer: { flex: 1, marginTop: 50, alignItems: 'center', justifyContent: 'center', padding: 20 },
     errorText: { fontSize: 16, color: 'red', textAlign: 'center', marginBottom: 10 },
