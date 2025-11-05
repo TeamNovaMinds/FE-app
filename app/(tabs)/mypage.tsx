@@ -77,8 +77,8 @@ export default function MyPageScreen() {
     const [myPosts, setMyPosts] = useState<SimplePost[]>([]);
     const queryClient = useQueryClient();
 
-    // React Query로 프로필 정보 캐싱
-    const { data: profileData, isLoading: isProfileLoading } = useQuery({
+    // React Query로 프로필 정보 캐싱 (placeholderData로 이전 캐시 먼저 표시)
+    const { data: profileData } = useQuery({
         queryKey: ['profile'],
         queryFn: async () => {
             const response = await axiosInstance.get('/api/auth/me');
@@ -89,7 +89,7 @@ export default function MyPageScreen() {
         },
         staleTime: 1000 * 60, // 1분간 신선한 데이터로 간주
         gcTime: 1000 * 60 * 5, // 5분간 캐시 유지
-        refetchOnMount: 'always', // 화면 진입 시 항상 재조회
+        placeholderData: (previousData) => previousData, // 이전 데이터를 먼저 표시
     });
 
     // profileData가 변경되면 zustand store 업데이트

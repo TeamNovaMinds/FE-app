@@ -11,6 +11,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { useAuthStore } from '@/store/authStore';
 import { getAccessToken, getUserInfo } from '../utils/tokenStorage';
+import axiosInstance from '@/api/axiosInstance';
 
 // Create a client
 const queryClient = new QueryClient({
@@ -20,6 +21,7 @@ const queryClient = new QueryClient({
       gcTime: 1000 * 60 * 10, // 10분간 캐시 유지 (이전 cacheTime)
       retry: 1, // 실패 시 1번만 재시도
       refetchOnWindowFocus: false, // 윈도우 포커스 시 자동 refetch 비활성화
+      refetchOnMount: false, // 마운트 시 자동 refetch 비활성화 (캐시 우선 사용)
     },
   },
 });
@@ -31,7 +33,7 @@ export default function RootLayout() {
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
 
-  // 앱 시작 시 토큰 확인하여 자동 로그인
+  // 앱 시작 시 토큰 확인하여 자동 로그인 및 주요 데이터 prefetch
   useEffect(() => {
     const checkAuth = async () => {
       try {
@@ -42,6 +44,9 @@ export default function RootLayout() {
           if (userInfo) {
             // 토큰과 사용자 정보가 모두 있으면 로그인 상태로 설정
             login(userInfo);
+
+            // 주요 데이터 미리 로딩 (백그라운드에서 실행)
+            prefetchMainData();
           }
         }
       } catch (error) {
@@ -50,6 +55,45 @@ export default function RootLayout() {
         setLoading(false);
       }
     };
+
+    // 주요 데이터 prefetch 함수
+    const prefetchMainData = async () => {
+      try {
+        // 1. 프로필 정보 prefetch
+        queryClient.prefetchQuery({
+          queryKey: ['profile'],
+          queryFn: async () => {
+            const response = await axiosInstance.get('/api/auth/me');
+            if (response.data.isSuccess) {
+              return response.data.result;
+            }
+            throw new Error(response.data.message || '프로필 조회 실패');
+          },
+        });
+
+        // 2. 냉장고 재료 개수 prefetch
+        queryClient.prefetchQuery({
+          queryKey: ['ingredientCount'],
+          queryFn: async () => {
+            const response = await axiosInstance.get('/api/refrigerators/stored-items/count');
+            if (response.data.isSuccess) {
+              return {
+                fridge: response.data.result.refrigeratorCount,
+                freezer: response.data.result.freezerCount,
+                room: response.data.result.roomTempCount,
+              };
+            }
+            throw new Error(response.data.message || '재료 개수를 불러오는데 실패했습니다.');
+          },
+        });
+
+        console.log('✅ 주요 데이터 prefetch 완료');
+      } catch (error) {
+        console.error('Prefetch 에러:', error);
+        // prefetch 실패는 조용히 처리 (사용자 경험에 영향 없음)
+      }
+    };
+
     checkAuth();
   }, [login, setLoading]);
 

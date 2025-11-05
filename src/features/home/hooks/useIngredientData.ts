@@ -33,7 +33,7 @@ const fetchStoredIngredientsAPI = async (tabName: TabName): Promise<StoredIngred
 };
 
 export const useIngredientData = (activeTab: TabName | null) => {
-    // 재료 개수 조회 (항상 활성화)
+    // 재료 개수 조회 (항상 활성화, placeholderData로 이전 캐시 먼저 표시)
     const {
         data: ingredientCount = { fridge: 0, freezer: 0, room: 0 },
         isLoading,
@@ -43,9 +43,10 @@ export const useIngredientData = (activeTab: TabName | null) => {
         queryKey: ['ingredientCount'],
         queryFn: fetchIngredientCountAPI,
         staleTime: 1000 * 60 * 5, // 5분간 fresh
+        placeholderData: (previousData) => previousData, // 이전 데이터를 먼저 표시
     });
 
-    // 재료 목록 조회 (activeTab이 있을 때만 활성화)
+    // 재료 목록 조회 (activeTab이 있을 때만 활성화, placeholderData 적용)
     const {
         data: storedIngredients = [],
         isLoading: isListLoading,
@@ -55,6 +56,7 @@ export const useIngredientData = (activeTab: TabName | null) => {
         queryFn: () => fetchStoredIngredientsAPI(activeTab!),
         enabled: activeTab !== null, // activeTab이 있을 때만 쿼리 실행
         staleTime: 1000 * 60 * 5, // 5분간 fresh
+        placeholderData: (previousData) => previousData, // 이전 데이터를 먼저 표시
     });
 
     // 에러 메시지 변환

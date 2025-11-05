@@ -11,6 +11,8 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
+import { useQueryClient } from '@tanstack/react-query';
+import axiosInstance from '@/api/axiosInstance';
 
 // 타입 및 상수
 import { TabName } from '@/src/features/home/types';
@@ -30,6 +32,7 @@ import { StoredIngredient } from '@/src/features/home/types'; // ✅ 2. StoredIn
 
 export default function HomeScreen() {
     const router = useRouter();
+    const queryClient = useQueryClient();
     const [activeTab, setActiveTab] = useState<TabName | null>(null);
 
     // 커스텀 훅 사용
@@ -51,9 +54,33 @@ export default function HomeScreen() {
         fabAnimatedStyle,
     } = useTabAnimation(activeTab);
 
-    // 탭 핸들러
+    // 탭 핸들러 - prefetch 추가
     const handleTabPress = (tabName: TabName) => {
-        setActiveTab(prev => (prev === tabName ? null : tabName));
+        const newTab = activeTab === tabName ? null : tabName;
+        setActiveTab(newTab);
+
+        // 탭이 열릴 때 해당 탭의 데이터를 prefetch
+        if (newTab) {
+            const STORAGE_TYPE_MAP: Record<TabName, string> = {
+                fridge: 'REFRIGERATOR',
+                freezer: 'FREEZER',
+                room: 'ROOM_TEMPERATURE',
+            };
+            const storageType = STORAGE_TYPE_MAP[newTab];
+
+            queryClient.prefetchQuery({
+                queryKey: ['storedIngredients', newTab],
+                queryFn: async () => {
+                    const response = await axiosInstance.get('/api/refrigerators/stored-items', {
+                        params: { storageType },
+                    });
+                    if (response.data.isSuccess) {
+                        return response.data.result.storedIngredients;
+                    }
+                    throw new Error(response.data.message || '재료를 불러오는데 실패했습니다.');
+                },
+            });
+        }
     };
 
     // 재료 추가 페이지로 이동
