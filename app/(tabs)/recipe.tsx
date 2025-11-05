@@ -1,5 +1,3 @@
-// app/(tabs)/recipe.tsx
-
 import React, { useState, useRef, useCallback, useMemo } from 'react';
 import {
     StyleSheet,
@@ -22,7 +20,7 @@ import axiosInstance from '@/api/axiosInstance';
 import { Link } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 
-// --- 타입 정의 (실제 API 응답에 맞게 수정) ---
+// --- 타입 정의 (API 응답과 일치) ---
 interface AuthorInfo {
     nickname: string;
     profileImageUrl: string | null;
@@ -32,20 +30,24 @@ interface Recipe {
     recipeId: number;
     title: string;
     mainImageUrl: string | null;
-    likeCount: number;
     authorInfo: AuthorInfo;
-    difficulty: string;
     cookingTimeMinutes: number;
-    servings : number;
+    difficulty: 'EASY' | 'MEDIUM' | 'HARD' | string;
+    servings: number;
+    likeCount: number;
+    commentCount: number;
+    likedByMe: boolean;
+    // writtenByMe: boolean;
+    // createdAt: string;
 }
 
 type RecipeListItem = Recipe | { isEmpty: true; recipeId: string };
 
 // --- 상수 정의 ---
 const BANNERS: string[] = [
-    'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?q=80&w=2881&auto.format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-    'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=2960&auto.format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-    'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?q=80&w=2880&auto.format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+    'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?q=80&w=2881&auto.format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%D%D',
+    'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=2960&auto.format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%D%D',
+    'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?q=80&w=2880&auto.format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%D%D',
 ];
 
 const FILTERS: string[] = ['최신순', '좋아요순', '한식', '중식', '일식', '양식', '아시안', '디저트', '베이커리', '간식', '음료/술'];
@@ -54,7 +56,22 @@ const CATEGORY_MAP: { [key: string]: string } = { '한식': 'KOREAN', '중식': 
 
 const { width: screenWidth } = Dimensions.get('window');
 
-// --- 레시피 카드 컴포넌트 ---
+// --- 헬퍼 함수 ---
+// 난이도 텍스트 변환
+const formatDifficulty = (difficulty: 'EASY' | 'MEDIUM' | 'HARD' | string) => {
+    switch (difficulty) {
+        case 'EASY':
+            return '쉬움';
+        case 'MEDIUM':
+            return '중간';
+        case 'HARD':
+            return '어려움';
+        default:
+            return difficulty;
+    }
+};
+
+// --- ⬇️ [수정] 레시피 카드 컴포넌트 (새 레이아웃) ---
 const RecipeCard: React.FC<{ item: RecipeListItem }> = ({ item }) => {
     if ('isEmpty' in item) {
         return <View style={[styles.cardContainer, styles.emptyCard]} />;
@@ -63,28 +80,57 @@ const RecipeCard: React.FC<{ item: RecipeListItem }> = ({ item }) => {
     return (
         <Link href={`/recipe/${item.recipeId}`} asChild>
             <TouchableOpacity style={styles.cardContainer}>
-                <Image
+                {/* 1. 이미지 및 오버레이 */}
+                <ImageBackground
                     source={item.mainImageUrl ? { uri: item.mainImageUrl } : require('../../assets/images/JustFridge_logo.png')}
                     style={styles.cardImage}
-                />
-                <Text style={styles.cardTitle} numberOfLines={1}>{item.title}</Text>
-                <View style={styles.cardInfoContainer}>
-                    <View style={styles.cardLikes}>
-                        <Ionicons name="heart" size={14} color="#FF6347" />
-                        <Text style={styles.cardLikesText}>{item.likeCount.toLocaleString()}</Text>
+                    resizeMode="cover"
+                >
+                    <View style={styles.cardOverlay}>
+                        {/* 1-1. 좋아요 */}
+                        <View style={styles.overlayIconContainer}>
+                            <Ionicons
+                                name={item.likedByMe ? "heart" : "heart-outline"}
+                                size={16}
+                                color={item.likedByMe ? "#FF6347" : "#FFFFFF"}
+                            />
+                            <Text style={styles.overlayText}>{item.likeCount.toLocaleString()}</Text>
+                        </View>
+                        {/* 1-2. 댓글 수 */}
+                        <View style={styles.overlayIconContainer}>
+                            <Ionicons name="chatbubble-ellipses-outline" size={16} color="#FFFFFF" />
+                            <Text style={styles.overlayText}>{item.commentCount.toLocaleString()}</Text>
+                        </View>
                     </View>
-                    <Text style={styles.cardInfoText}>
-                        {item.servings ? `${item.servings}인분 기준` : '정보 없음'}
-                    </Text>
-                    <Text style={styles.cardInfoText}>조리시간 {item.cookingTimeMinutes}분</Text>
-                    <Text style={styles.cardInfoText}>난이도 {item.difficulty}</Text>
+                </ImageBackground>
+
+                {/* 2. 하단 정보 (제목 + 작성자 + 추가 정보) */}
+                <View style={styles.cardInfoContainer}>
+                    {/* 2-1. 제목 */}
+                    <Text style={styles.cardTitle} numberOfLines={1}>{item.title}</Text>
+
+                    {/* 2-2. 작성자 정보 */}
+                    <View style={styles.authorContainer}>
+                        <Image
+                            source={item.authorInfo.profileImageUrl ? { uri: item.authorInfo.profileImageUrl } : require('../../assets/images/JustFridge_logo.png')}
+                            style={styles.authorImage}
+                        />
+                        <Text style={styles.authorName} numberOfLines={1}>{item.authorInfo.nickname}</Text>
+                    </View>
+
+                    {/* 2-3. ⬇️ [수정] 인분/시간/난이도 (별도 라인) */}
+                    <Text style={styles.cardDetailText}>{item.servings}인분 기준</Text>
+                    <Text style={styles.cardDetailText}>평균 조리시간 {item.cookingTimeMinutes}분</Text>
+                    <Text style={styles.cardDetailText}>조리 난이도 {formatDifficulty(item.difficulty)}</Text>
                 </View>
             </TouchableOpacity>
         </Link>
     );
 };
+// --- ⬆️ 레시피 카드 컴포넌트 끝 ---
 
-// --- 레시피 페이지 메인 컴포넌트 ---
+
+// --- 레시피 페이지 메인 컴포넌트 (변경 없음) ---
 export default function RecipeScreen() {
     const [searchQuery, setSearchQuery] = useState('');
     const [submittedQuery, setSubmittedQuery] = useState('');
@@ -93,21 +139,17 @@ export default function RecipeScreen() {
 
     const flatListRef = useRef<FlatList<RecipeListItem>>(null);
 
-    // API 요청 파라미터 메모이제이션
     const queryParams = useMemo(() => {
         const params: any = { keyword: submittedQuery || undefined, size: 20 };
-
         if (CATEGORY_MAP[activeFilter]) {
             params.category = CATEGORY_MAP[activeFilter];
             params.sortBy = 'LATEST';
         } else {
             params.sortBy = SORT_MAP[activeFilter] || 'LATEST';
         }
-
         return params;
     }, [activeFilter, submittedQuery]);
 
-    // React Query로 레시피 데이터 캐싱
     const {
         data: fetchedRecipes = [],
         isLoading,
@@ -122,11 +164,10 @@ export default function RecipeScreen() {
             }
             throw new Error(response.data.message || '레시피를 불러오는데 실패했습니다.');
         },
-        staleTime: 1000 * 60 * 5, // 5분간 fresh
-        placeholderData: (previousData) => previousData, // 이전 데이터를 먼저 표시
+        staleTime: 1000 * 60 * 5,
+        placeholderData: (previousData) => previousData,
     });
 
-    // 홀수 개수일 때 빈 카드 추가
     const recipes = useMemo(() => {
         if (fetchedRecipes.length % 2 === 1) {
             return [...fetchedRecipes, { isEmpty: true, recipeId: 'empty' }] as RecipeListItem[];
@@ -148,10 +189,9 @@ export default function RecipeScreen() {
     const renderHeader = () => (
         <View>
             <ImageBackground
-                // ⚠️ 가지고 계신 이미지 파일 경로로 수정하세요!
                 source={require('../../assets/images/banner_recipe.png')}
                 style={styles.topBanner}
-                resizeMode="cover" // 이미지가 영역을 덮도록 설정
+                resizeMode="cover"
             >
                 <Text style={styles.topBannerText}>유통기한 잘 확인하셨나요?</Text>
             </ImageBackground>
@@ -213,9 +253,7 @@ export default function RecipeScreen() {
             />
             <Link href="/recipe/create" asChild>
                 <TouchableOpacity style={styles.fab}>
-                    {/* Ionicons 대신 Image 컴포넌트로 변경 */}
                     <Image
-                        // ⚠️ 가지고 계신 아이콘 파일 경로로 수정하세요! (예: plus_icon.png)
                         source={require('../../assets/icons/plus.png')}
                         style={styles.fabIcon}
                     />
@@ -226,8 +264,10 @@ export default function RecipeScreen() {
     );
 }
 
+// --- ⬇️ [수정] 스타일시트 (카드 디자인 변경) ---
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#FFFFFF' },
+    // ... (헤더 스타일은 변경 없음) ...
     topBanner: { height:60, padding: 16, alignItems: 'flex-start', justifyContent: 'center', },
     topBannerText: { fontSize: 18, fontWeight: 'bold', color: '#FFFFFF',textShadowColor: 'rgba(0, 0, 0, 0.5)',textShadowOffset: { width: 1, height: 1 },textShadowRadius: 2, },
     carouselContainer: { height: 200 },
@@ -249,31 +289,95 @@ const styles = StyleSheet.create({
     activeFilterText: { color: '#fff', fontWeight: 'bold' },
     listContentContainer: {
         flexGrow: 1,
-        paddingBottom: 150, // (하단 스크롤 여백)
+        paddingBottom: 150,
     },
     row: { justifyContent: 'space-between', paddingHorizontal: 8,},
+
+    // --- 카드 스타일 ---
     cardContainer: {
         flex: 1,
         margin: 8,
         backgroundColor: '#fff',
         borderRadius: 12,
-        overflow: 'hidden',
-
-        // ⬅️ 그림자 및 테두리 조정
-        borderWidth: 1, // 얇은 테두리 추가
-        borderColor: '#E0E0E0', // 연한 회색 테두리
-        elevation: 4, // 그림자 깊이 약간 증가
+        borderWidth: 1,
+        borderColor: '#E0E0E0',
+        elevation: 4,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.15, // 그림자 불투명도 약간 증가
-        shadowRadius: 5, // 그림자 반경 약간 증가
-    },    emptyCard: { backgroundColor: 'transparent', elevation: 0, shadowOpacity: 0 },
-    cardImage: { width: '100%', height: 120, backgroundColor: '#eee' },
-    cardTitle: { fontSize: 16, fontWeight: 'bold', marginHorizontal: 8, marginTop: 8 },
-    cardInfoContainer: { paddingHorizontal: 8, paddingBottom: 8, marginTop: 4 },
-    cardLikes: { flexDirection: 'row', alignItems: 'center', marginBottom: 4 },
-    cardLikesText: { marginLeft: 4, fontSize: 12, color: '#555' },
-    cardInfoText: { fontSize: 11, color: '#888', marginTop: 2 },
+        shadowOpacity: 0.15,
+        shadowRadius: 5,
+    },
+    emptyCard: {
+        backgroundColor: 'transparent',
+        elevation: 0,
+        shadowOpacity: 0,
+        borderWidth: 0,
+    },
+    cardImage: {
+        width: '100%',
+        height: 140,
+        backgroundColor: '#eee',
+        borderTopLeftRadius: 11,
+        borderTopRightRadius: 11,
+        overflow: 'hidden',
+        justifyContent: 'flex-start',
+    },
+    cardOverlay: {
+        flexDirection: 'row',
+        justifyContent: 'flex-end',
+        padding: 8,
+        backgroundColor: 'rgba(0,0,0,0.3)',
+    },
+    overlayIconContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginLeft: 12,
+    },
+    overlayText: {
+        color: '#FFFFFF',
+        fontSize: 13,
+        fontWeight: '600',
+        marginLeft: 4,
+        textShadowColor: 'rgba(0, 0, 0, 0.7)',
+        textShadowOffset: { width: 0, height: 1 },
+        textShadowRadius: 2,
+    },
+    cardInfoContainer: {
+        padding: 12,
+    },
+    cardTitle: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        marginBottom: 8, // ⬅️ [수정] 제목-작성자 간격
+    },
+    authorContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 12, // ⬅️ [수정] 작성자-상세정보 간격
+    },
+    authorImage: {
+        width: 24,
+        height: 24,
+        borderRadius: 12,
+        marginRight: 6,
+        backgroundColor: '#eee',
+    },
+    authorName: {
+        fontSize: 13,
+        color: '#555',
+        flex: 1,
+    },
+
+    // ⬇️ [수정] 인분/시간/난이도 (개별 라인)
+    cardDetailText: {
+        fontSize: 13, // ⬅️ 디자인 시안에 맞게 폰트 크기 조정
+        color: '#555', // ⬅️ 디자인 시안에 맞게 색상 조정
+        marginTop: 4, // ⬅️ 각 라인 사이의 간격
+    },
+
+    // ⬇️ [삭제] cardExtraInfoContainer, cardExtraInfoText, cardExtraInfoDivider는 더 이상 사용되지 않음
+
+    // --- (FAB, 에러/로딩 스타일 변경 없음) ---
     fab: { position: 'absolute', bottom: 90, right: 20, flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFFFFF', paddingVertical: 10, paddingHorizontal: 16, borderRadius: 30, elevation: 5, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 4 },
     fabIcon: { width: 24, height: 24,},
     fabText: { color: '#2D303A', marginLeft: 8, fontWeight: 'bold', fontSize: 16 },

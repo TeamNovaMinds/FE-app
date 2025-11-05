@@ -271,8 +271,8 @@ export default function RecipeDetailScreen() {
     const renderIngredients = () => (
         <View style={styles.sectionContainer}>
             <Text style={styles.sectionTitle}>재료</Text>
-            {recipe?.recipeIngredientDTOs.map((item: RecipeIngredient) => (
-                <View key={item.ingredientId} style={styles.ingredientItem}>
+            {recipe?.recipeIngredientDTOs.map((item: RecipeIngredient, index: number) => (
+                <View key={`ingredient-${item.ingredientId}-${index}`} style={styles.ingredientItem}>
                     <Text style={styles.ingredientName}>{item.description}</Text>
                     <Text style={styles.ingredientAmount}>{item.amount}</Text>
                 </View>
