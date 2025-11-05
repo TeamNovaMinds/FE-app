@@ -38,6 +38,8 @@ interface Step {
 interface ApiIngredient {
     id: number;
     name: string;
+    category: string;
+    imageUrl: string | null;
 }
 
 // 카테고리 상수 정의
@@ -60,6 +62,17 @@ const DIFFICULTY_OPTIONS = [
     { value: 'HARD', label: '어려움' },
 ];
 
+// 재료 카테고리 상수 정의
+const INGREDIENT_CATEGORIES = [
+    { key: 'ALL', name: '전체' },
+    { key: 'MEAT', name: '육류' },
+    { key: 'VEGETABLE', name: '채소' },
+    { key: 'FRUIT', name: '과일' },
+    { key: 'DAIRY', name: '유제품' },
+    { key: 'SEASONING', name: '조미료' },
+    { key: 'FROZEN', name: '냉동' },
+];
+
 export default function CreateRecipeScreen() {
     const router = useRouter();
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -75,6 +88,7 @@ export default function CreateRecipeScreen() {
     const [modalSearchQuery, setModalSearchQuery] = useState('');
     const [modalResults, setModalResults] = useState<ApiIngredient[]>([]);
     const [modalLoading, setModalLoading] = useState(false);
+    const [modalCategoryFilter, setModalCategoryFilter] = useState<string>('ALL');
     const [currentIngredientIndex, setCurrentIngredientIndex] = useState(0);
     const [isImageUploading, setIsImageUploading] = useState(false);
     const [isDifficultyDropdownOpen, setIsDifficultyDropdownOpen] = useState(false);
@@ -107,23 +121,28 @@ export default function CreateRecipeScreen() {
         }
     };
 
-    const fetchModalIngredients = async (keyword: string) => {
+    const fetchModalIngredients = async (keyword: string, category: string) => {
         setModalLoading(true);
         try {
-            const response = await axiosInstance.get('/api/ingredients', { params: { keyword: keyword || undefined } });
+            const params: any = {
+                keyword: keyword || undefined,
+                category: category !== 'ALL' ? category : undefined,
+            };
+            const response = await axiosInstance.get('/api/ingredients', { params });
             if (response.data.isSuccess) setModalResults(response.data.result.ingredients);
         } catch (error) { console.error("Ingredient search error:", error); }
         finally { setModalLoading(false); }
     };
 
-    const debouncedSearch = useCallback(debounce(fetchModalIngredients, 300), []);
+    const debouncedSearch = useCallback(debounce((keyword: string, category: string) => fetchModalIngredients(keyword, category), 300), []);
 
     const openIngredientModal = (index: number) => {
         setCurrentIngredientIndex(index);
         setModalSearchQuery('');
+        setModalCategoryFilter('ALL');
         setModalResults([]);
         setIsModalVisible(true);
-        fetchModalIngredients('');
+        fetchModalIngredients('', 'ALL');
     };
 
     const onSelectIngredient = (ingredient: ApiIngredient) => {
@@ -182,13 +201,13 @@ export default function CreateRecipeScreen() {
             // 업로드 성공 후 상태 업데이트
             if (type === 'main') {
                 setMainImages((prevImages) => [...prevImages, imageUrl]);
+                Alert.alert('성공', '이미지가 업로드되었습니다.');
             } else if (type === 'step' && index !== undefined) {
                 const newSteps = [...steps];
                 newSteps[index].imageUrl = imageUrl;
                 setSteps(newSteps);
+                // step 이미지는 화면에 바로 표시되므로 Alert 생략
             }
-
-            Alert.alert('성공', '이미지가 업로드되었습니다.');
         } catch (error: any) {
             console.error('이미지 업로드 오류:', error);
             const errorMessage = error?.message || '이미지 업로드 중 오류가 발생했습니다.';
@@ -215,7 +234,7 @@ export default function CreateRecipeScreen() {
     };
 
     const handleCreateRecipe = async () => {
-        if (!title || !time || !difficulty || !servings || !description || ingredients.some(i => !i.ingredientId || !i.amount) || steps.some(s => !s.description)) {
+        if (!title || !time || !difficulty || !servings || !description || ingredients.some(i => !i.ingredientId) || steps.some(s => !s.description)) {
             Alert.alert('입력 오류', '모든 필수 항목을 입력해주세요.');
             return;
         }
@@ -491,38 +510,93 @@ export default function CreateRecipeScreen() {
             {/* ... (모달 코드는 이전과 동일) ... */}
             <Modal
                 animationType="slide"
-                transparent={true}
+                transparent={false}
                 visible={isModalVisible}
                 onRequestClose={() => setIsModalVisible(false)}
             >
-                <View style={styles.modalContainer}>
-                    <View style={styles.modalContent}>
-                        <Text style={styles.modalTitle}>재료 검색</Text>
+                <SafeAreaView style={styles.modalFullContainer}>
+                    <View style={styles.modalHeader}>
+                        <TouchableOpacity onPress={() => setIsModalVisible(false)}>
+                            <Ionicons name="close" size={28} color="#333" />
+                        </TouchableOpacity>
+                        <Text style={styles.modalHeaderTitle}>재료 검색</Text>
+                        <View style={{ width: 28 }} />
+                    </View>
+
+                    <View style={styles.modalSearchContainer}>
+                        <Ionicons name="search" size={20} color="#888" style={{ marginRight: 8 }} />
                         <TextInput
-                            style={styles.modalSearchInput}
+                            style={styles.modalFullSearchInput}
                             placeholder="재료 이름 검색..."
                             value={modalSearchQuery}
                             onChangeText={(text) => {
                                 setModalSearchQuery(text);
-                                debouncedSearch(text);
+                                debouncedSearch(text, modalCategoryFilter);
                             }}
                         />
-                        {modalLoading && <ActivityIndicator style={{ marginVertical: 20 }} />}
+                    </View>
+
+                    <ScrollView
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        contentContainerStyle={styles.modalCategoryScrollContainer}
+                        style={styles.modalCategoryScrollView}
+                    >
+                        {INGREDIENT_CATEGORIES.map((cat) => (
+                            <TouchableOpacity
+                                key={cat.key}
+                                style={[
+                                    styles.modalCategoryButton,
+                                    modalCategoryFilter === cat.key && styles.modalCategoryButtonActive
+                                ]}
+                                onPress={() => {
+                                    setModalCategoryFilter(cat.key);
+                                    fetchModalIngredients(modalSearchQuery, cat.key);
+                                }}
+                            >
+                                <Text
+                                    style={[
+                                        styles.modalCategoryButtonText,
+                                        modalCategoryFilter === cat.key && styles.modalCategoryButtonTextActive
+                                    ]}
+                                >
+                                    {cat.name}
+                                </Text>
+                            </TouchableOpacity>
+                        ))}
+                    </ScrollView>
+
+                    {modalLoading ? (
+                        <ActivityIndicator style={{ marginTop: 40 }} />
+                    ) : (
                         <FlatList
                             data={modalResults}
                             keyExtractor={(item) => item.id.toString()}
+                            numColumns={4}
+                            contentContainerStyle={styles.modalGridContainer}
+                            columnWrapperStyle={styles.modalGridRow}
                             renderItem={({ item }) => (
-                                <TouchableOpacity style={styles.modalItem} onPress={() => onSelectIngredient(item)}>
-                                    <Text>{item.name}</Text>
+                                <TouchableOpacity
+                                    style={styles.modalGridItem}
+                                    onPress={() => onSelectIngredient(item)}
+                                >
+                                    <Image
+                                        source={item.imageUrl ? { uri: item.imageUrl } : require('../../assets/images/JustFridge_logo.png')}
+                                        style={styles.modalGridImage}
+                                    />
+                                    <Text style={styles.modalGridItemText} numberOfLines={1}>
+                                        {item.name}
+                                    </Text>
                                 </TouchableOpacity>
                             )}
-                            ListEmptyComponent={!modalLoading && modalSearchQuery.length > 0 ? <Text style={styles.modalEmptyText}>검색 결과가 없습니다.</Text> : null}
+                            ListEmptyComponent={
+                                !modalLoading ? (
+                                    <Text style={styles.modalEmptyText}>검색 결과가 없습니다.</Text>
+                                ) : null
+                            }
                         />
-                        <TouchableOpacity style={styles.modalCloseButton} onPress={() => setIsModalVisible(false)}>
-                            <Text style={styles.modalCloseText}>닫기</Text>
-                        </TouchableOpacity>
-                    </View>
-                </View>
+                    )}
+                </SafeAreaView>
             </Modal>
         </SafeAreaView>
     );
@@ -722,12 +796,102 @@ const styles = StyleSheet.create({
         fontWeight: '600',
     },
     // --- Modal Styles ---
-    modalContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)' },
-    modalContent: { width: '90%', maxHeight: '80%', backgroundColor: 'white', borderRadius: 12, padding: 20, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4, elevation: 5 },
-    modalTitle: { fontSize: 20, fontWeight: 'bold', marginBottom: 16 },
-    modalSearchInput: { height: 44, borderWidth: 1, borderColor: '#ddd', borderRadius: 8, paddingHorizontal: 12, marginBottom: 12 },
-    modalItem: { paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#eee' },
-    modalEmptyText: { textAlign: 'center', marginTop: 20, color: '#888' },
-    modalCloseButton: { marginTop: 20, padding: 12, backgroundColor: '#007AFF', borderRadius: 8, alignItems: 'center' },
-    modalCloseText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
+    modalFullContainer: {
+        flex: 1,
+        backgroundColor: '#fff',
+    },
+    modalHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        borderBottomWidth: 1,
+        borderBottomColor: '#f0f0f0',
+    },
+    modalHeaderTitle: {
+        fontSize: 18,
+        fontWeight: '600',
+        color: '#000',
+    },
+    modalSearchContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#f8f8f8',
+        margin: 16,
+        paddingHorizontal: 12,
+        paddingVertical: 10,
+        borderRadius: 10,
+    },
+    modalFullSearchInput: {
+        flex: 1,
+        fontSize: 16,
+        color: '#000',
+    },
+    modalCategoryScrollView: {
+        flexGrow: 0,
+    },
+    modalCategoryScrollContainer: {
+        flexDirection: 'row',
+        paddingHorizontal: 16,
+        paddingBottom: 16,
+    },
+    modalCategoryButton: {
+        paddingVertical: 8,
+        paddingHorizontal: 14,
+        borderRadius: 20,
+        backgroundColor: '#f0f0f0',
+        marginRight: 8,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    modalCategoryButtonActive: {
+        backgroundColor: '#1298FF',
+    },
+    modalCategoryButtonText: {
+        fontSize: 14,
+        color: '#555',
+        lineHeight: 16,
+    },
+    modalCategoryButtonTextActive: {
+        color: '#fff',
+        fontWeight: 'bold',
+    },
+    modalGridContainer: {
+        paddingHorizontal: 12,
+    },
+    modalGridRow: {
+        justifyContent: 'flex-start',
+        paddingHorizontal: 4,
+    },
+    modalGridItem: {
+        width: 90,
+        height: 90,
+        borderRadius: 12,
+        backgroundColor: '#F0F0F0',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 4,
+        marginBottom: 12,
+        marginHorizontal: 6,
+    },
+    modalGridImage: {
+        width: 48,
+        height: 48,
+        backgroundColor: 'transparent',
+        marginBottom: 4,
+        resizeMode: 'contain',
+    },
+    modalGridItemText: {
+        fontSize: 13,
+        textAlign: 'center',
+        color: '#333',
+        width: '100%',
+    },
+    modalEmptyText: {
+        textAlign: 'center',
+        marginTop: 40,
+        color: '#888',
+        fontSize: 16,
+    },
 });
