@@ -332,8 +332,15 @@ export default function RecipeDetailScreen() {
                     <Text style={styles.viewMoreComments}>전체보기</Text>
                 </TouchableOpacity>
             </View>
-            {recipe?.commentPreview.previewComments.map((comment: Comment) => (
-                <View key={comment.commentId} style={styles.commentItem}>
+            {recipe?.commentPreview.previewComments.map((comment: Comment, index: number) => (
+                <View
+                    key={comment.commentId}
+                    // 2. 마지막 아이템인지 확인하고 스타일을 동적으로 적용합니다.
+                    style={[
+                        styles.commentItem,
+                        index === recipe.commentPreview.previewComments.length - 1 && { marginBottom: 0 }
+                    ]}
+                >
                     <Image
                         source={{
                             uri:
@@ -441,7 +448,6 @@ const styles = StyleSheet.create({
         // flex: 1,
     },
     contentContainer: {
-        paddingBottom: 100, // 하단 고정 푸터 공간 확보
     },
     center: {
         flex: 1,
@@ -517,14 +523,12 @@ const styles = StyleSheet.create({
         marginVertical: 16,
     },
     sectionContainer: {
-        marginBottom: 16,
     },
-    // ✅ 3. sectionHeader 스타일을 새로 추가합니다.
     sectionHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 12, // 👈 기존 sectionTitle의 여백을 여기로 이동
+        marginBottom: 12,
     },
     sectionTitle: {
         fontSize: 20,
