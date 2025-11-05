@@ -94,6 +94,8 @@ export default function CreateRecipeScreen() {
     const [isDifficultyDropdownOpen, setIsDifficultyDropdownOpen] = useState(false);
 
     const scrollRef = useRef<KeyboardAwareScrollView>(null);
+    const savedScrollPosition = useRef<number>(0);
+    const currentStepIndex = useRef<number>(-1);
 
     // --- (핸들러 함수들... 이전과 동일) ---
     const handleIngredientChange = (index: number, field: 'amount', value: string) => {
@@ -155,6 +157,16 @@ export default function CreateRecipeScreen() {
 
     const handlePickImage = async (type: 'main' | 'step', index?: number) => {
         try {
+            // step 이미지 업로드 시 현재 스크롤 위치 저장
+            if (type === 'step' && index !== undefined) {
+                currentStepIndex.current = index;
+                // 현재 스크롤 위치 저장
+                const scrollView = scrollRef.current?.getScrollResponder?.();
+                if (scrollView && typeof scrollView.scrollTo === 'function') {
+                    savedScrollPosition.current = scrollView.contentOffset?.y || 0;
+                }
+            }
+
             // 갤러리 권한 요청
             const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
@@ -207,6 +219,13 @@ export default function CreateRecipeScreen() {
                 newSteps[index].imageUrl = imageUrl;
                 setSteps(newSteps);
                 // step 이미지는 화면에 바로 표시되므로 Alert 생략
+
+                // 스크롤 위치 복원
+                setTimeout(() => {
+                    if (scrollRef.current && savedScrollPosition.current > 0) {
+                        scrollRef.current.scrollToPosition(0, savedScrollPosition.current, true);
+                    }
+                }, 300);
             }
         } catch (error: any) {
             console.error('이미지 업로드 오류:', error);
@@ -268,8 +287,9 @@ export default function CreateRecipeScreen() {
         if (node && scrollRef.current) {
             setTimeout(() => {
                 // 이 노드(TextInput)로 스크롤하도록 명령합니다.
-                scrollRef.current?.scrollToFocusedInput(node, 100, 0);
-            }, 100);
+                // extraScrollHeight를 더 크게 설정하여 키보드가 입력창을 가리지 않도록 함
+                scrollRef.current?.scrollToFocusedInput(node, 200, 0);
+            }, 150);
         }
     };
 
@@ -303,10 +323,9 @@ export default function CreateRecipeScreen() {
                 ref={scrollRef}
                 style={styles.flexContainer}
                 contentContainerStyle={styles.scrollContainer}
-                extraScrollHeight={20}
+                extraScrollHeight={150}
                 enableOnAndroid={true}
                 keyboardShouldPersistTaps="handled"
-                // ✅ enableAutomaticScroll={false} 속성 제거! (자동 스크롤 다시 켬)
             >
                 <View style={styles.imagePickerContainer}>
                     <ScrollView horizontal contentContainerStyle={styles.imageScrollContainer}>
