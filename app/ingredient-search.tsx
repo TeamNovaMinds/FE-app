@@ -394,7 +394,7 @@ const styles = StyleSheet.create({
         marginRight: 8,
     },
     filterButtonActive: {
-        backgroundColor: '#62A1FF', // 활성 탭 색상 (원하는 색으로 변경)
+        backgroundColor: '#1298FF', // 활성 탭 색상 (원하는 색으로 변경)
     },
     filterText: {
         fontSize: 14,
