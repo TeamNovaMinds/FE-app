@@ -138,17 +138,26 @@ export default function IngredientSearchScreen() {
         runOnJS(closeModal)();
     };
     const panGesture = Gesture.Pan()
+        .activeOffsetY(10)
+        .failOffsetY(-10)
         .onStart(() => {
             context.value = { y: translateY.value };
         })
         .onUpdate((event) => {
-            translateY.value = Math.max(0, context.value.y + event.translationY);
+            if (event.translationY > 0) {
+                translateY.value = event.translationY;
+            }
         })
         .onEnd(() => {
             if (translateY.value > 100) {
                 handleClose();
             } else {
-                translateY.value = withSpring(0, { damping: 15 });
+                translateY.value = withSpring(0, {
+                    damping: 50,
+                    stiffness: 400,
+                    mass: 0.3,
+                    overshootClamping: false,
+                });
             }
         });
     const animatedSheetStyle = useAnimatedStyle(() => {
