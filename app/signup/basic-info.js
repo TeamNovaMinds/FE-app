@@ -172,7 +172,7 @@ const styles = StyleSheet.create({
     inputWithButton: { flex: 1, height: 50, borderWidth: 1, borderColor: '#E0E0E0', borderRadius: 8, paddingHorizontal: 15, fontSize: 16, marginRight: 10 },
     checkButton: { height: 50, paddingHorizontal: 15, backgroundColor: '#555', borderRadius: 8, justifyContent: 'center', alignItems: 'center' },
     checkButtonText: { color: '#fff', fontWeight: 'bold' },
-    button: { width: '100%', height: 50, backgroundColor: '#3498db', borderRadius: 8, justifyContent: 'center', alignItems: 'center', marginTop: 'auto', marginBottom: 20 },
+    button: { width: '100%', height: 50, backgroundColor: '#1298FF', borderRadius: 8, justifyContent: 'center', alignItems: 'center', marginTop: 'auto', marginBottom: 20 },
     buttonDisabled: { backgroundColor: '#A9A9A9' },
     buttonText: { color: '#FFFFFF', fontSize: 18, fontWeight: 'bold' },
     errorText: { color: 'red', alignSelf: 'flex-start', marginLeft: 5, marginBottom: 10, fontSize: 12 },

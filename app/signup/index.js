@@ -40,24 +40,24 @@ export default function TermsScreen() {
                 <Text style={styles.title}>서비스 이용약관에{"\n"}동의해주세요.</Text>
 
                 <TouchableOpacity style={styles.agreementRow} onPress={handleSelectAll}>
-                    <Ionicons name={allAgreed ? "checkbox" : "checkbox-outline"} size={24} color={allAgreed ? "#3498db" : "#A9A9A9"} />
+                    <Ionicons name={allAgreed ? "checkbox" : "checkbox-outline"} size={24} color={allAgreed ? "#1298FF" : "#A9A9A9"} />
                     <Text style={[styles.agreementText, styles.bold]}>전체 동의</Text>
                 </TouchableOpacity>
 
                 <View style={styles.separator} />
 
                 <TouchableOpacity style={styles.agreementRow} onPress={() => handleToggle('termsOfService')}>
-                    <Ionicons name={agreements.termsOfService ? "checkbox" : "checkbox-outline"} size={24} color={agreements.termsOfService ? "#3498db" : "#A9A9A9"} />
+                    <Ionicons name={agreements.termsOfService ? "checkbox" : "checkbox-outline"} size={24} color={agreements.termsOfService ? "#1298FF" : "#A9A9A9"} />
                     <Text style={styles.agreementText}>서비스 이용약관 (필수)</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity style={styles.agreementRow} onPress={() => handleToggle('privacyPolicy')}>
-                    <Ionicons name={agreements.privacyPolicy ? "checkbox" : "checkbox-outline"} size={24} color={agreements.privacyPolicy ? "#3498db" : "#A9A9A9"} />
+                    <Ionicons name={agreements.privacyPolicy ? "checkbox" : "checkbox-outline"} size={24} color={agreements.privacyPolicy ? "#1298FF" : "#A9A9A9"} />
                     <Text style={styles.agreementText}>개인정보 처리방침 (필수)</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity style={styles.agreementRow} onPress={() => handleToggle('ageConfirm')}>
-                    <Ionicons name={agreements.ageConfirm ? "checkbox" : "checkbox-outline"} size={24} color={agreements.ageConfirm ? "#3498db" : "#A9A9A9"} />
+                    <Ionicons name={agreements.ageConfirm ? "checkbox" : "checkbox-outline"} size={24} color={agreements.ageConfirm ? "#1298FF" : "#A9A9A9"} />
                     <Text style={styles.agreementText}>만 14세 이상 확인 (필수)</Text>
                 </TouchableOpacity>
 

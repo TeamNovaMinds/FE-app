@@ -196,7 +196,7 @@ const styles = StyleSheet.create({
         color: '#727272',
     },
     categoryNameSelected: {
-        color: '#3498db',
+        color: '#1298FF',
     },
     button: {
         width: '100%',
