@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback } from 'react';
 import {
     View,
     Text,
@@ -10,14 +10,15 @@ import {
     Dimensions,
     ActivityIndicator,
     SafeAreaView,
-    Alert, // 👈 [추가] '더보기' 및 '삭제' 확인에 사용
+    Alert,
 } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import axiosInstance from '../../api/axiosInstance'; // axios 인스턴스 경로
-import { RecipeData } from '../../src/features/recipe/types'; // 타입
-import { formatRelativeTime } from '../../utils/date'; // 👈 [추가] 날짜 포맷팅 함수
+import axiosInstance from '../../api/axiosInstance';
+import { RecipeIngredient, RecipeOrder, Comment } from '../../src/features/recipe/types';
+import { formatRelativeTime } from '../../utils/date';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 const { width } = Dimensions.get('window');
 
@@ -25,18 +26,72 @@ export default function RecipeDetailScreen() {
     const { recipeId } = useLocalSearchParams();
     const router = useRouter();
     const navigation = useNavigation();
-    const [recipe, setRecipe] = useState<RecipeData | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const queryClient = useQueryClient();
 
-    const [isLiked, setIsLiked] = useState(false);
-    const [likeCount, setLikeCount] = useState(0);
+    // React Query로 레시피 데이터 캐싱
+    const {
+        data: recipe,
+        isLoading,
+        error,
+    } = useQuery({
+        queryKey: ['recipe', recipeId],
+        queryFn: async () => {
+            const response = await axiosInstance.get(`api/recipes/${recipeId}`);
+            if (response.data.isSuccess) {
+                return response.data.result;
+            }
+            throw new Error(response.data.message || '레시피를 불러오는 데 실패했습니다.');
+        },
+        enabled: !!recipeId,
+        staleTime: 1000 * 60 * 10, // 10분간 fresh
+        placeholderData: (previousData) => previousData, // 이전 데이터를 먼저 표시
+    });
+
+    // useMutation으로 좋아요 기능 구현
+    const likeMutation = useMutation({
+        mutationFn: async () => {
+            await axiosInstance.post(`api/recipes/${recipeId}/like`);
+        },
+        onMutate: async () => {
+            // Optimistic Update: 서버 응답 전에 UI 즉시 업데이트
+            await queryClient.cancelQueries({ queryKey: ['recipe', recipeId] });
+
+            const previousRecipe = queryClient.getQueryData(['recipe', recipeId]);
+
+            queryClient.setQueryData(['recipe', recipeId], (old: any) => {
+                if (!old) return old;
+                const newLikedState = !old.likedByMe;
+                return {
+                    ...old,
+                    likedByMe: newLikedState,
+                    likeCount: newLikedState ? old.likeCount + 1 : old.likeCount - 1,
+                };
+            });
+
+            return { previousRecipe };
+        },
+        onError: (err, variables, context) => {
+            // 실패 시 이전 상태로 롤백
+            if (context?.previousRecipe) {
+                queryClient.setQueryData(['recipe', recipeId], context.previousRecipe);
+            }
+            Alert.alert('좋아요 처리에 실패했습니다.');
+            console.error(err);
+        },
+        onSettled: () => {
+            // 성공/실패와 관계없이 쿼리 무효화하여 최신 데이터 가져오기
+            queryClient.invalidateQueries({ queryKey: ['recipe', recipeId] });
+        },
+    });
+
+    const handleLike = () => {
+        if (!recipeId) return;
+        likeMutation.mutate();
+    };
 
     // --- 헬퍼 함수 ---
 
-    // 👈 [추가] 2. '더보기' 옵션 관련 함수들
     const handleEdit = useCallback(() => {
-        // '레시피 수정' 페이지로 이동 (경로는 예시입니다)
         router.push(`api/recipe/${recipeId}`);
     }, [router, recipeId]);
 
@@ -54,10 +109,8 @@ export default function RecipeDetailScreen() {
                     style: 'destructive',
                     onPress: async () => {
                         try {
-                            // API 명세에 따른 DELETE /recipes/{recipeId} 호출
                             await axiosInstance.delete(`api/recipes/${recipeId}`);
                             Alert.alert('삭제 완료', '레시피가 삭제되었습니다.');
-                            // 삭제 후 이전 페이지로 이동
                             router.back();
                         } catch (e) {
                             Alert.alert('삭제 실패', '레시피 삭제에 실패했습니다.');
@@ -82,46 +135,18 @@ export default function RecipeDetailScreen() {
                 {
                     text: '삭제하기',
                     onPress: handleDelete,
-                    style: 'destructive', // iOS에서 빨간색으로 표시
+                    style: 'destructive',
                 },
                 {
                     text: '취소',
                     style: 'cancel',
                 },
             ],
-            { cancelable: true }, // 안드로이드에서 바깥쪽 터치로 닫기
+            { cancelable: true },
         );
     }, [handleEdit, handleDelete]);
 
-    // --- 데이터 로드 ---
-    useEffect(() => {
-        if (!recipeId) return;
-
-        const fetchRecipe = async () => {
-            setIsLoading(true);
-            setError(null);
-            try {
-                const response = await axiosInstance.get(`api/recipes/${recipeId}`);
-                if (response.data.isSuccess) {
-                    const data = response.data.result;
-                    setRecipe(data);
-                    setIsLiked(data.likedByMe);
-                    setLikeCount(data.likeCount);
-                } else {
-                    setError(response.data.message);
-                }
-            } catch (e) {
-                console.error(e);
-                setError('레시피를 불러오는 데 실패했습니다.');
-            } finally {
-                setIsLoading(false);
-            }
-        };
-        fetchRecipe();
-    }, [recipeId]);
-
-    // --- 👈 [추가] 동적 헤더 설정 ---
-    // recipe 데이터가 로드된 후, 내가 쓴 글(writtenByMe)인지 확인하여 '...' 버튼 표시
+    // 동적 헤더 설정
     useEffect(() => {
         if (recipe?.writtenByMe) {
             navigation.setOptions({
@@ -137,37 +162,11 @@ export default function RecipeDetailScreen() {
                 ),
             });
         } else {
-            // 내 글이 아니면 '더보기' 버튼 숨김
             navigation.setOptions({ headerRight: () => null });
         }
-    }, [recipe, navigation, handleMoreOptions]); // recipe 상태가 변경될 때마다 실행
+    }, [recipe, navigation, handleMoreOptions]);
 
-    // 👈 [수정] 1. 좋아요 API 연동
-    const handleLike = async () => {
-        if (!recipeId) return;
-
-        // UI 즉시 업데이트 (Optimistic Update)
-        const newLikedState = !isLiked;
-        const newLikeCount = newLikedState ? likeCount + 1 : likeCount - 1;
-        setIsLiked(newLikedState);
-        setLikeCount(newLikeCount);
-
-        try {
-            // API 명세를 기반으로 POST 또는 DELETE 호출 (여기서는 POST로 가정)
-            await axiosInstance.post(`api/recipes/${recipeId}/like`);
-            // API 응답이 성공적이면 현재 상태 유지
-        } catch (e) {
-            // 실패 시 UI 롤백
-            setIsLiked(!newLikedState);
-            setLikeCount(newLikedState ? newLikeCount - 1 : newLikeCount + 1);
-            Alert.alert('좋아요 처리에 실패했습니다.');
-            console.error(e);
-        }
-    };
-
-    // 👈 [추가] 3. 댓글 페이지 이동
     const navigateToComments = () => {
-        // 댓글 페이지 경로는 예시입니다.
         router.push(`api/recipe/comments/${recipeId}`);
     };
 
@@ -272,7 +271,7 @@ export default function RecipeDetailScreen() {
     const renderIngredients = () => (
         <View style={styles.sectionContainer}>
             <Text style={styles.sectionTitle}>재료</Text>
-            {recipe?.recipeIngredientDTOs.map((item) => (
+            {recipe?.recipeIngredientDTOs.map((item: RecipeIngredient) => (
                 <View key={item.ingredientId} style={styles.ingredientItem}>
                     <Text style={styles.ingredientName}>{item.description}</Text>
                     <Text style={styles.ingredientAmount}>{item.amount}</Text>
@@ -285,8 +284,8 @@ export default function RecipeDetailScreen() {
         <View style={styles.sectionContainer}>
             <Text style={styles.sectionTitle}>요리 순서</Text>
             {recipe?.recipeOrderDTOs
-                .sort((a, b) => a.order - b.order)
-                .map((step, index) => (
+                .sort((a: RecipeOrder, b: RecipeOrder) => a.order - b.order)
+                .map((step: RecipeOrder, index: number) => (
                     <View key={step.order} style={styles.stepItem}>
                         <Text style={styles.stepOrder}>Step {index + 1}</Text>
                         {step.imageUrl && (
@@ -303,7 +302,7 @@ export default function RecipeDetailScreen() {
             <Text style={styles.sectionTitle}>
                 댓글 ({recipe?.commentPreview.totalCommentCount})
             </Text>
-            {recipe?.commentPreview.previewComments.map((comment) => (
+            {recipe?.commentPreview.previewComments.map((comment: Comment) => (
                 <View key={comment.commentId} style={styles.commentItem}>
                     <Image
                         source={{
@@ -346,7 +345,7 @@ export default function RecipeDetailScreen() {
     if (error) {
         return (
             <View style={styles.center}>
-                <Text style={styles.errorText}>{error}</Text>
+                <Text style={styles.errorText}>{error.message || '레시피를 불러오는 중 오류가 발생했습니다.'}</Text>
             </View>
         );
     }
@@ -361,16 +360,13 @@ export default function RecipeDetailScreen() {
 
     return (
         <SafeAreaView style={styles.safeArea}>
-            {/* 1. 스크린 헤더 설정 (더보기 버튼은 useEffect에서 동적으로 설정됨) */}
             <Stack.Screen
                 options={{
                     title: '레시피',
                     headerTintColor: '#000',
-                    // 👈 [수정] headerRight는 useEffect에서 동적으로 설정하므로 여기서 제거
                 }}
             />
 
-            {/* 2. 메인 컨텐츠 (스크롤) */}
             <ScrollView
                 style={styles.container}
                 contentContainerStyle={styles.contentContainer}
@@ -388,19 +384,18 @@ export default function RecipeDetailScreen() {
                 </View>
             </ScrollView>
 
-            {/* 3. 하단 고정 푸터 (좋아요/댓글) */}
             <View style={styles.footer}>
                 <TouchableOpacity onPress={handleLike} style={styles.likeButton}>
                     <Ionicons
-                        name={isLiked ? 'heart' : 'heart-outline'}
+                        name={recipe?.likedByMe ? 'heart' : 'heart-outline'}
                         size={30}
-                        color={isLiked ? '#FF6347' : '#555'}
+                        color={recipe?.likedByMe ? '#FF6347' : '#555'}
                     />
-                    <Text style={styles.likeCount}>{likeCount}</Text>
+                    <Text style={styles.likeCount}>{recipe?.likeCount || 0}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                     style={styles.commentInputContainer}
-                    onPress={navigateToComments} // 👈 [수정] 3. 댓글 페이지 이동
+                    onPress={navigateToComments}
                 >
                     <Text style={styles.commentInputText}>댓글을 남겨주세요...</Text>
                 </TouchableOpacity>

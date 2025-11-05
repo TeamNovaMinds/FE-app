@@ -1,6 +1,6 @@
 // app/(tabs)/recipe.tsx
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useMemo } from 'react';
 import {
     StyleSheet,
     View,
@@ -16,11 +16,11 @@ import {
     NativeScrollEvent,
     ActivityIndicator,
     ImageBackground,
-    RefreshControl,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import axiosInstance from '@/api/axiosInstance';
-import { Link, useFocusEffect } from 'expo-router';
+import { Link } from 'expo-router';
+import { useQuery } from '@tanstack/react-query';
 
 // --- 타입 정의 (실제 API 응답에 맞게 수정) ---
 interface AuthorInfo {
@@ -90,17 +90,11 @@ export default function RecipeScreen() {
     const [submittedQuery, setSubmittedQuery] = useState('');
     const [activeFilter, setActiveFilter] = useState('최신순');
     const [activeBannerIndex, setActiveBannerIndex] = useState(0);
-    const [recipes, setRecipes] = useState<RecipeListItem[]>([]);
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
 
     const flatListRef = useRef<FlatList<RecipeListItem>>(null);
 
-    const [isRefreshing, setIsRefreshing] = useState(false);
-    const fetchRecipes = useCallback(async () => {
-        setIsLoading(true);
-        setError(null);
-
+    // API 요청 파라미터 메모이제이션
+    const queryParams = useMemo(() => {
         const params: any = { keyword: submittedQuery || undefined, size: 20 };
 
         if (CATEGORY_MAP[activeFilter]) {
@@ -110,39 +104,39 @@ export default function RecipeScreen() {
             params.sortBy = SORT_MAP[activeFilter] || 'LATEST';
         }
 
-        try {
-            const response = await axiosInstance.get('/api/recipes', { params });
-            if (response.data.isSuccess) {
-                // ✅✅✅ 핵심 수정사항: result.recipes 에서 데이터를 가져옵니다.
-                const fetchedRecipes = response.data.result.recipes || []; // 만약을 위해 기본값으로 빈 배열 설정
-
-                if (fetchedRecipes.length % 2 === 1) {
-                    setRecipes([...fetchedRecipes, { isEmpty: true, recipeId: 'empty' }]);
-                } else {
-                    setRecipes(fetchedRecipes);
-                }
-            } else {
-                setError(response.data.message || '레시피를 불러오는데 실패했습니다.');
-            }
-        } catch (err) {
-            console.error('레시피 조회 에러:', err);
-            setError('레시피를 불러오는 중 오류가 발생했습니다.');
-        } finally {
-            setIsLoading(false);
-        }
+        return params;
     }, [activeFilter, submittedQuery]);
 
-    useFocusEffect(
-        useCallback(() => {
-            fetchRecipes();
-        }, [fetchRecipes])
-    );
+    // React Query로 레시피 데이터 캐싱
+    const {
+        data: fetchedRecipes = [],
+        isLoading,
+        error,
+        refetch,
+    } = useQuery({
+        queryKey: ['recipes', queryParams],
+        queryFn: async () => {
+            const response = await axiosInstance.get('/api/recipes', { params: queryParams });
+            if (response.data.isSuccess) {
+                return response.data.result.recipes || [];
+            }
+            throw new Error(response.data.message || '레시피를 불러오는데 실패했습니다.');
+        },
+        staleTime: 1000 * 60 * 5, // 5분간 fresh
+        placeholderData: (previousData) => previousData, // 이전 데이터를 먼저 표시
+    });
+
+    // 홀수 개수일 때 빈 카드 추가
+    const recipes = useMemo(() => {
+        if (fetchedRecipes.length % 2 === 1) {
+            return [...fetchedRecipes, { isEmpty: true, recipeId: 'empty' }] as RecipeListItem[];
+        }
+        return fetchedRecipes as RecipeListItem[];
+    }, [fetchedRecipes]);
 
     const onRefresh = useCallback(async () => {
-        setIsRefreshing(true);
-        await fetchRecipes();
-        setIsRefreshing(false);
-    }, [fetchRecipes]);
+        await refetch();
+    }, [refetch]);
 
     const handleSearch = () => setSubmittedQuery(searchQuery);
     const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -195,8 +189,8 @@ export default function RecipeScreen() {
         if (isLoading) return <ActivityIndicator size="large" color="#89FFF1" style={{ marginTop: 50 }} />;
         if (error) return (
             <View style={styles.errorContainer}>
-                <Text style={styles.errorText}>{error}</Text>
-                <TouchableOpacity style={styles.retryButton} onPress={fetchRecipes}><Text style={styles.retryButtonText}>다시 시도</Text></TouchableOpacity>
+                <Text style={styles.errorText}>{error.message || '레시피를 불러오는 중 오류가 발생했습니다.'}</Text>
+                <TouchableOpacity style={styles.retryButton} onPress={() => refetch()}><Text style={styles.retryButtonText}>다시 시도</Text></TouchableOpacity>
             </View>
         );
         return <View style={styles.emptyContainer}><Text>표시할 레시피가 없어요.</Text></View>;
@@ -215,7 +209,7 @@ export default function RecipeScreen() {
                 columnWrapperStyle={styles.row}
                 ListEmptyComponent={renderListEmptyComponent}
                 onRefresh={onRefresh}
-                refreshing={isRefreshing}
+                refreshing={isLoading}
             />
             <Link href="/recipe/create" asChild>
                 <TouchableOpacity style={styles.fab}>

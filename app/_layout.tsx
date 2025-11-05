@@ -87,6 +87,20 @@ export default function RootLayout() {
           },
         });
 
+        // 3. 레시피 리스트 prefetch (최신순, 20개)
+        await queryClient.prefetchQuery({
+          queryKey: ['recipes', { sortBy: 'LATEST', size: 20 }],
+          queryFn: async () => {
+            const response = await axiosInstance.get('/api/recipes', {
+              params: { sortBy: 'LATEST', size: 20 },
+            });
+            if (response.data.isSuccess) {
+              return response.data.result.recipes || [];
+            }
+            throw new Error(response.data.message || '레시피를 불러오는데 실패했습니다.');
+          },
+        });
+
         console.log('✅ 주요 데이터 prefetch 완료');
       } catch (error) {
         console.error('Prefetch 에러:', error);
