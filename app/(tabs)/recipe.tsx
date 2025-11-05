@@ -18,7 +18,8 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import axiosInstance from '@/api/axiosInstance';
 import { Link } from 'expo-router';
-import { useQuery } from '@tanstack/react-query';
+// ✅ [수정] useInfiniteQuery, InfiniteData 임포트
+import { useQuery, useInfiniteQuery, InfiniteData } from '@tanstack/react-query';
 
 // --- 타입 정의 (API 응답과 일치) ---
 interface AuthorInfo {
@@ -41,6 +42,14 @@ interface Recipe {
     // createdAt: string;
 }
 
+// ✅ [수정] 백엔드 DTO와 일치하는 응답 래퍼 타입 정의
+interface RecipeListResponse {
+    recipes: Recipe[];
+    hasNext: boolean;
+    nextCursor: number | null; // DTO에서 Long 타입이므로 number | null로 매핑
+}
+
+// ✅ [수정] FlatList의 data 타입 (짝수/홀수 처리를 위해)
 type RecipeListItem = Recipe | { isEmpty: true; recipeId: string };
 
 // --- 상수 정의 ---
@@ -129,6 +138,31 @@ const RecipeCard: React.FC<{ item: RecipeListItem }> = ({ item }) => {
 };
 // --- ⬆️ 레시피 카드 컴포넌트 끝 ---
 
+// --- ✅ [수정] API 호출 함수를 밖으로 분리 ---
+const fetchRecipes = async ({
+                                pageParam, // cursorId
+                                queryParams, // keyword, sortBy, category 등
+                            }: {
+    pageParam: number | null;
+    queryParams: any;
+}) => {
+    const params = {
+        ...queryParams,
+        cursorId: pageParam, // pageParam을 cursorId로 사용
+        size: 20, // (기존 size와 동일하게)
+    };
+
+    // 💡 디버깅: API 요청 파라미터 확인
+    console.log('Fetching recipes with params:', params);
+
+    const response = await axiosInstance.get('/api/recipes', { params });
+    if (response.data.isSuccess) {
+        // 💡 중요: `result` 객체 전체 (recipes, hasNext, nextCursor 포함)를 반환
+        return response.data.result as RecipeListResponse;
+    }
+    throw new Error(response.data.message || '레시피를 불러오는 데 실패했습니다.');
+};
+
 
 // --- 레시피 페이지 메인 컴포넌트 (변경 없음) ---
 export default function RecipeScreen() {
@@ -139,8 +173,9 @@ export default function RecipeScreen() {
 
     const flatListRef = useRef<FlatList<RecipeListItem>>(null);
 
+// ✅ [수정] queryParams에서 size와 cursorId를 제거 (fetchRecipes 함수에서 관리)
     const queryParams = useMemo(() => {
-        const params: any = { keyword: submittedQuery || undefined, size: 20 };
+        const params: any = { keyword: submittedQuery || undefined };
         if (CATEGORY_MAP[activeFilter]) {
             params.category = CATEGORY_MAP[activeFilter];
             params.sortBy = 'LATEST';
@@ -150,24 +185,41 @@ export default function RecipeScreen() {
         return params;
     }, [activeFilter, submittedQuery]);
 
+// ✅ [수정] useQuery를 useInfiniteQuery로 변경
     const {
-        data: fetchedRecipes = [],
+        data, // data 객체에는 이제 pages와 pageParams가 포함됨
         isLoading,
         error,
         refetch,
-    } = useQuery({
-        queryKey: ['recipes', queryParams],
-        queryFn: async () => {
-            const response = await axiosInstance.get('/api/recipes', { params: queryParams });
-            if (response.data.isSuccess) {
-                return response.data.result.recipes || [];
-            }
-            throw new Error(response.data.message || '레시피를 불러오는데 실패했습니다.');
+        fetchNextPage, // 다음 페이지를 불러오는 함수
+        hasNextPage, // 다음 페이지 존재 여부 (DTO의 hasNext와 연결됨)
+        isFetchingNextPage, // 다음 페이지 로딩 중 상태
+    } = useInfiniteQuery<
+        RecipeListResponse,
+        Error,
+        InfiniteData<RecipeListResponse>, // data 타입
+        (string | { [key: string]: string | undefined })[], // queryKey 타입
+        number | null // pageParam(커서) 타입
+    >({
+        queryKey: ['recipes', queryParams], // 필터가 바뀌면 쿼리 키가 변경되어 자동 새로고침
+        queryFn: ({ pageParam = null }) => fetchRecipes({ pageParam, queryParams }),
+        initialPageParam: null, // 첫 페이지는 커서 null
+        getNextPageParam: (lastPage) => {
+            // 💡 마지막 페이지의 nextCursor 값을 다음 pageParam으로 반환
+            // 💡 hasNext가 false이면 undefined를 반환하여 `hasNextPage`를 false로 설정
+            return lastPage.hasNext ? lastPage.nextCursor : undefined;
         },
         staleTime: 1000 * 60 * 5,
         placeholderData: (previousData) => previousData,
     });
 
+// ✅ [수정] data.pages를 flatMap으로 펼쳐서 하나의 배열로 만듦
+    const fetchedRecipes = useMemo(() =>
+            data?.pages.flatMap((page) => page.recipes) ?? [],
+        [data]
+    );
+
+    // (기존 2열 레이아웃 맞추기용 로직 - 동일)
     const recipes = useMemo(() => {
         if (fetchedRecipes.length % 2 === 1) {
             return [...fetchedRecipes, { isEmpty: true, recipeId: 'empty' }] as RecipeListItem[];
@@ -225,15 +277,34 @@ export default function RecipeScreen() {
         </View>
     );
 
+// ✅ [수정] ListEmptyComponent 로직 (recipes.length === 0)
     const renderListEmptyComponent = () => {
-        if (isLoading) return <ActivityIndicator size="large" color="#89FFF1" style={{ marginTop: 50 }} />;
-        if (error) return (
-            <View style={styles.errorContainer}>
-                <Text style={styles.errorText}>{error.message || '레시피를 불러오는 중 오류가 발생했습니다.'}</Text>
-                <TouchableOpacity style={styles.retryButton} onPress={() => refetch()}><Text style={styles.retryButtonText}>다시 시도</Text></TouchableOpacity>
-            </View>
-        );
-        return <View style={styles.emptyContainer}><Text>표시할 레시피가 없어요.</Text></View>;
+        // 💡 첫 로딩 (데이터가 아예 없을 때)
+        if (isLoading && recipes.length === 0) {
+            return <ActivityIndicator size="large" color="#89FFF1" style={{ marginTop: 50 }} />;
+        }
+        // 💡 에러 발생 (데이터가 아예 없을 때)
+        if (error && recipes.length === 0) {
+            return (
+                <View style={styles.errorContainer}>
+                    <Text style={styles.errorText}>{error.message || '레시피를 불러오는 중 오류가 발생했습니다.'}</Text>
+                    <TouchableOpacity style={styles.retryButton} onPress={() => refetch()}><Text style={styles.retryButtonText}>다시 시도</Text></TouchableOpacity>
+                </View>
+            );
+        }
+        // 💡 로딩/에러도 아니고 데이터도 없을 때
+        if (recipes.length === 0) {
+            return <View style={styles.emptyContainer}><Text>표시할 레시피가 없어요.</Text></View>;
+        }
+        return null;
+    };
+
+    // ✅ [수정] ListFooterComponent 추가 (다음 페이지 로딩)
+    const renderListFooterComponent = () => {
+        if (isFetchingNextPage) {
+            return <ActivityIndicator size="small" color="#888" style={{ marginVertical: 20 }} />;
+        }
+        return null;
     };
 
     return (
@@ -241,15 +312,26 @@ export default function RecipeScreen() {
             <FlatList
                 ref={flatListRef}
                 ListHeaderComponent={renderHeader}
-                data={recipes}
+                data={recipes} // ✅ [수정] data={recipes} (기존과 동일)
                 renderItem={({ item }) => <RecipeCard item={item} />}
                 keyExtractor={(item) => item.recipeId.toString()}
                 numColumns={2}
                 contentContainerStyle={styles.listContentContainer}
                 columnWrapperStyle={styles.row}
-                ListEmptyComponent={renderListEmptyComponent}
+                ListEmptyComponent={renderListEmptyComponent} // ✅ [수정] (기존과 동일)
                 onRefresh={onRefresh}
-                refreshing={isLoading}
+                refreshing={isLoading} // 💡 refreshing은 useInfiniteQuery의 isLoading을 사용
+
+                // --- ✅ [수정] 무한 스크롤을 위한 props 추가 ---
+                onEndReachedThreshold={0.5} // 목록의 50% 지점에 도달했을 때
+                onEndReached={() => {
+                    // 💡 다음 페이지가 있고, 현재 로딩 중이 아닐 때
+                    if (hasNextPage && !isFetchingNextPage) {
+                        fetchNextPage();
+                    }
+                }}
+                ListFooterComponent={renderListFooterComponent} // 💡 다음 페이지 로딩 인디케이터
+                // ----------------------------------------
             />
             <Link href="/recipe/create" asChild>
                 <TouchableOpacity style={styles.fab}>

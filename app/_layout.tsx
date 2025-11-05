@@ -87,19 +87,29 @@ export default function RootLayout() {
           },
         });
 
-        // 3. 레시피 리스트 prefetch (최신순, 20개)
-        await queryClient.prefetchQuery({
-          queryKey: ['recipes', { sortBy: 'LATEST', size: 20 }],
-          queryFn: async () => {
-            const response = await axiosInstance.get('/api/recipes', {
-              params: { sortBy: 'LATEST', size: 20 },
-            });
-            if (response.data.isSuccess) {
-              return response.data.result.recipes || [];
-            }
-            throw new Error(response.data.message || '레시피를 불러오는데 실패했습니다.');
-          },
-        });
+        // 3. [수정] 레시피 리스트 prefetch (useInfiniteQuery 형식에 맞게)
+          await queryClient.prefetchQuery({
+              // 💡 queryKey를 recipe.tsx의 useInfiniteQuery와 일치시킵니다.
+              queryKey: ['recipes', { sortBy: 'LATEST' }],
+              queryFn: async () => {
+                  const response = await axiosInstance.get('/api/recipes', {
+                      params: {
+                          sortBy: 'LATEST',
+                          size: 20,
+                          cursorId: null // 💡 첫 페이지 prefetch
+                      },
+                  });
+
+                  if (response.data.isSuccess) {
+                      // 💡 useInfiniteQuery가 기대하는 InfiniteData 형식으로 데이터를 가공
+                      return {
+                          pages: [response.data.result], // 💡 API 응답(RecipeListResponse)을 pages 배열에 넣음
+                          pageParams: [null],           // 💡 첫 페이지의 pageParam은 null
+                      };
+                  }
+                  throw new Error(response.data.message || '레시피를 불러오는데 실패했습니다.');
+              },
+          });
 
           // 💡 4. [추가] 기본 재료 목록 prefetch
           await queryClient.prefetchQuery({
