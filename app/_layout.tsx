@@ -60,7 +60,7 @@ export default function RootLayout() {
     const prefetchMainData = async () => {
       try {
         // 1. 프로필 정보 prefetch
-        queryClient.prefetchQuery({
+        await queryClient.prefetchQuery({
           queryKey: ['profile'],
           queryFn: async () => {
             const response = await axiosInstance.get('/api/auth/me');
@@ -72,7 +72,7 @@ export default function RootLayout() {
         });
 
         // 2. 냉장고 재료 개수 prefetch
-        queryClient.prefetchQuery({
+        await queryClient.prefetchQuery({
           queryKey: ['ingredientCount'],
           queryFn: async () => {
             const response = await axiosInstance.get('/api/refrigerators/stored-items/count');
