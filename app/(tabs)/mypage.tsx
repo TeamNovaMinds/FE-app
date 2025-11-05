@@ -19,6 +19,7 @@ import axiosInstance from '@/api/axiosInstance';
 import { useAuthStore } from '@/store/authStore';
 import * as ImagePicker from 'expo-image-picker';
 import { uploadImage, validateFileSize, validateFileType } from '@/utils/imageUpload';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 // --- (타입 정의, RecipePreviewCard 등은 기존과 동일) ---
 // ... (생략) ...
@@ -74,6 +75,29 @@ export default function MyPageScreen() {
     const [likedRecipes, setLikedRecipes] = useState<SimpleRecipe[]>([]);
     const [myRecipes, setMyRecipes] = useState<SimpleRecipe[]>([]);
     const [myPosts, setMyPosts] = useState<SimplePost[]>([]);
+    const queryClient = useQueryClient();
+
+    // React Query로 프로필 정보 캐싱
+    const { data: profileData, isLoading: isProfileLoading } = useQuery({
+        queryKey: ['profile'],
+        queryFn: async () => {
+            const response = await axiosInstance.get('/api/auth/me');
+            if (response.data.isSuccess) {
+                return response.data.result;
+            }
+            throw new Error(response.data.message || '프로필 조회 실패');
+        },
+        staleTime: 1000 * 60, // 1분간 신선한 데이터로 간주
+        gcTime: 1000 * 60 * 5, // 5분간 캐시 유지
+        refetchOnMount: 'always', // 화면 진입 시 항상 재조회
+    });
+
+    // profileData가 변경되면 zustand store 업데이트
+    React.useEffect(() => {
+        if (profileData) {
+            updateUser(profileData);
+        }
+    }, [profileData, updateUser]);
 
     const fetchLikedRecipes = async () => {
         try {
@@ -162,14 +186,13 @@ export default function MyPageScreen() {
             const { imageUrl } = await uploadImage(imageUri, fileName);
 
             // 백엔드에 프로필 이미지 URL 업데이트 요청
-            // NOTE: 실제 백엔드 API 엔드포인트에 맞게 수정이 필요합니다
-            const response = await axiosInstance.patch('/api/users/profile', {
-                profileImageUrl: imageUrl,
+            const response = await axiosInstance.patch('/api/auth/profile-image', {
+                profileImgUrl: imageUrl,
             });
 
             if (response.data.isSuccess) {
-                // 로컬 상태 업데이트
-                updateUser({ profileImageUrl: imageUrl });
+                // 프로필 캐시 무효화하여 최신 정보 다시 가져오기
+                await queryClient.invalidateQueries({ queryKey: ['profile'] });
                 Alert.alert('성공', '프로필 이미지가 변경되었습니다.');
             } else {
                 throw new Error(response.data.message || '프로필 업데이트에 실패했습니다.');
@@ -193,7 +216,7 @@ export default function MyPageScreen() {
                     </View>
                 ) : (
                     <Image
-                        source={profile?.profileImageUrl ? { uri: profile.profileImageUrl } : require('../../assets/images/logo.png')}
+                        source={profile?.profileImgUrl ? { uri: profile.profileImgUrl } : require('../../assets/images/logo.png')}
                         style={styles.profileImage}
                     />
                 )}
@@ -210,11 +233,11 @@ export default function MyPageScreen() {
             </View>
             <View style={styles.followSection}>
                 <View style={styles.followBox}>
-                    <Text style={styles.followCount}>0</Text>
+                    <Text style={styles.followCount}>{profile?.followerCount ?? 0}</Text>
                     <Text style={styles.followLabel}>팔로워</Text>
                 </View>
                 <View style={styles.followBox}>
-                    <Text style={styles.followCount}>0</Text>
+                    <Text style={styles.followCount}>{profile?.followingCount ?? 0}</Text>
                     <Text style={styles.followLabel}>팔로잉</Text>
                 </View>
             </View>
@@ -229,7 +252,7 @@ export default function MyPageScreen() {
                 />
                 <Text style={styles.pointLabel}>보유 포인트</Text>
             </View>
-            <Text style={styles.pointValue}>0 P</Text>
+            <Text style={styles.pointValue}>{profile?.point ?? 0} P</Text>
         </View>
     );
     const renderPreviewList = (data: (SimpleRecipe | SimplePost)[], viewAllLink: string) => (
