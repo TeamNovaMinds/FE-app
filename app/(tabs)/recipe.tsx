@@ -79,7 +79,7 @@ const formatDifficulty = (difficulty: 'EASY' | 'MEDIUM' | 'HARD' | string) => {
     }
 };
 
-// --- ⬇️ [수정] 레시피 카드 컴포넌트 (새 레이아웃) ---
+// --- 레시피 카드 컴포넌트 ---
 const RecipeCard: React.FC<{ item: RecipeListItem }> = ({ item }) => {
     if ('isEmpty' in item) {
         return <View style={[styles.cardContainer, styles.emptyCard]} />;
@@ -135,7 +135,7 @@ const RecipeCard: React.FC<{ item: RecipeListItem }> = ({ item }) => {
         </Link>
     );
 };
-// --- ⬆️ 레시피 카드 컴포넌트 끝 ---
+// --- 레시피 카드 컴포넌트 끝 ---
 
 // --- API 호출 함수를 밖으로 분리 ---
 const fetchRecipes = async ({
