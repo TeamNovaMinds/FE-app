@@ -174,7 +174,7 @@ export default function RecipeDetailScreen() {
     }, [recipe, navigation, handleMoreOptions]);
 
     const navigateToComments = () => {
-        router.push(`api/recipe/comments/${recipeId}`);
+        router.push(`recipe/comments/${recipeId}`);
     };
 
     // (기존) 난이도/카테고리 텍스트 변환
@@ -322,9 +322,16 @@ export default function RecipeDetailScreen() {
 
     const renderCommentsPreview = () => (
         <View style={styles.sectionContainer}>
-            <Text style={styles.sectionTitle}>
-                댓글 ({recipe?.commentPreview.totalCommentCount})
-            </Text>
+            {/* 2-1. 헤더 View로 감싸기 */}
+            <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>
+                    댓글 ({recipe?.commentPreview.totalCommentCount})
+                </Text>
+                {/* 2-2. 버튼을 헤더 View 안으로 이동 */}
+                <TouchableOpacity onPress={navigateToComments}>
+                    <Text style={styles.viewMoreComments}>전체보기</Text>
+                </TouchableOpacity>
+            </View>
             {recipe?.commentPreview.previewComments.map((comment: Comment) => (
                 <View key={comment.commentId} style={styles.commentItem}>
                     <Image
@@ -348,10 +355,6 @@ export default function RecipeDetailScreen() {
                     </View>
                 </View>
             ))}
-            <TouchableOpacity onPress={navigateToComments}>
-                {/* 👈 [수정] 3. 댓글 페이지 이동 */}
-                <Text style={styles.viewMoreComments}>댓글 전체보기</Text>
-            </TouchableOpacity>
         </View>
     );
 
@@ -435,7 +438,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#fff',
     },
     container: {
-        flex: 1,
+        // flex: 1,
     },
     contentContainer: {
         paddingBottom: 100, // 하단 고정 푸터 공간 확보
@@ -515,6 +518,13 @@ const styles = StyleSheet.create({
     },
     sectionContainer: {
         marginBottom: 16,
+    },
+    // ✅ 3. sectionHeader 스타일을 새로 추가합니다.
+    sectionHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 12, // 👈 기존 sectionTitle의 여백을 여기로 이동
     },
     sectionTitle: {
         fontSize: 20,
@@ -607,12 +617,9 @@ const styles = StyleSheet.create({
         marginTop: 4,
     },
     viewMoreComments: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        color: '#777',
-        textAlign: 'center',
-        marginTop: 10,
-        paddingVertical: 8,
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#555',
     },
     footer: {
         flexDirection: 'row',
