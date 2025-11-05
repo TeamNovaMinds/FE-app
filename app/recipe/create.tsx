@@ -300,16 +300,16 @@ export default function CreateRecipeScreen() {
                 options={{
                     title: '레시피 등록',
                     headerBackTitle: '레시피 목록',
-                    // ✅ 1. headerRight 부분을 수정합니다.
+                    // 1. headerRight 부분을 수정합니다.
                     headerRight: () => (
                         <TouchableOpacity
                             onPress={handleCreateRecipe}
                             disabled={isSubmitting}
-                            // ✅ 2. 버튼 자체에 정렬 및 여백 스타일을 적용합니다.
+                            // 2. 버튼 자체에 정렬 및 여백 스타일을 적용합니다.
                             style={styles.headerRightButton}
                         >
                             {isSubmitting ? (
-                                // ✅ 3. ActivityIndicator에서 개별 스타일을 제거합니다.
+                                // 3. ActivityIndicator에서 개별 스타일을 제거합니다.
                                 <ActivityIndicator color="#007AFF" />
                             ) : (
                                 <Text style={styles.headerSubmitButtonText}>등록</Text>
@@ -381,11 +381,11 @@ export default function CreateRecipeScreen() {
                     사진을 터치하여 메인 이미지를 선택하실 수 있습니다.
                 </Text>
 
-                {/* ✅ onFocus 핸들러 제거 */}
+                {/* onFocus 핸들러 제거 */}
                 <Text style={styles.label}>레시피 제목</Text>
                 <TextInput style={styles.input} placeholder="예) 초간단 김치볶음밥" value={title} onChangeText={setTitle} />
 
-                {/* ✅ onFocus 핸들러 제거 */}
+                {/* onFocus 핸들러 제거 */}
                 <Text style={styles.label}>레시피 설명</Text>
                 <TextInput style={styles.inputDescription} placeholder="이 레시피에 대해 간단히 설명해주세요." value={description} onChangeText={setDescription} multiline />
 
@@ -478,7 +478,7 @@ export default function CreateRecipeScreen() {
                         <TouchableOpacity style={[styles.input, styles.flexInput, styles.ingredientButton]} onPress={() => openIngredientModal(index)}>
                             <Text style={item.description ? styles.ingredientText : styles.ingredientPlaceholder}>{item.description || '재료 검색'}</Text>
                         </TouchableOpacity>
-                        {/* ✅ onFocus 핸들러 제거 */}
+                        {/* onFocus 핸들러 제거 */}
                         <TextInput style={[styles.input, { flex: 0.6 }]} placeholder="용량 (예: 300g)" value={item.amount} onChangeText={(text) => handleIngredientChange(index, 'amount', text)} />
                         {ingredients.length > 1 && (
                             <TouchableOpacity onPress={() => removeIngredient(index)} style={styles.deleteButton}>
@@ -504,7 +504,7 @@ export default function CreateRecipeScreen() {
                                     placeholder="만드는 방법을 입력해주세요."
                                     value={item.description}
                                     onChangeText={(text) => handleStepChange(index, text)}
-                                    // ✅ 여기만 onFocus 핸들러를 유지합니다. (함수 이름 변경)
+                                    // 여기만 onFocus 핸들러를 유지합니다.
                                     onFocus={handleStepInputFocus}
                                 />
                                 <TouchableOpacity style={styles.stepImagePicker} onPress={() => handlePickImage('step', index)}>
@@ -639,7 +639,7 @@ export default function CreateRecipeScreen() {
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#fff' },
     flexContainer: { flex: 1 },
-    // ✅ 5. '등록' 버튼을 감싸는 컨테이너 스타일
+    // 5. '등록' 버튼을 감싸는 컨테이너 스타일
     headerRightButton: {
         justifyContent: 'center',
         alignItems: 'center',
@@ -686,7 +686,7 @@ const styles = StyleSheet.create({
         height: '100%',
     },
 
-    // ✅ 3. 대표 사진 배지 스타일
+    // 3. 대표 사진 배지 스타일
     mainImageBadge: {
         position: 'absolute',
         top: 4,
@@ -703,7 +703,7 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
     },
 
-    // ✅ 3. 삭제 버튼 스타일 (zIndex 추가)
+    // 3. 삭제 버튼 스타일 (zIndex 추가)
     imageDeleteButton: {
         position: 'absolute',
         top: 4,
