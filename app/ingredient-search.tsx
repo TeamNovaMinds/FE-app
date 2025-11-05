@@ -21,7 +21,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import axiosInstance from '@/api/axiosInstance';
 import debounce from 'lodash.debounce';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
@@ -60,15 +60,28 @@ const CATEGORIES = [
     { key: 'FROZEN', name: '냉동' },
 ];
 
+// 💡 2. API 호출 함수를 컴포넌트 밖으로 분리
+const fetchIngredients = async (keyword: string, category: string) => {
+    try {
+        const params: any = {
+            keyword: keyword || undefined,
+            category: category !== 'ALL' ? category : undefined,
+        };
+        const response = await axiosInstance.get('/api/ingredients', { params });
+        if (response.data.isSuccess) {
+            return response.data.result.ingredients as IngredientDTO[]; // 💡 데이터 반환
+        }
+        throw new Error(response.data.message || "재료 검색 에러");
+    } catch (error) {
+        console.error("재료 검색 에러:", error);
+        throw error; // 💡 React Query가 에러를 인지하도록 throw
+    }
+};
 
 export default function IngredientSearchScreen() {
     const router = useRouter();
     const queryClient = useQueryClient();
     const { storageType } = useLocalSearchParams<{ storageType?: string; }>();
-    const [searchQuery, setSearchQuery] = useState('');
-    const [results, setResults] = useState<IngredientDTO[]>([]);
-    const [isLoading, setIsLoading] = useState(false);
-    const [activeCategory, setActiveCategory] = useState<string>('ALL');
 
     // 3. 스토어에서 상태와 함수들 가져오기
     const { pendingItems, removeItem, clearItems } = usePendingIngredientsStore();
@@ -99,34 +112,42 @@ export default function IngredientSearchScreen() {
         }
     });
 
+    // 💡 3. 검색어 상태 (즉시)
+    const [searchQuery, setSearchQuery] = useState('');
+    // 💡 4. 디바운스된(입력이 멈춘 후 반영될) 검색어 상태
+    const [debouncedQuery, setDebouncedQuery] = useState('');
+    const [activeCategory, setActiveCategory] = useState<string>('ALL');
+
+    // 💡 5. results, isLoading 상태 제거 (useQuery가 관리)
+    // const [results, setResults] = useState<IngredientDTO[]>([]);
+    // const [isLoading, setIsLoading] = useState(false);
+
     const translateY = useSharedValue(0);
     const context = useSharedValue({ y: 0 });
 
-    // (fetchIngredients, debouncedSearch, useEffects ... 기존과 동일)
-    const fetchIngredients = async (keyword: string, category: string) => {
-        setIsLoading(true);
-        try {
-            const params: any = {
-                keyword: keyword || undefined,
-                category: category !== 'ALL' ? category : undefined,
-            };
-            const response = await axiosInstance.get('/api/ingredients', { params });
-            if (response.data.isSuccess) {
-                setResults(response.data.result.ingredients);
-            }
-        } catch (error) {
-            console.error("재료 검색 에러:", error);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-    const debouncedSearch = useCallback(debounce(fetchIngredients, 300), []);
+    // 💡 6. searchQuery가 변경될 때마다 300ms 지연 후 debouncedQuery를 업데이트
     useEffect(() => {
-        debouncedSearch(searchQuery, activeCategory);
-    }, [searchQuery, activeCategory, debouncedSearch]);
-    useEffect(() => {
-        fetchIngredients('', 'ALL');
-    }, []);
+        const handler = setTimeout(() => {
+            setDebouncedQuery(searchQuery);
+        }, 300);
+
+        return () => {
+            clearTimeout(handler);
+        };
+    }, [searchQuery]);
+
+    // 💡 7. React Query의 useQuery로 데이터 페칭
+    const {
+        data: results = [], // 💡 data를 results로 사용, 기본값은 빈 배열
+        isLoading,          // 💡 React Query가 제공하는 isLoading 사용
+        error,              // 💡 에러 상태
+    } = useQuery<IngredientDTO[], Error>({
+        // 💡 디바운스된 검색어(debouncedQuery)와 카테고리를 key로 사용
+        queryKey: ['ingredients', debouncedQuery, activeCategory],
+        queryFn: () => fetchIngredients(debouncedQuery, activeCategory),
+        staleTime: 1000 * 60 * 5, // 5분 동안 캐시된 데이터를 신선하다고 간주
+        placeholderData: (previousData) => previousData, // 로딩 중 이전 데이터 표시
+    });
 
     // (모달 닫기, 제스처, 애니메이션 스타일 ... 기존과 동일)
     const closeModal = () => {
@@ -248,7 +269,7 @@ export default function IngredientSearchScreen() {
                                         style={styles.searchInput}
                                         placeholder="재료 이름을 검색하세요..."
                                         value={searchQuery}
-                                        onChangeText={setSearchQuery}
+                                        onChangeText={setSearchQuery} // 💡 state를 직접 업데이트
                                     />
                                     {searchQuery.length > 0 && (
                                         <TouchableOpacity onPress={() => setSearchQuery('')}>
@@ -262,24 +283,22 @@ export default function IngredientSearchScreen() {
                         {renderCategoryFilters()}
 
 
-                        {/* 8. FlatList renderItem 수정 */}
-                        {isLoading && results.length === 0 ? (
+                        {/* 💡 9. FlatList 렌더링 로직 수정 (isLoading, error 사용) */}
+                        {isLoading && results.length === 0 ? ( // 💡 첫 로딩 또는 검색 중일 때
                             <ActivityIndicator size="large" style={{ marginTop: 20 }} />
                         ) : (
                             <FlatList
-                                data={results}
+                                data={results} // 💡 useQuery에서 온 results 사용
                                 keyExtractor={(item) => item.id.toString()}
                                 keyboardShouldPersistTaps="handled"
-                                style={{ flex: 1 }} // 9. FlatList가 남은 공간을 모두 차지하도록
+                                style={{ flex: 1 }}
                                 numColumns={4}
                                 columnWrapperStyle={styles.gridRow}
                                 contentContainerStyle={styles.gridContainer}
                                 renderItem={({ item }) => {
-                                    // 10. 스토어를 확인하여 선택 상태 결정
                                     const isSelected = (pendingItems as PendingIngredient[]).some((p: PendingIngredient) => p.ingredientId === item.id);
                                     return (
                                         <TouchableOpacity
-                                            // 11. 선택 시 활성 스타일 적용
                                             style={[
                                                 styles.itemContainer,
                                                 isSelected && styles.itemContainerActive
@@ -290,7 +309,6 @@ export default function IngredientSearchScreen() {
                                                 source={item.imageUrl ? { uri: item.imageUrl } : require('../assets/images/JustFridge_logo.png')}
                                                 style={styles.itemImage}
                                             />
-                                            {/* 12. 선택 시 텍스트 스타일 적용 */}
                                             <Text
                                                 style={[
                                                     styles.itemName,
@@ -305,7 +323,10 @@ export default function IngredientSearchScreen() {
                                 }}
                                 ListEmptyComponent={
                                     <View style={styles.emptyContainer}>
-                                        <Text>검색 결과가 없습니다.</Text>
+                                        {/* 💡 에러가 있으면 에러 메시지 표시 */}
+                                        <Text>
+                                            {error ? `오류: ${error.message}` : "검색 결과가 없습니다."}
+                                        </Text>
                                     </View>
                                 }
                             />

@@ -101,10 +101,25 @@ export default function RootLayout() {
           },
         });
 
-        console.log('✅ 주요 데이터 prefetch 완료');
+          // 💡 4. [추가] 기본 재료 목록 prefetch
+          await queryClient.prefetchQuery({
+              queryKey: ['ingredients', '', 'ALL'], // ingredient-search.tsx의 기본 queryKey와 일치
+              queryFn: async () => {
+                  const response = await axiosInstance.get('/api/ingredients', {
+                      params: { keyword: undefined, category: undefined },
+                  });
+                  if (response.data.isSuccess) {
+                      return response.data.result.ingredients || [];
+                  }
+                  throw new Error(response.data.message || '재료 목록을 불러오는데 실패했습니다.');
+              },
+          });
+
+          // 💡 5. 로그 메시지 수정
+          console.log('✅ 주요 데이터 prefetch 완료 (재료 목록 포함)');
       } catch (error) {
-        console.error('Prefetch 에러:', error);
-        // prefetch 실패는 조용히 처리 (사용자 경험에 영향 없음)
+          console.error('Prefetch 에러:', error);
+          // prefetch 실패는 조용히 처리 (사용자 경험에 영향 없음)
       }
     };
 
