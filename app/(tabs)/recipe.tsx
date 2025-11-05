@@ -316,7 +316,10 @@ export default function RecipeScreen() {
                 renderItem={({ item }) => <RecipeCard item={item} />}
                 keyExtractor={(item) => item.recipeId.toString()}
                 numColumns={2}
-                contentContainerStyle={styles.listContentContainer}
+                contentContainerStyle={[
+                    styles.listContentContainer, // 기본 스타일
+                    recipes.length === 0 && styles.listContentContainerEmpty // 비어있을 때만 flexGrow: 1 적용
+                ]}
                 columnWrapperStyle={styles.row}
                 ListEmptyComponent={renderListEmptyComponent} // ✅ [수정] (기존과 동일)
                 onRefresh={onRefresh}
@@ -370,8 +373,10 @@ const styles = StyleSheet.create({
     filterText: { fontSize: 14, color: '#555' },
     activeFilterText: { color: '#fff', fontWeight: 'bold' },
     listContentContainer: {
+        paddingBottom: 120,
+    },
+    listContentContainerEmpty: {
         flexGrow: 1,
-        paddingBottom: 150,
     },
     row: { justifyContent: 'space-between', paddingHorizontal: 8,},
 
