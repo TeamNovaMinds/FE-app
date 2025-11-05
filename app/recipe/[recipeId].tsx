@@ -387,6 +387,7 @@ export default function RecipeDetailScreen() {
                 options={{
                     title: '레시피',
                     headerTintColor: '#000',
+                    headerBackTitle: '레시피 목록',
                 }}
             />
 
