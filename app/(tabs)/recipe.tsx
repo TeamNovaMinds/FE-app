@@ -58,7 +58,8 @@ const BANNERS: string[] = [
     'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?q=80&w=2880&auto.format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%D%D',
 ];
 
-const FILTERS: string[] = ['최신순', '좋아요순', '한식', '중식', '일식', '양식', '아시안', '디저트', '베이커리', '간식', '음료/술'];
+const SORT_FILTERS: string[] = ['최신순', '좋아요순'];
+const CATEGORY_FILTERS: string[] = ['전체', '한식', '중식', '일식', '양식', '아시안', '디저트', '베이커리', '간식', '음료/술'];
 const SORT_MAP: { [key: string]: string } = { '최신순': 'LATEST', '좋아요순': 'LIKES' };
 const CATEGORY_MAP: { [key: string]: string } = { '한식': 'KOREAN', '중식': 'CHINESE', '일식': 'JAPANESE', '양식': 'WESTERN', '아시안': 'ASIAN', '디저트': 'DESSERT', '베이커리': 'BAKERY', '간식': 'SNACK', '음료/술': 'DRINK' };
 
@@ -165,22 +166,26 @@ const fetchRecipes = async ({
 export default function RecipeScreen() {
     const [searchQuery, setSearchQuery] = useState('');
     const [submittedQuery, setSubmittedQuery] = useState('');
-    const [activeFilter, setActiveFilter] = useState('최신순');
+    const [activeSortFilter, setActiveSortFilter] = useState('최신순');
+    const [activeCategoryFilter, setActiveCategoryFilter] = useState('전체');
     const [activeBannerIndex, setActiveBannerIndex] = useState(0);
 
     const flatListRef = useRef<FlatList<RecipeListItem>>(null);
 
-// queryParams에서 size와 cursorId를 제거 (fetchRecipes 함수에서 관리)
+// queryParams: 정렬 기준과 카테고리를 독립적으로 전달
     const queryParams = useMemo(() => {
         const params: any = { keyword: submittedQuery || undefined };
-        if (CATEGORY_MAP[activeFilter]) {
-            params.category = CATEGORY_MAP[activeFilter];
-            params.sortBy = 'LATEST';
-        } else {
-            params.sortBy = SORT_MAP[activeFilter] || 'LATEST';
+
+        // 정렬 기준 설정
+        params.sortBy = SORT_MAP[activeSortFilter] || 'LATEST';
+
+        // 카테고리 설정 ('전체'가 아닐 때만)
+        if (activeCategoryFilter !== '전체' && CATEGORY_MAP[activeCategoryFilter]) {
+            params.category = CATEGORY_MAP[activeCategoryFilter];
         }
+
         return params;
-    }, [activeFilter, submittedQuery]);
+    }, [activeSortFilter, activeCategoryFilter, submittedQuery]);
 
 // useQuery를 useInfiniteQuery로 변경
     const {
@@ -264,13 +269,38 @@ export default function RecipeScreen() {
                 <TextInput style={styles.searchInput} placeholder="요리 이름을 검색해보세요" value={searchQuery} onChangeText={setSearchQuery} onSubmitEditing={handleSearch} returnKeyType="search" />
                 <TouchableOpacity onPress={handleSearch}><Ionicons name="search" size={20} color="#888" style={styles.searchIcon} /></TouchableOpacity>
             </View>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterContainer}>
-                {FILTERS.map((filter) => (
-                    <TouchableOpacity key={filter} style={[styles.filterButton, activeFilter === filter && styles.activeFilterButton]} onPress={() => setActiveFilter(filter)}>
-                        <Text style={[styles.filterText, activeFilter === filter && styles.activeFilterText]}>{filter}</Text>
-                    </TouchableOpacity>
-                ))}
-            </ScrollView>
+
+            {/* 정렬 필터 */}
+            <View style={styles.filterSection}>
+                <Text style={styles.filterLabel}>정렬</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScrollContainer}>
+                    {SORT_FILTERS.map((filter) => (
+                        <TouchableOpacity
+                            key={filter}
+                            style={[styles.filterButton, activeSortFilter === filter && styles.activeFilterButton]}
+                            onPress={() => setActiveSortFilter(filter)}
+                        >
+                            <Text style={[styles.filterText, activeSortFilter === filter && styles.activeFilterText]}>{filter}</Text>
+                        </TouchableOpacity>
+                    ))}
+                </ScrollView>
+            </View>
+
+            {/* 카테고리 필터 */}
+            <View style={styles.filterSection}>
+                <Text style={styles.filterLabel}>카테고리</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScrollContainer}>
+                    {CATEGORY_FILTERS.map((filter) => (
+                        <TouchableOpacity
+                            key={filter}
+                            style={[styles.filterButton, activeCategoryFilter === filter && styles.activeFilterButton]}
+                            onPress={() => setActiveCategoryFilter(filter)}
+                        >
+                            <Text style={[styles.filterText, activeCategoryFilter === filter && styles.activeFilterText]}>{filter}</Text>
+                        </TouchableOpacity>
+                    ))}
+                </ScrollView>
+            </View>
         </View>
     );
 
@@ -364,6 +394,9 @@ const styles = StyleSheet.create({
     searchContainer: { margin: 16, flexDirection: 'row', alignItems: 'center', backgroundColor: '#f0f0f0', borderRadius: 25, paddingHorizontal: 15 },
     searchInput: { flex: 1, height: 50, fontSize: 16 },
     searchIcon: { marginLeft: 10 },
+    filterSection: { marginBottom: 12 },
+    filterLabel: { fontSize: 15, fontWeight: 'bold', color: '#333', marginLeft: 16, marginBottom: 8 },
+    filterScrollContainer: { paddingHorizontal: 16 },
     filterContainer: { paddingHorizontal: 16, marginBottom: 16 },
     filterButton: { paddingVertical: 8, paddingHorizontal: 16, borderRadius: 20, backgroundColor: '#f0f0f0', marginRight: 8 },
     activeFilterButton: { backgroundColor: '#1298FF' },
