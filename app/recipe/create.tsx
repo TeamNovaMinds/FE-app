@@ -106,7 +106,12 @@ export default function CreateRecipeScreen() {
 
     const addIngredient = () => setIngredients([...ingredients, { ingredientId: null, description: '', amount: '' }]);
     const removeIngredient = (indexToRemove: number) => {
-        if (ingredients.length > 1) setIngredients(ingredients.filter((_, index) => index !== indexToRemove));
+        if (ingredients.length > 1) {
+            setIngredients(ingredients.filter((_, index) => index !== indexToRemove));
+        } else {
+            // 마지막 재료를 삭제할 때는 빈 재료 입력 필드로 리셋
+            setIngredients([{ ingredientId: null, description: '', amount: '' }]);
+        }
     };
 
     const handleStepChange = (index: number, value: string) => {
@@ -480,7 +485,7 @@ export default function CreateRecipeScreen() {
                         </TouchableOpacity>
                         {/* onFocus 핸들러 제거 */}
                         <TextInput style={[styles.input, { flex: 0.6 }]} placeholder="용량 (예: 300g)" value={item.amount} onChangeText={(text) => handleIngredientChange(index, 'amount', text)} />
-                        {ingredients.length > 1 && (
+                        {(item.description || ingredients.length > 1) && (
                             <TouchableOpacity onPress={() => removeIngredient(index)} style={styles.deleteButton}>
                                 <Ionicons name="remove-circle-outline" size={24} color="#FF6347" />
                             </TouchableOpacity>
@@ -785,7 +790,7 @@ const styles = StyleSheet.create({
     stepImagePreviewContainer: { marginTop: 12, position: 'relative', width: '100%', height: 150, borderRadius: 8, overflow: 'hidden' },
     stepImagePreview: { width: '100%', height: '100%', borderRadius: 8 },
     stepImageDeleteButton: { position: 'absolute', top: 8, right: 8, backgroundColor: 'rgba(255, 255, 255, 0.9)', borderRadius: 12, padding: 2 },
-    deleteButton: { justifyContent: 'center', paddingLeft: 8, paddingTop: 10 },
+    deleteButton: { justifyContent: 'center', paddingLeft: 8, paddingTop: 0 , paddingBottom: 8,},
     ingredientButton: { justifyContent: 'center', paddingVertical: 12 },
     ingredientText: { fontSize: 16, color: '#000' },
     ingredientPlaceholder: { fontSize: 16, color: '#c7c7cd' },
