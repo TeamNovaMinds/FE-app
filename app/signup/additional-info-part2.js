@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Alert, FlatList, ActivityIndicator, Image } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView as NewSafeAreaView } from 'react-native-safe-area-context'; // 경고 메시지 해결
 import axiosInstance from '../../api/axiosInstance';
 import useSignupStore, { useAuthStore } from '../../store/authStore';
@@ -14,7 +13,7 @@ const CATEGORIES = [
     { key: 'JAPANESE', name: '일식', icon: require('../../assets/images/JustFridge_logo.png') },
     { key: 'CHINESE', name: '중식', icon: require('../../assets/images/JustFridge_logo.png') },
     { key: 'WESTERN', name: '양식', icon: require('../../assets/images/JustFridge_logo.png') },
-    { key: 'ASIAN', name: '동양', icon: require('../../assets/images/JustFridge_logo.png') }, // '동양'으로 텍스트 변경
+    { key: 'ASIAN', name: '아시안', icon: require('../../assets/images/JustFridge_logo.png') }, // '동양'으로 텍스트 변경
     { key: 'SNACK', name: '분식', icon: require('../../assets/images/JustFridge_logo.png') }, // '분식'으로 텍스트 변경
     { key: 'HEALTHY', name: '건강식', icon: require('../../assets/images/JustFridge_logo.png') },
     { key: 'HOMEMADE', name: '혼밥', icon: require('../../assets/images/JustFridge_logo.png') },
@@ -90,18 +89,6 @@ export default function AdditionalInfoPart2Screen() {
 
     return (
         <NewSafeAreaView style={styles.safeArea}>
-            {/* --- 헤더 --- */}
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                    <Ionicons name="chevron-back" size={24} color="#8F8F8F" />
-                </TouchableOpacity>
-                <View style={styles.progressBarContainer}>
-                    <View style={[styles.progressBar, { backgroundColor: '#E0E0E0' }]} />
-                    <View style={[styles.progressBar, { backgroundColor: '#E0E0E0' }]} />
-                    <View style={[styles.progressBar, { backgroundColor: '#5FE5FF' }]} />
-                </View>
-            </View>
-
             <View style={styles.container}>
                 <Text style={styles.title}>관심 카테고리 설정</Text>
                 <Text style={styles.subtitle}>최대 3개까지 선택할 수 있어요.</Text>
@@ -136,29 +123,6 @@ export default function AdditionalInfoPart2Screen() {
 // --- 최종 디자인 스타일 ---
 const styles = StyleSheet.create({
     safeArea: { flex: 1, backgroundColor: '#FFFFFF' },
-    header: {
-        height: 50,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingHorizontal: 12,
-        borderBottomWidth: 0.5,
-        borderColor: '#D4D4D4',
-    },
-    backButton: {
-        padding: 5,
-    },
-    progressBarContainer: {
-        flexDirection: 'row',
-        flex: 1,
-        justifyContent: 'flex-end',
-        gap: 8,
-    },
-    progressBar: {
-        width: '25%',
-        height: 2,
-        borderRadius: 4,
-    },
     container: { flex: 1, paddingHorizontal: 30, paddingTop: 30, },
     title: { fontSize: 20, fontWeight: '600', textAlign: 'center', color: '#161616', marginBottom: 10 },
     subtitle: { fontSize: 14, color: '#727272', textAlign: 'center', marginBottom: 30, },

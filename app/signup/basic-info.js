@@ -36,13 +36,13 @@ export default function BasicInfoScreen() {
 
     // 비밀번호 유효성 검사
     const validatePassword = (text) => {
-        const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,16}$/;
+        const regex = /^(?=.*[a-zA-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,16}$/;
         if (!text) {
             setPasswordError('');
             return;
         }
         if (!regex.test(text)) {
-            setPasswordError('8-16자, 대/소문자, 숫자, 특수문자를 포함해야 합니다.');
+            setPasswordError('8-16자, 문자/숫자/특수문자를 포함해야 합니다.');
         } else {
             setPasswordError('');
         }

@@ -4,6 +4,7 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
+import { Image } from 'react-native';
 
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -148,6 +149,56 @@ export default function RootLayout() {
                 <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
                     <Stack>
                         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+
+                        {/* 로그인 페이지 */}
+                        <Stack.Screen
+                            name="index"
+                            options={{
+                                headerShown: true,
+                                headerTitle: () => (
+                                    <Image
+                                        source={require('../assets/icons/home_logo.png')}
+                                        style={{ width: 120, height: 40 }}
+                                        resizeMode="contain"
+                                    />
+                                ),
+                                headerBackVisible: false
+                            }}
+                        />
+
+                        {/* 회원가입 페이지들 */}
+                        <Stack.Screen
+                            name="signup/index"
+                            options={{
+                                title: '약관 동의',
+                                headerShown: true,
+                                headerBackTitle: '뒤로가기'
+                            }}
+                        />
+                        <Stack.Screen
+                            name="signup/basic-info"
+                            options={{
+                                title: '기본 정보',
+                                headerShown: true,
+                                headerBackTitle: '뒤로가기'
+                            }}
+                        />
+                        <Stack.Screen
+                            name="signup/additional-info-part1"
+                            options={{
+                                title: '프로필 설정',
+                                headerShown: true,
+                                headerBackTitle: '뒤로가기'
+                            }}
+                        />
+                        <Stack.Screen
+                            name="signup/additional-info-part2"
+                            options={{
+                                title: '관심 카테고리',
+                                headerShown: true,
+                                headerBackTitle: '뒤로가기'
+                            }}
+                        />
 
                         {/* 3. 재료 검색 (바텀 시트) 스크린 추가 (버튼 작동) */}
                         <Stack.Screen
