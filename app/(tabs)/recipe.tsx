@@ -366,7 +366,7 @@ const styles = StyleSheet.create({
     searchIcon: { marginLeft: 10 },
     filterContainer: { paddingHorizontal: 16, marginBottom: 16 },
     filterButton: { paddingVertical: 8, paddingHorizontal: 16, borderRadius: 20, backgroundColor: '#f0f0f0', marginRight: 8 },
-    activeFilterButton: { backgroundColor: '#2D303A' },
+    activeFilterButton: { backgroundColor: '#1298FF' },
     filterText: { fontSize: 14, color: '#555' },
     activeFilterText: { color: '#fff', fontWeight: 'bold' },
     listContentContainer: {

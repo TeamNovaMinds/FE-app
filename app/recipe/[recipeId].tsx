@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback, useState } from 'react';
 import {
     View,
     Text,
@@ -11,6 +11,7 @@ import {
     ActivityIndicator,
     SafeAreaView,
     Alert,
+    RefreshControl,
 } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useNavigation } from '@react-navigation/native';
@@ -34,6 +35,7 @@ export default function RecipeDetailScreen() {
         data: recipe,
         isLoading,
         error,
+        refetch,
     } = useQuery({
         queryKey: ['recipe', recipeId],
         queryFn: async () => {
@@ -176,6 +178,14 @@ export default function RecipeDetailScreen() {
     const navigateToComments = () => {
         router.push(`recipe/comments/${recipeId}`);
     };
+
+    // Pull-to-refresh 핸들러
+    const [refreshing, setRefreshing] = useState(false);
+    const onRefresh = useCallback(async () => {
+        setRefreshing(true);
+        await refetch();
+        setRefreshing(false);
+    }, [refetch]);
 
     // (기존) 난이도/카테고리 텍스트 변환
     const formatDifficulty = (difficulty: 'EASY' | 'MEDIUM' | 'HARD') => {
@@ -404,6 +414,13 @@ export default function RecipeDetailScreen() {
             <ScrollView
                 style={styles.container}
                 contentContainerStyle={styles.contentContainer}
+                refreshControl={
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={onRefresh}
+                        tintColor="#FF6347"
+                    />
+                }
             >
                 {renderImageCarousel()}
                 <View style={styles.recipeContent}>
