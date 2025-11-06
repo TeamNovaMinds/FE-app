@@ -492,7 +492,7 @@ export default function CreateRecipeScreen() {
                     <Text style={styles.addButtonText}>재료 추가</Text>
                 </TouchableOpacity>
 
-                <Text style={styles.sectionTitle}>만드는 방법</Text>
+                <Text style={styles.sectionTitle}>조리 과정</Text>
                 {steps.map((item, index) => (
                     <View key={index} style={styles.stepContainer}>
                         <Text style={styles.stepNumber}>{index + 1}</Text>
@@ -501,7 +501,8 @@ export default function CreateRecipeScreen() {
                                 <TextInput
                                     style={styles.stepInput}
                                     multiline
-                                    placeholder="만드는 방법을 입력해주세요."
+                                    textAlignVertical="top"
+                                    placeholder="조리 순서를 입력해주세요."
                                     value={item.description}
                                     onChangeText={(text) => handleStepChange(index, text)}
                                     // 여기만 onFocus 핸들러를 유지합니다.
@@ -776,11 +777,11 @@ const styles = StyleSheet.create({
     addButton: { flexDirection: 'row', padding: 12, borderRadius: 8, alignItems: 'center', justifyContent: 'center', marginTop: 8, marginBottom: 16, borderWidth: 1, borderColor: '#eee' },
     addButtonText: { color: '#555', fontWeight: '500', marginLeft: 4, fontSize: 15 },
     stepContainer: { flexDirection: 'row', marginBottom: 20, gap: 12, alignItems: 'flex-start' },
-    stepNumber: { fontSize: 18, fontWeight: 'bold', color: '#007AFF', paddingTop: 10 },
+    stepNumber: { fontSize: 18, fontWeight: 'bold', color: '#007AFF', paddingTop: 16 },
     stepContentWrapper: { flex: 1 },
-    stepContent: { flexDirection: 'row', borderBottomWidth: 1, borderColor: '#ddd', alignItems: 'flex-end', },
-    stepInput: { flex: 1, fontSize: 16, paddingVertical: 12 },
-    stepImagePicker: { padding: 10 },
+    stepContent: { flexDirection: 'row', borderBottomWidth: 1, borderColor: '#ddd', alignItems: 'flex-start' },
+    stepInput: { flex: 1, fontSize: 16, paddingVertical: 17 },
+    stepImagePicker: { padding: 10, paddingTop: 12 },
     stepImagePreviewContainer: { marginTop: 12, position: 'relative', width: '100%', height: 150, borderRadius: 8, overflow: 'hidden' },
     stepImagePreview: { width: '100%', height: '100%', borderRadius: 8 },
     stepImageDeleteButton: { position: 'absolute', top: 8, right: 8, backgroundColor: 'rgba(255, 255, 255, 0.9)', borderRadius: 12, padding: 2 },
