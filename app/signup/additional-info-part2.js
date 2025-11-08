@@ -55,13 +55,33 @@ export default function AdditionalInfoPart2Screen() {
             store.setInterestCategories(selected);
             const { email, password, name, nickname, profileImgUrl } = store;
 
-            await axiosInstance.post('/api/auth/signup', { email, password, name });
-            await axiosInstance.post('/api/auth/additional-info-part1', { nickname, profileImgUrl });
+            console.log('=== 회원가입 시작 ===');
+            console.log('1단계: 기본 정보 전송', { email, name });
+
+            const signupResponse = await axiosInstance.post('/api/auth/signup', { email, password, name });
+            console.log('1단계 응답:', signupResponse.data);
+
+            if (!signupResponse.data.isSuccess) {
+                throw new Error(signupResponse.data.message || '기본 정보 등록 실패');
+            }
+
+            console.log('2단계: 프로필 정보 전송', { nickname });
+            const part1Response = await axiosInstance.post('/api/auth/additional-info-part1', { nickname, profileImgUrl });
+            console.log('2단계 응답:', part1Response.data);
+
+            if (!part1Response.data.isSuccess) {
+                throw new Error(part1Response.data.message || '프로필 정보 등록 실패');
+            }
+
+            console.log('3단계: 관심 카테고리 전송', { interestCategories: selected });
             const response = await axiosInstance.post('/api/auth/additional-info-part2', { interestCategories: selected });
+            console.log('3단계 응답:', response.data);
 
             // 회원가입 완료 시 토큰 저장
             if (response.data.isSuccess) {
                 const { accessToken, refreshToken, nickname: resNickname, name: resName, profileImg, profileCompleted } = response.data.result;
+
+                console.log('회원가입 성공! 토큰 저장 중...');
 
                 // 토큰과 사용자 정보 저장
                 await saveAuthData(accessToken, refreshToken, {
@@ -78,9 +98,17 @@ export default function AdditionalInfoPart2Screen() {
                 Alert.alert("회원가입 완료!", `${resNickname}님 환영합니다!`);
                 store.reset();
                 router.replace('/home');
+            } else {
+                throw new Error(response.data.message || '관심 카테고리 등록 실패');
             }
         } catch (error) {
-            const errorMessage = error.response?.data?.message || '요청 중 문제가 발생했습니다.';
+            console.error('회원가입 에러 상세:', {
+                status: error.response?.status,
+                data: error.response?.data,
+                message: error.message
+            });
+
+            const errorMessage = error.response?.data?.message || error.message || '요청 중 문제가 발생했습니다.';
             Alert.alert('회원가입 오류', errorMessage);
         } finally {
             setIsSigningUp(false);

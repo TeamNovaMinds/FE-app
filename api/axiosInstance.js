@@ -29,8 +29,16 @@ const processQueue = (error, token = null) => {
 // 요청 인터셉터: 모든 요청에 AccessToken 자동 추가
 axiosInstance.interceptors.request.use(
     async (config) => {
-        // 로그인, 회원가입, refresh API는 토큰 필요 없음
-        const noAuthUrls = ['/api/auth/login', '/api/auth/signup', '/api/auth/refresh'];
+        // 로그인, 회원가입 관련 API는 토큰 필요 없음
+        const noAuthUrls = [
+            '/api/auth/login',
+            '/api/auth/signup',
+            '/api/auth/refresh',
+            '/api/auth/additional-info-part1',
+            '/api/auth/additional-info-part2',
+            '/api/auth/check-email',
+            '/api/auth/check-nickname'
+        ];
         const isNoAuthUrl = noAuthUrls.some(url => config.url.includes(url));
 
         if (!isNoAuthUrl) {

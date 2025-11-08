@@ -44,6 +44,7 @@ export default function LoginScreen() {
             Alert.alert('입력 오류', '이메일과 비밀번호를 모두 입력해주세요.');
             return;
         }
+
         try {
             // 💡 axiosInstance를 사용하여 API 호출 (이제 baseURL을 적을 필요 없음)
             const response = await axiosInstance.post('/api/auth/login', {
@@ -74,12 +75,21 @@ export default function LoginScreen() {
             }
         } catch (error) {
             // 서버 응답이 에러일 경우, 응답 본문에 담긴 메시지를 사용
+            console.error('이메일 로그인 에러 상세:', {
+                status: error.response?.status,
+                data: error.response?.data,
+                message: error.message,
+                request: {
+                    email: email,
+                    passwordLength: password.length
+                }
+            });
+
             if (error.response && error.response.data && error.response.data.message) {
-                Alert.alert('오류', error.response.data.message);
+                Alert.alert('오류', `[${error.response.status}] ${error.response.data.message}`);
             } else {
                 Alert.alert('오류', '로그인 중 문제가 발생했습니다.');
             }
-            console.error('이메일 로그인 에러:', error);
         }
     };
 
