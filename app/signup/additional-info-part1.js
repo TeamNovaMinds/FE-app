@@ -5,11 +5,15 @@ import axiosInstance from '../../api/axiosInstance';
 import useSignupStore from '../../store/authStore';
 import debounce from 'lodash.debounce';
 import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
+import { uploadImage, validateFileSize, validateFileType } from '../../utils/imageUpload';
 
 export default function AdditionalInfoPart1Screen() {
     const router = useRouter();
     const { setAdditionalInfo1 } = useSignupStore();
     const [nickname, setNickname] = useState('');
+    const [profileImageUrl, setProfileImageUrl] = useState(null);
+    const [isImageUploading, setIsImageUploading] = useState(false);
 
     const [isCheckingNickname, setIsCheckingNickname] = useState(false);
     const [isNicknameAvailable, setIsNicknameAvailable] = useState(false);
@@ -58,12 +62,64 @@ export default function AdditionalInfoPart1Screen() {
             Alert.alert('닉네임 중복 확인', '사용 가능한 닉네임인지 확인해주세요.');
             return;
         }
-        setAdditionalInfo1(nickname, null); // 현재 프로필 이미지는 null
+        setAdditionalInfo1(nickname, profileImageUrl);
         router.push('/signup/additional-info-part2');
     };
 
-    const handleImagePicker = () => {
-        Alert.alert("준비 중", "프로필 사진 변경 기능은 준비 중입니다.");
+    const handleImagePicker = async () => {
+        try {
+            // 갤러리 권한 요청
+            const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+            if (status !== 'granted') {
+                Alert.alert('권한 필요', '갤러리 접근 권한이 필요합니다.');
+                return;
+            }
+
+            // 이미지 선택
+            const result = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: 'images',
+                allowsEditing: true,
+                aspect: [1, 1],
+                quality: 0.8,
+            });
+
+            if (result.canceled) {
+                return;
+            }
+
+            const selectedImage = result.assets[0];
+            const imageUri = selectedImage.uri;
+            const fileName = imageUri.split('/').pop() || 'profile.jpg';
+
+            // 파일 타입 검증
+            if (!validateFileType(fileName)) {
+                Alert.alert('파일 형식 오류', 'jpg, jpeg, png, gif, webp 파일만 업로드 가능합니다.');
+                return;
+            }
+
+            // 파일 크기 검증
+            if (selectedImage.fileSize && !validateFileSize(selectedImage.fileSize)) {
+                Alert.alert('파일 크기 오류', '10MB 이하의 이미지만 업로드 가능합니다.');
+                return;
+            }
+
+            // 로딩 시작
+            setIsImageUploading(true);
+
+            // 이미지 업로드
+            const { imageUrl } = await uploadImage(imageUri, fileName);
+
+            // 업로드 성공 후 상태 업데이트
+            setProfileImageUrl(imageUrl);
+            Alert.alert('성공', '프로필 사진이 업로드되었습니다.');
+        } catch (error) {
+            console.error('프로필 이미지 업로드 오류:', error);
+            const errorMessage = error?.message || '이미지 업로드 중 오류가 발생했습니다.';
+            Alert.alert('업로드 실패', errorMessage);
+        } finally {
+            setIsImageUploading(false);
+        }
     };
 
     return (
@@ -71,14 +127,35 @@ export default function AdditionalInfoPart1Screen() {
             <View style={styles.container}>
                 <Text style={styles.title}>프로필을{"\n"}설정해주세요.</Text>
 
-                <TouchableOpacity style={styles.profileImageContainer} onPress={handleImagePicker}>
-                    <Image
-                        source={require('../../assets/images/JustFridge_logo.png')}
-                        style={styles.profileImage}
-                    />
-                    <View style={styles.cameraIconContainer}>
-                        <Ionicons name="camera" size={20} color="#fff" />
-                    </View>
+                <TouchableOpacity
+                    style={styles.profileImageContainer}
+                    onPress={handleImagePicker}
+                    disabled={isImageUploading}
+                >
+                    {profileImageUrl ? (
+                        <Image
+                            source={{ uri: profileImageUrl }}
+                            style={styles.profileImage}
+                            resizeMode="cover"
+                        />
+                    ) : (
+                        <View style={styles.defaultImageContainer}>
+                            <Image
+                                source={require('../../assets/images/JustFridge_logo.png')}
+                                style={styles.defaultImage}
+                                resizeMode="contain"
+                            />
+                        </View>
+                    )}
+                    {isImageUploading ? (
+                        <View style={styles.uploadingContainer}>
+                            <ActivityIndicator size="large" color="#1298FF" />
+                        </View>
+                    ) : (
+                        <View style={styles.cameraIconContainer}>
+                            <Ionicons name="camera" size={20} color="#fff" />
+                        </View>
+                    )}
                 </TouchableOpacity>
 
                 <Text style={styles.label}>닉네임</Text>
@@ -107,7 +184,31 @@ const styles = StyleSheet.create({
     title: { fontSize: 26, fontWeight: 'bold', marginBottom: 30, lineHeight: 36, },
     profileImageContainer: { alignSelf: 'center', marginBottom: 40, position: 'relative' },
     profileImage: { width: 120, height: 120, borderRadius: 60, borderWidth: 1, borderColor: '#E0E0E0' },
+    defaultImageContainer: {
+        width: 120,
+        height: 120,
+        borderRadius: 60,
+        backgroundColor: '#F5F5F5',
+        borderWidth: 1,
+        borderColor: '#E0E0E0',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 20,
+    },
+    defaultImage: {
+        width: '100%',
+        height: '100%',
+    },
     cameraIconContainer: { position: 'absolute', bottom: 0, right: 0, backgroundColor: '#1298FF', padding: 8, borderRadius: 15 },
+    uploadingContainer: {
+        position: 'absolute',
+        width: 120,
+        height: 120,
+        borderRadius: 60,
+        backgroundColor: 'rgba(255, 255, 255, 0.8)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
     label: { fontSize: 16, fontWeight: '600', marginBottom: 8, color: '#333' },
     inputContainer: { flexDirection: 'row', alignItems: 'center' },
     input: { flex: 1, height: 50, borderWidth: 1, borderColor: '#E0E0E0', borderRadius: 8, paddingHorizontal: 15, fontSize: 16, marginBottom: 5 },

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useRef, useCallback, useMemo, useEffect } from 'react';
 import {
     StyleSheet,
     View,
@@ -136,7 +136,109 @@ const RecipeCard: React.FC<{ item: RecipeListItem }> = ({ item }) => {
         </Link>
     );
 };
-// --- 레시피 카드 컴포넌트 끝 ---
+
+// --- 헤더 컴포넌트 ---
+interface ListHeaderProps {
+    searchQuery: string;
+    onSearchChange: (text: string) => void;
+    onSearchSubmit: () => void;
+    activeSortFilter: string;
+    onSortFilterChange: (filter: string) => void;
+    activeCategoryFilter: string;
+    onCategoryFilterChange: (filter: string) => void;
+    activeBannerIndex: number;
+    onScroll: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
+}
+
+const ListHeader = React.memo<ListHeaderProps>((props) => {
+    const {
+        searchQuery,
+        onSearchChange,
+        onSearchSubmit,
+        activeSortFilter,
+        onSortFilterChange,
+        activeCategoryFilter,
+        onCategoryFilterChange,
+        activeBannerIndex,
+        onScroll,
+    } = props;
+
+    return (
+    <View>
+        <ImageBackground
+            source={require('../../assets/images/banner_recipe.png')}
+            style={styles.topBanner}
+            resizeMode="cover"
+        >
+            <Text style={styles.topBannerText}>유통기한 잘 확인하셨나요?</Text>
+        </ImageBackground>
+        <View style={styles.carouselContainer}>
+            <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false} onScroll={onScroll} scrollEventThrottle={16}>
+                {BANNERS.map((uri, index) => (
+                    <View key={index} style={styles.bannerWrapper}>
+                        <Image source={{ uri }} style={styles.bannerImage} />
+                        <View style={styles.bannerTextContainer}>
+                            <Text style={styles.bannerTitle}>저당 디저트 레시피</Text>
+                            <Text style={styles.bannerSubtitle}>오늘의 인기메뉴!</Text>
+                        </View>
+                    </View>
+                ))}
+            </ScrollView>
+            <View style={styles.pagination}>
+                {BANNERS.map((_, index) => <View key={index} style={[styles.paginationDot, index === activeBannerIndex && styles.paginationDotActive]} />)}
+            </View>
+        </View>
+        <View style={styles.searchContainer}>
+            <TextInput
+                style={styles.searchInput}
+                placeholder="요리 이름을 검색해보세요"
+                value={searchQuery}
+                onChangeText={onSearchChange}
+                onSubmitEditing={onSearchSubmit}
+                returnKeyType="search"
+            />
+            <TouchableOpacity onPress={onSearchSubmit}>
+                <Ionicons name="search" size={20} color="#888" style={styles.searchIcon} />
+            </TouchableOpacity>
+        </View>
+
+        {/* 정렬 필터 */}
+        <View style={styles.filterSection}>
+            <Text style={styles.filterLabel}>정렬</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScrollContainer}>
+                {SORT_FILTERS.map((filter) => (
+                    <TouchableOpacity
+                        key={filter}
+                        style={[styles.filterButton, activeSortFilter === filter && styles.activeFilterButton]}
+                        onPress={() => onSortFilterChange(filter)}
+                    >
+                        <Text style={[styles.filterText, activeSortFilter === filter && styles.activeFilterText]}>{filter}</Text>
+                    </TouchableOpacity>
+                ))}
+            </ScrollView>
+        </View>
+
+        {/* 카테고리 필터 */}
+        <View style={styles.filterSection}>
+            <Text style={styles.filterLabel}>카테고리</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScrollContainer}>
+                {CATEGORY_FILTERS.map((filter) => (
+                    <TouchableOpacity
+                        key={filter}
+                        style={[styles.filterButton, activeCategoryFilter === filter && styles.activeFilterButton]}
+                        onPress={() => onCategoryFilterChange(filter)}
+                    >
+                        <Text style={[styles.filterText, activeCategoryFilter === filter && styles.activeFilterText]}>{filter}</Text>
+                    </TouchableOpacity>
+                ))}
+            </ScrollView>
+        </View>
+    </View>
+    );
+});
+
+ListHeader.displayName = 'ListHeader';
+// --- 헤더 컴포넌트 끝 ---
 
 // --- API 호출 함수를 밖으로 분리 ---
 const fetchRecipes = async ({
@@ -233,76 +335,24 @@ export default function RecipeScreen() {
         await refetch();
     }, [refetch]);
 
-    const handleSearch = () => setSubmittedQuery(searchQuery);
-    const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const handleSearch = useCallback(() => {
+        setSubmittedQuery(searchQuery);
+    }, [searchQuery]);
+
+    const handleScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
         const scrollPosition = event.nativeEvent.contentOffset.x;
         const index = Math.round(scrollPosition / screenWidth);
         setActiveBannerIndex(index);
-    };
+    }, []);
 
-    const renderHeader = () => (
-        <View>
-            <ImageBackground
-                source={require('../../assets/images/banner_recipe.png')}
-                style={styles.topBanner}
-                resizeMode="cover"
-            >
-                <Text style={styles.topBannerText}>유통기한 잘 확인하셨나요?</Text>
-            </ImageBackground>
-            <View style={styles.carouselContainer}>
-                <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false} onScroll={handleScroll} scrollEventThrottle={16}>
-                    {BANNERS.map((uri, index) => (
-                        <View key={index} style={styles.bannerWrapper}>
-                            <Image source={{ uri }} style={styles.bannerImage} />
-                            <View style={styles.bannerTextContainer}>
-                                <Text style={styles.bannerTitle}>저당 디저트 레시피</Text>
-                                <Text style={styles.bannerSubtitle}>오늘의 인기메뉴!</Text>
-                            </View>
-                        </View>
-                    ))}
-                </ScrollView>
-                <View style={styles.pagination}>
-                    {BANNERS.map((_, index) => <View key={index} style={[styles.paginationDot, index === activeBannerIndex && styles.paginationDotActive]} />)}
-                </View>
-            </View>
-            <View style={styles.searchContainer}>
-                <TextInput style={styles.searchInput} placeholder="요리 이름을 검색해보세요" value={searchQuery} onChangeText={setSearchQuery} onSubmitEditing={handleSearch} returnKeyType="search" />
-                <TouchableOpacity onPress={handleSearch}><Ionicons name="search" size={20} color="#888" style={styles.searchIcon} /></TouchableOpacity>
-            </View>
+    // 검색어가 변경되면 500ms 후 자동으로 검색
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setSubmittedQuery(searchQuery);
+        }, 500);
 
-            {/* 정렬 필터 */}
-            <View style={styles.filterSection}>
-                <Text style={styles.filterLabel}>정렬</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScrollContainer}>
-                    {SORT_FILTERS.map((filter) => (
-                        <TouchableOpacity
-                            key={filter}
-                            style={[styles.filterButton, activeSortFilter === filter && styles.activeFilterButton]}
-                            onPress={() => setActiveSortFilter(filter)}
-                        >
-                            <Text style={[styles.filterText, activeSortFilter === filter && styles.activeFilterText]}>{filter}</Text>
-                        </TouchableOpacity>
-                    ))}
-                </ScrollView>
-            </View>
-
-            {/* 카테고리 필터 */}
-            <View style={styles.filterSection}>
-                <Text style={styles.filterLabel}>카테고리</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScrollContainer}>
-                    {CATEGORY_FILTERS.map((filter) => (
-                        <TouchableOpacity
-                            key={filter}
-                            style={[styles.filterButton, activeCategoryFilter === filter && styles.activeFilterButton]}
-                            onPress={() => setActiveCategoryFilter(filter)}
-                        >
-                            <Text style={[styles.filterText, activeCategoryFilter === filter && styles.activeFilterText]}>{filter}</Text>
-                        </TouchableOpacity>
-                    ))}
-                </ScrollView>
-            </View>
-        </View>
-    );
+        return () => clearTimeout(timer);
+    }, [searchQuery]);
 
 // ListEmptyComponent 로직 (recipes.length === 0)
     const renderListEmptyComponent = () => {
@@ -338,7 +388,19 @@ export default function RecipeScreen() {
         <SafeAreaView style={styles.container}>
             <FlatList
                 ref={flatListRef}
-                ListHeaderComponent={renderHeader}
+                ListHeaderComponent={
+                    <ListHeader
+                        searchQuery={searchQuery}
+                        onSearchChange={setSearchQuery}
+                        onSearchSubmit={handleSearch}
+                        activeSortFilter={activeSortFilter}
+                        onSortFilterChange={setActiveSortFilter}
+                        activeCategoryFilter={activeCategoryFilter}
+                        onCategoryFilterChange={setActiveCategoryFilter}
+                        activeBannerIndex={activeBannerIndex}
+                        onScroll={handleScroll}
+                    />
+                }
                 data={recipes}
                 renderItem={({ item }) => <RecipeCard item={item} />}
                 keyExtractor={(item) => item.recipeId.toString()}
