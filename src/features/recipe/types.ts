@@ -2,7 +2,9 @@
 
 export interface AuthorInfo {
     nickname: string;
-    profileImageUrl: string;
+    profileImageUrl: string | null;
+    following?: boolean;
+    myself?: boolean;
 }
 
 export interface RecipeImage {

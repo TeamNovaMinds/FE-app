@@ -43,7 +43,7 @@ export default function RecipeDetailScreen() {
             if (response.data.isSuccess) {
                 // 디버깅: API 응답 확인
                 console.log('=== Recipe Detail API Response ===');
-                console.log('Recipe Ingredients:', JSON.stringify(response.data.result.recipeIngredientDTOs, null, 2));
+                console.log('Author Info:', JSON.stringify(response.data.result.authorInfo, null, 2));
                 return response.data.result;
             }
             throw new Error(response.data.message || '레시피를 불러오는 데 실패했습니다.');
@@ -51,6 +51,7 @@ export default function RecipeDetailScreen() {
         enabled: !!recipeId,
         staleTime: 1000 * 60 * 10, // 10분간 fresh
         placeholderData: (previousData) => previousData, // 이전 데이터를 먼저 표시
+        refetchOnMount: 'always', // 팔로잉 상태 최신화 위해 항상 재요청
     });
 
     // useMutation으로 좋아요 기능 구현
@@ -90,6 +91,55 @@ export default function RecipeDetailScreen() {
             queryClient.invalidateQueries({ queryKey: ['recipe', recipeId] });
             // 목록 화면도 업데이트되도록 레시피 목록 쿼리 무효화
             queryClient.invalidateQueries({ queryKey: ['recipes'] });
+        },
+    });
+
+    const followMutation = useMutation({
+        mutationFn: async () => {
+            const currentlyFollowing = !!recipe?.authorInfo?.following;
+            const nickname = recipe?.authorInfo?.nickname;
+            if (!nickname) {
+                throw new Error('작성자 정보를 찾을 수 없습니다.');
+            }
+            const endpoint = `/api/members/${encodeURIComponent(nickname)}/following`;
+            if (currentlyFollowing) {
+                await axiosInstance.delete(endpoint);
+            } else {
+                await axiosInstance.post(endpoint);
+            }
+        },
+        onMutate: async () => {
+            await queryClient.cancelQueries({ queryKey: ['recipe', recipeId] });
+
+            const previousRecipe = queryClient.getQueryData(['recipe', recipeId]);
+            const previousFollowing =
+                (previousRecipe as any)?.authorInfo?.following ?? recipe?.authorInfo?.following ?? false;
+
+            queryClient.setQueryData(['recipe', recipeId], (old: any) => {
+                const base = old || recipe;
+                if (!base) return old;
+                const nextFollowing = !base.authorInfo?.following;
+                return {
+                    ...base,
+                    authorInfo: {
+                        ...base.authorInfo,
+                        following: nextFollowing,
+                    },
+                };
+            });
+
+            return { previousRecipe, previousFollowing };
+        },
+        onError: (err: any, variables, context) => {
+            if (context?.previousRecipe) {
+                queryClient.setQueryData(['recipe', recipeId], context.previousRecipe);
+            }
+            const errorMessage = err?.response?.data?.message || err?.message || '팔로우 처리에 실패했습니다.';
+            Alert.alert('오류', errorMessage);
+            console.error('Follow error:', err?.response?.data || err);
+        },
+        onSettled: () => {
+            queryClient.invalidateQueries({ queryKey: ['recipe', recipeId] });
         },
     });
 
@@ -242,17 +292,50 @@ export default function RecipeDetailScreen() {
         />
     );
 
+    const handleFollowToggle = () => {
+        if (!recipe?.authorInfo?.nickname || recipe?.authorInfo?.myself || recipe?.writtenByMe) {
+            return;
+        }
+        followMutation.mutate();
+    };
+
+    const following = !!recipe?.authorInfo?.following;
+
     const renderAuthor = () => (
         <View style={styles.authorSection}>
-            <Image
-                source={{
-                    uri:
-                        recipe?.authorInfo.profileImageUrl ||
-                        'https://via.placeholder.com/40',
-                }}
-                style={styles.authorImage}
-            />
-            <Text style={styles.authorName}>{recipe?.authorInfo.nickname}</Text>
+            <View style={styles.authorInfo}>
+                <Image
+                    source={{
+                        uri:
+                            recipe?.authorInfo.profileImageUrl ||
+                            'https://via.placeholder.com/40',
+                    }}
+                    style={styles.authorImage}
+                />
+                <Text style={styles.authorName}>{recipe?.authorInfo.nickname}</Text>
+            </View>
+
+            {!recipe?.authorInfo.myself && !recipe?.writtenByMe && (
+                <TouchableOpacity
+                    onPress={handleFollowToggle}
+                    style={[
+                        styles.followButton,
+                        following && styles.followingButton,
+                        followMutation.isPending && styles.followButtonDisabled,
+                    ]}
+                    disabled={followMutation.isPending}
+                    activeOpacity={0.8}
+                >
+                    <Text
+                        style={[
+                            styles.followButtonText,
+                            following && styles.followingButtonText,
+                        ]}
+                    >
+                        {following ? '언팔로잉' : '팔로잉'}
+                    </Text>
+                </TouchableOpacity>
+            )}
         </View>
     );
 
@@ -490,7 +573,13 @@ const styles = StyleSheet.create({
     authorSection: {
         flexDirection: 'row',
         alignItems: 'center',
+        justifyContent: 'space-between',
         marginBottom: 12,
+    },
+    authorInfo: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        flexShrink: 1,
     },
     authorImage: {
         width: 40,
@@ -502,6 +591,28 @@ const styles = StyleSheet.create({
     authorName: {
         fontSize: 16,
         fontWeight: 'bold',
+    },
+    followButton: {
+        paddingHorizontal: 14,
+        paddingVertical: 8,
+        borderRadius: 18,
+        borderWidth: 1,
+        borderColor: '#1298FF',
+        backgroundColor: '#fff',
+    },
+    followingButton: {
+        backgroundColor: '#1298FF',
+    },
+    followButtonText: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#1298FF',
+    },
+    followingButtonText: {
+        color: '#fff',
+    },
+    followButtonDisabled: {
+        opacity: 0.7,
     },
     infoContainer: {
         marginBottom: 16,
@@ -526,7 +637,7 @@ const styles = StyleSheet.create({
     },
     infoItem: {
         alignItems: 'center',
-        width: 60,
+        flex: 1,
     },
     infoText: {
         fontSize: 14,
