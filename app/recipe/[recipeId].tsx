@@ -637,7 +637,7 @@ const styles = StyleSheet.create({
     },
     infoItem: {
         alignItems: 'center',
-        width: 60,
+        flex: 1,
     },
     infoText: {
         fontSize: 14,
