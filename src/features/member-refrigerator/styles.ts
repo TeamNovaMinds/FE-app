@@ -12,6 +12,7 @@ export const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
     },
+    // [Header Styles - 기존 유지]
     header: {
         height: 126 + Constants.statusBarHeight,
         borderBottomWidth: 2,
@@ -69,6 +70,8 @@ export const styles = StyleSheet.create({
     activeTabText: {
         fontWeight: '700',
     },
+
+    // --- [요약 카드 스타일 수정] ---
     contentArea: {
         flex: 1,
         paddingBottom: 86,
@@ -77,68 +80,98 @@ export const styles = StyleSheet.create({
         flex: 1,
     },
     summaryWrapper: {
-        paddingHorizontal: 20,
-        paddingTop: 24,
+        width: '100%',
+        paddingTop: 60,
+        alignItems: 'center', // ✅ 카드를 화면 정중앙에 위치시킴 (핵심)
+        paddingLeft: 30,
+        paddingRight: 0,
     },
     summaryCard: {
-        width: '100%',
+        width: '100%', // 부모(Wrapper)의 padding 안쪽을 꽉 채움
         minHeight: 180,
         borderRadius: 16,
         overflow: 'hidden',
-        padding: 20,
-        justifyContent: 'center',
+        paddingHorizontal: 24,
+        paddingVertical: 24,
     },
     summaryCardImage: {
         borderRadius: 16,
         resizeMode: 'stretch',
     },
-    summaryHeader: {
+
+    // 1. 닉네임 영역
+    nicknameContainer: {
+        marginBottom: 24, // 간격 넓힘
+    },
+    nickname: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        color: '#FFFFFF',
+        textAlign: 'left',
+    },
+    nicknameSuffix: {
+        fontSize: 18,
+        fontWeight: 'normal',
+    },
+
+    // 2. 프로필 + 스탯 가로 배치
+    profileStatsRow: {
         flexDirection: 'row',
         alignItems: 'center',
         marginBottom: 16,
     },
     profileImage: {
-        width: 60,
-        height: 60,
-        borderRadius: 30,
-        marginRight: 12,
+        width: 74, // 이미지 살짝 키움
+        height: 74,
+        borderRadius: 37,
+        marginRight: 24, // 스탯과의 간격
+        backgroundColor: '#eee',
     },
-    nickname: {
-        fontSize: 22,
-        fontWeight: 'bold',
-        color: '#FFFFFF',
-    },
+
+    // 3. 스탯 (레시피, 팔로워, 팔로우)
     statRow: {
         flexDirection: 'row',
-        justifyContent: 'space-around',
         alignItems: 'center',
-        marginTop: 8,
+        gap: 24, // ✅ 스탯 사이 간격 조정
+        marginLeft: 20, // 왼쪽으로 이동 (값을 조정해서 원하는 위치로 이동 가능)
     },
     statItem: {
         alignItems: 'center',
     },
+    // [수정] 숫자 크기 대폭 확대
     statValue: {
         color: '#FFFFFF',
         fontWeight: 'bold',
-        fontSize: 18,
+        fontSize: 24, // 20 -> 24
+        marginBottom: 4,
     },
+    // [수정] 라벨 크기 확대
     statLabel: {
-        color: '#FFFFFF',
-        fontSize: 14,
-        marginTop: 4,
+        color: '#DDDDDD',
+        fontSize: 16, // 15 -> 16
+        fontWeight: '600', // 굵기 살짝 추가
     },
+
+    // 4. 랭킹 (우측 하단)
     rankingBox: {
-        marginTop: 18,
+        flexDirection: 'row',
+        justifyContent: 'flex-end', // 오른쪽 정렬
         alignItems: 'center',
+        marginTop: 10,
+        width: '100%', // 박스 너비 확보
+        paddingRight: 50, // 오른쪽 여백 추가로 박스 안에 확실히 들어오도록
     },
     rankingLabel: {
         color: '#FFFFFF',
-        fontSize: 15,
+        fontSize: 16,
+        marginRight: 8,
+        textAlign: 'right',
     },
+    // [수정] 랭킹 텍스트 잘림 방지 및 색상 유지
     rankingValue: {
         color: '#5FE5FF',
-        fontSize: 20,
+        fontSize: 22,
         fontWeight: 'bold',
-        marginTop: 4,
+        textAlign: 'right', // 오른쪽 정렬
     },
 });

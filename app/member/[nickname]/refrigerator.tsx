@@ -1,3 +1,5 @@
+// app/member/[nickname]/refrigerator.tsx
+
 import React, { useMemo, useState } from 'react';
 import {
     ActivityIndicator,
@@ -25,7 +27,8 @@ import { skinService } from '@/src/features/skin/service';
 const activeTabBg = require('../../../assets/icons/active_tab_bg.png');
 const defaultHeaderBackground = require('../../../assets/images/default.png');
 const defaultDetailBackground = require('../../../assets/images/room.png');
-const summaryBackground = require('../../../assets/icons/others_summary_bg.png');
+const defaultSummaryBackground = require('../../../assets/images/default.png');
+const summaryCardBackground = require('../../../assets/icons/others_summary_bg.png');
 
 const MemberRefrigeratorScreen = () => {
     const { nickname: nicknameParam } = useLocalSearchParams<{ nickname: string }>();
@@ -65,46 +68,47 @@ const MemberRefrigeratorScreen = () => {
 
     const equippedSkinId = summary?.equippedSkinId;
 
-    // 스킨 상점 목록을 조회해서 해당 스킨의 thumbnailUrl 가져오기
     const { data: skinShopData } = useQuery({
         queryKey: ['skinShop'],
         queryFn: () => skinService.getShopSkins(),
-        staleTime: 1000 * 60 * 10, // 10분간 캐시 유지
+        staleTime: 1000 * 60 * 10,
     });
 
-    const resolvedSkinImages = useMemo((): { backgroundImage: ImageSourcePropType; headerBackgroundImage: ImageSourcePropType } => {
-        // equippedSkinId가 있고 스킨 목록이 로드되었을 때
+    const resolvedSkinImages = useMemo((): {
+        backgroundImage: ImageSourcePropType;
+        headerBackgroundImage: ImageSourcePropType;
+        summaryBackgroundImage: ImageSourcePropType;
+    } => {
         if (equippedSkinId && skinShopData?.skins) {
-            // 스킨 목록에서 해당 ID의 스킨 찾기
             const equippedSkin = skinShopData.skins.find(skin => skin.id === equippedSkinId);
 
             if (equippedSkin?.thumbnailUrl) {
                 const thumbnailUrl = equippedSkin.thumbnailUrl;
 
-                // thumbnailUrl이 로컬 스킨 식별자인 경우
                 if (!thumbnailUrl.startsWith('http')) {
                     const skinAsset = SKIN_ASSETS[thumbnailUrl as SkinIdentifier];
                     if (skinAsset) {
                         return {
                             backgroundImage: skinAsset.thumbnail,
                             headerBackgroundImage: skinAsset.headerBackground,
+                            summaryBackgroundImage: skinAsset.summaryBackground,
                         };
                     }
                 }
 
-                // 원격 이미지인 경우
                 const source = getImageSource(thumbnailUrl);
                 return {
                     backgroundImage: source,
                     headerBackgroundImage: source,
+                    summaryBackgroundImage: source,
                 };
             }
         }
 
-        // 기본 스킨 사용
         return {
             backgroundImage: defaultDetailBackground,
             headerBackgroundImage: defaultHeaderBackground,
+            summaryBackgroundImage: defaultSummaryBackground,
         };
     }, [equippedSkinId, skinShopData]);
 
@@ -284,58 +288,74 @@ const MemberRefrigeratorScreen = () => {
                 </Animated.View>
 
                 <Animated.View style={[homeStyles.animatedContainer, summaryAnimatedStyle]}>
-                    <View style={memberStyles.summaryWrapper}>
-                        <ImageBackground
-                            source={summaryBackground}
-                            style={memberStyles.summaryCard}
-                            imageStyle={memberStyles.summaryCardImage}
-                            resizeMode="cover"
-                        >
-                            {isSummaryLoading ? (
-                                <View style={memberStyles.summaryLoading}>
-                                    <ActivityIndicator size="large" color="#5FE5FF" />
-                                </View>
-                            ) : summaryError ? (
-                                <View style={memberStyles.summaryLoading}>
-                                    <Text style={{ color: '#FF5C5C' }}>요약 정보를 불러오지 못했습니다.</Text>
-                                </View>
-                            ) : (
-                                <>
-                                    <View style={memberStyles.summaryHeader}>
-                                        <Image
-                                        source={summary?.profileImageUrl
-                                            ? { uri: summary.profileImageUrl }
-                                            : require('../../../assets/images/JustFridge_logo.png')}
-                                        style={memberStyles.profileImage}
-                                    />
-                                        <Text style={memberStyles.nickname}>{summary?.nickname || '알 수 없음'} 님</Text>
+                    <ImageBackground
+                        source={resolvedSkinImages.summaryBackgroundImage}
+                        style={homeStyles.contentGradient}
+                        resizeMode="cover"
+                    >
+                        <View style={memberStyles.summaryWrapper}>
+                            <ImageBackground
+                                source={summaryCardBackground}
+                                style={memberStyles.summaryCard}
+                                imageStyle={memberStyles.summaryCardImage}
+                                resizeMode="cover"
+                            >
+                                {isSummaryLoading ? (
+                                    <View style={memberStyles.summaryLoading}>
+                                        <ActivityIndicator size="large" color="#5FE5FF" />
                                     </View>
+                                ) : summaryError ? (
+                                    <View style={memberStyles.summaryLoading}>
+                                        <Text style={{ color: '#FF5C5C' }}>요약 정보를 불러오지 못했습니다.</Text>
+                                    </View>
+                                ) : (
+                                    <>
+                                        {/* 1. 닉네임 (맨 위) */}
+                                        <View style={memberStyles.nicknameContainer}>
+                                            <Text style={memberStyles.nickname}>
+                                                {summary?.nickname || '알 수 없음'} <Text style={memberStyles.nicknameSuffix}>님</Text>
+                                            </Text>
+                                        </View>
 
-                                    <View style={memberStyles.statRow}>
-                                        <View style={memberStyles.statItem}>
-                                            <Text style={memberStyles.statValue}>{summary?.recipeCount ?? 0}</Text>
-                                            <Text style={memberStyles.statLabel}>레시피</Text>
-                                        </View>
-                                        <View style={memberStyles.statItem}>
-                                            <Text style={memberStyles.statValue}>{summary?.followerCount ?? 0}</Text>
-                                            <Text style={memberStyles.statLabel}>팔로워</Text>
-                                        </View>
-                                        <View style={memberStyles.statItem}>
-                                            <Text style={memberStyles.statValue}>{summary?.followingCount ?? 0}</Text>
-                                            <Text style={memberStyles.statLabel}>팔로우</Text>
-                                        </View>
-                                    </View>
+                                        {/* 2. 프로필 이미지 + 스탯 (가로 배치) */}
+                                        <View style={memberStyles.profileStatsRow}>
+                                            {/* 왼쪽: 프로필 이미지 */}
+                                            <Image
+                                                source={summary?.profileImageUrl
+                                                    ? { uri: summary.profileImageUrl }
+                                                    : require('../../../assets/images/JustFridge_logo.png')}
+                                                style={memberStyles.profileImage}
+                                            />
 
-                                    <View style={memberStyles.rankingBox}>
-                                        <Text style={memberStyles.rankingLabel}>포인트 랭킹</Text>
-                                        <Text style={memberStyles.rankingValue}>
-                                            {summary?.pointRanking ? `${summary.pointRanking}등` : '집계 중'}
-                                        </Text>
-                                    </View>
-                                </>
-                            )}
-                        </ImageBackground>
-                    </View>
+                                            {/* 오른쪽: 스탯 (레시피, 팔로워, 팔로우) */}
+                                            <View style={memberStyles.statRow}>
+                                                <View style={memberStyles.statItem}>
+                                                    <Text style={memberStyles.statValue}>{summary?.recipeCount ?? 0}</Text>
+                                                    <Text style={memberStyles.statLabel}>레시피</Text>
+                                                </View>
+                                                <View style={memberStyles.statItem}>
+                                                    <Text style={memberStyles.statValue}>{summary?.followerCount ?? 0}</Text>
+                                                    <Text style={memberStyles.statLabel}>팔로워</Text>
+                                                </View>
+                                                <View style={memberStyles.statItem}>
+                                                    <Text style={memberStyles.statValue}>{summary?.followingCount ?? 0}</Text>
+                                                    <Text style={memberStyles.statLabel}>팔로우</Text>
+                                                </View>
+                                            </View>
+                                        </View>
+
+                                        {/* 3. 포인트 랭킹 (우측 하단) */}
+                                        <View style={memberStyles.rankingBox}>
+                                            <Text style={memberStyles.rankingLabel}>포인트 랭킹</Text>
+                                            <Text style={memberStyles.rankingValue}>
+                                                {summary?.pointRanking ? `${summary.pointRanking}등` : '집계 중'}
+                                            </Text>
+                                        </View>
+                                    </>
+                                )}
+                            </ImageBackground>
+                        </View>
+                    </ImageBackground>
                 </Animated.View>
             </View>
         </View>

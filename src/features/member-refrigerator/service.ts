@@ -6,7 +6,7 @@ import { MemberRefrigeratorItemsResponse, MemberRefrigeratorSummary } from './ty
 
 const normalizeMemberItems = (result: any, fallbackNickname: string): MemberRefrigeratorItemsResponse => ({
     nickname: result?.nickname ?? fallbackNickname,
-    profileImageUrl: result?.profileImageUrl ?? null,
+    profileImageUrl: result?.profileImage ?? result?.profileImageUrl ?? null,
     isFollowing: result?.isFollowing ?? result?.following ?? false,
     isMe: result?.isMe ?? false,
     equippedSkinId: result?.equippedSkinId ?? null,
@@ -27,14 +27,14 @@ export const memberRefrigeratorService = {
 
         return {
             nickname: result?.nickname ?? nickname,
-            profileImageUrl: result?.profileImageUrl ?? null,
+            profileImageUrl: result?.profileImage ?? result?.profileImageUrl ?? null,
             isFollowing: result?.isFollowing ?? result?.following ?? false,
             isMe: result?.isMe ?? false,
             equippedSkinId: result?.equippedSkinId ?? null,
             recipeCount: result?.recipeCount ?? 0,
             followerCount: result?.followerCount ?? 0,
             followingCount: result?.followingCount ?? 0,
-            pointRanking: result?.pointRanking ?? null,
+            pointRanking: result?.pointRank ?? result?.pointRanking ?? null,
         };
     },
 
