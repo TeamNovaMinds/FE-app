@@ -16,7 +16,7 @@ import axiosInstance from '@/api/axiosInstance';
 
 // 타입 및 상수
 import { TabName } from '@/src/features/home/types';
-import { TAB_BACKGROUNDS, TAB_ACTIVE_COLORS } from '@/src/features/home/constants';
+import { TAB_ACTIVE_COLORS } from '@/src/features/home/constants';
 
 // 스타일
 import { styles } from '@/src/features/home/styles';
@@ -56,7 +56,14 @@ export default function HomeScreen() {
     } = useTabAnimation(activeTab);
 
     // 장착된 스킨 조회
-    const { backgroundImage, summaryBackgroundImage, headerBackgroundImage } = useEquippedSkin();
+    const {
+        backgroundImage,
+        summaryBackgroundImage,
+        headerBackgroundImage,
+        fridgeBackgroundImage,
+        freezerBackgroundImage,
+        roomBackgroundImage,
+    } = useEquippedSkin();
 
     // 탭 핸들러 - prefetch 추가
     const handleTabPress = (tabName: TabName) => {
@@ -228,55 +235,43 @@ export default function HomeScreen() {
                 {/* Layer 2: 상세 뷰들 */}
                 <Animated.View style={[styles.animatedContainer, fridgeDetailStyle]}>
                     <ImageBackground
-                        source={backgroundImage}
+                        source={fridgeBackgroundImage}
                         style={styles.detailBackground}
                         resizeMode="stretch"
                     >
-                        <ImageBackground
-                            source={TAB_BACKGROUNDS.fridge}
-                            style={styles.detailBackground}
-                            resizeMode="stretch"
-                        >
-                            <IngredientListView
-                                isLoading={isListLoading}
-                                error={isListError}
-                                ingredients={storedIngredients}
-                                tabName="fridge"
-                                color={TAB_ACTIVE_COLORS.fridge}
-                                onAddIngredient={goToAddIngredient}
-                                onItemPress={handleIngredientPress} // ✅ 5. 핸들러 전달
-                            />
-                        </ImageBackground>
+                        <IngredientListView
+                            isLoading={isListLoading}
+                            error={isListError}
+                            ingredients={storedIngredients}
+                            tabName="fridge"
+                            color={TAB_ACTIVE_COLORS.fridge}
+                            onAddIngredient={goToAddIngredient}
+                            onItemPress={handleIngredientPress}
+                        />
                     </ImageBackground>
                 </Animated.View>
 
                 <Animated.View style={[styles.animatedContainer, freezerDetailStyle]}>
                     <ImageBackground
-                        source={backgroundImage}
+                        source={freezerBackgroundImage}
                         style={styles.detailBackground}
                         resizeMode="stretch"
                     >
-                        <ImageBackground
-                            source={TAB_BACKGROUNDS.freezer}
-                            style={styles.detailBackground}
-                            resizeMode="stretch"
-                        >
-                            <IngredientListView
-                                isLoading={isListLoading}
-                                error={isListError}
-                                ingredients={storedIngredients}
-                                tabName="freezer"
-                                color={TAB_ACTIVE_COLORS.freezer}
-                                onAddIngredient={goToAddIngredient}
-                                onItemPress={handleIngredientPress} // ✅ 5. 핸들러 전달
-                            />
-                        </ImageBackground>
+                        <IngredientListView
+                            isLoading={isListLoading}
+                            error={isListError}
+                            ingredients={storedIngredients}
+                            tabName="freezer"
+                            color={TAB_ACTIVE_COLORS.freezer}
+                            onAddIngredient={goToAddIngredient}
+                            onItemPress={handleIngredientPress}
+                        />
                     </ImageBackground>
                 </Animated.View>
 
                 <Animated.View style={[styles.animatedContainer, roomDetailStyle]}>
                     <ImageBackground
-                        source={backgroundImage}
+                        source={roomBackgroundImage}
                         style={styles.detailBackground}
                         resizeMode="stretch"
                     >
@@ -287,7 +282,7 @@ export default function HomeScreen() {
                             tabName="room"
                             color={TAB_ACTIVE_COLORS.room}
                             onAddIngredient={goToAddIngredient}
-                            onItemPress={handleIngredientPress} // ✅ 5. 핸들러 전달
+                            onItemPress={handleIngredientPress}
                         />
                     </ImageBackground>
                 </Animated.View>

@@ -15,7 +15,7 @@ import { useLocalSearchParams } from 'expo-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { IngredientListView } from '@/src/features/home/components/IngredientListView';
-import { TAB_ACTIVE_COLORS, TAB_BACKGROUNDS } from '@/src/features/home/constants';
+import { TAB_ACTIVE_COLORS } from '@/src/features/home/constants';
 import { TabName } from '@/src/features/home/types';
 import { useTabAnimation } from '@/src/features/home/hooks/useTabAnimation';
 import { memberRefrigeratorService } from '@/src/features/member-refrigerator/service';
@@ -79,6 +79,9 @@ const MemberRefrigeratorScreen = () => {
         backgroundImage: ImageSourcePropType;
         headerBackgroundImage: ImageSourcePropType;
         summaryBackgroundImage: ImageSourcePropType;
+        fridgeBackgroundImage: ImageSourcePropType;
+        freezerBackgroundImage: ImageSourcePropType;
+        roomBackgroundImage: ImageSourcePropType;
     } => {
         if (equippedSkinId && skinShopData?.skins) {
             const equippedSkin = skinShopData.skins.find(skin => skin.id === equippedSkinId);
@@ -93,6 +96,9 @@ const MemberRefrigeratorScreen = () => {
                             backgroundImage: skinAsset.thumbnail,
                             headerBackgroundImage: skinAsset.headerBackground,
                             summaryBackgroundImage: skinAsset.summaryBackground,
+                            fridgeBackgroundImage: skinAsset.fridgeBackground,
+                            freezerBackgroundImage: skinAsset.freezerBackground,
+                            roomBackgroundImage: skinAsset.roomBackground,
                         };
                     }
                 }
@@ -102,6 +108,9 @@ const MemberRefrigeratorScreen = () => {
                     backgroundImage: source,
                     headerBackgroundImage: source,
                     summaryBackgroundImage: source,
+                    fridgeBackgroundImage: source,
+                    freezerBackgroundImage: source,
+                    roomBackgroundImage: source,
                 };
             }
         }
@@ -110,6 +119,9 @@ const MemberRefrigeratorScreen = () => {
             backgroundImage: defaultDetailBackground,
             headerBackgroundImage: defaultHeaderBackground,
             summaryBackgroundImage: defaultSummaryBackground,
+            fridgeBackgroundImage: defaultDetailBackground,
+            freezerBackgroundImage: defaultDetailBackground,
+            roomBackgroundImage: defaultDetailBackground,
         };
     }, [equippedSkinId, skinShopData]);
 
@@ -221,70 +233,52 @@ const MemberRefrigeratorScreen = () => {
             <View style={homeStyles.contentArea}>
                 <Animated.View style={[homeStyles.animatedContainer, fridgeDetailStyle]}>
                     <ImageBackground
-                        source={resolvedSkinImages.backgroundImage}
+                        source={resolvedSkinImages.fridgeBackgroundImage}
                         style={homeStyles.detailBackground}
                         resizeMode="stretch"
                     >
-                        <ImageBackground
-                            source={TAB_BACKGROUNDS.fridge}
-                            style={homeStyles.detailBackground}
-                            resizeMode="stretch"
-                        >
-                            <IngredientListView
-                                isLoading={isListLoading}
-                                error={listErrorMessage}
-                                ingredients={storedIngredients}
-                                tabName="fridge"
-                                color={TAB_ACTIVE_COLORS.fridge}
-                                readOnly
-                            />
-                        </ImageBackground>
+                        <IngredientListView
+                            isLoading={isListLoading}
+                            error={listErrorMessage}
+                            ingredients={storedIngredients}
+                            tabName="fridge"
+                            color={TAB_ACTIVE_COLORS.fridge}
+                            readOnly
+                        />
                     </ImageBackground>
                 </Animated.View>
 
                 <Animated.View style={[homeStyles.animatedContainer, freezerDetailStyle]}>
                     <ImageBackground
-                        source={resolvedSkinImages.backgroundImage}
+                        source={resolvedSkinImages.freezerBackgroundImage}
                         style={homeStyles.detailBackground}
                         resizeMode="stretch"
                     >
-                        <ImageBackground
-                            source={TAB_BACKGROUNDS.freezer}
-                            style={homeStyles.detailBackground}
-                            resizeMode="stretch"
-                        >
-                            <IngredientListView
-                                isLoading={isListLoading}
-                                error={listErrorMessage}
-                                ingredients={storedIngredients}
-                                tabName="freezer"
-                                color={TAB_ACTIVE_COLORS.freezer}
-                                readOnly
-                            />
-                        </ImageBackground>
+                        <IngredientListView
+                            isLoading={isListLoading}
+                            error={listErrorMessage}
+                            ingredients={storedIngredients}
+                            tabName="freezer"
+                            color={TAB_ACTIVE_COLORS.freezer}
+                            readOnly
+                        />
                     </ImageBackground>
                 </Animated.View>
 
                 <Animated.View style={[homeStyles.animatedContainer, roomDetailStyle]}>
                     <ImageBackground
-                        source={resolvedSkinImages.backgroundImage}
+                        source={resolvedSkinImages.roomBackgroundImage}
                         style={homeStyles.detailBackground}
                         resizeMode="stretch"
                     >
-                        <ImageBackground
-                            source={TAB_BACKGROUNDS.room}
-                            style={homeStyles.detailBackground}
-                            resizeMode="stretch"
-                        >
-                            <IngredientListView
-                                isLoading={isListLoading}
-                                error={listErrorMessage}
-                                ingredients={storedIngredients}
-                                tabName="room"
-                                color={TAB_ACTIVE_COLORS.room}
-                                readOnly
-                            />
-                        </ImageBackground>
+                        <IngredientListView
+                            isLoading={isListLoading}
+                            error={listErrorMessage}
+                            ingredients={storedIngredients}
+                            tabName="room"
+                            color={TAB_ACTIVE_COLORS.room}
+                            readOnly
+                        />
                     </ImageBackground>
                 </Animated.View>
 
