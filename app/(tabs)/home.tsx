@@ -27,6 +27,7 @@ import { IngredientListView } from '@/src/features/home/components/IngredientLis
 // 커스텀 훅
 import { useIngredientData } from '@/src/features/home/hooks/useIngredientData';
 import { useTabAnimation } from '@/src/features/home/hooks/useTabAnimation';
+import { useEquippedSkin } from '@/src/features/home/hooks/useEquippedSkin';
 
 import { StoredIngredient } from '@/src/features/home/types'; // ✅ 2. StoredIngredient 타입 임포트
 
@@ -53,6 +54,9 @@ export default function HomeScreen() {
         roomDetailStyle,
         fabAnimatedStyle,
     } = useTabAnimation(activeTab);
+
+    // 장착된 스킨 조회
+    const { backgroundImage, summaryBackgroundImage, headerBackgroundImage } = useEquippedSkin();
 
     // 탭 핸들러 - prefetch 추가
     const handleTabPress = (tabName: TabName) => {
@@ -120,12 +124,10 @@ export default function HomeScreen() {
     return (
         <View style={styles.container}>
             {/* 상단 헤더 영역 */}
-            <LinearGradient
-                colors={['#8387A5', '#DAE4F4', '#96A3C6']}
-                locations={[0, 0.75, 1]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
+            <ImageBackground
+                source={headerBackgroundImage}
                 style={styles.headerGradient}
+                resizeMode="cover"
             >
                 <View style={styles.logoContainer}>
                     {activeTab === null ? (
@@ -219,50 +221,62 @@ export default function HomeScreen() {
                         )}
                     </TouchableOpacity>
                 </View>
-            </LinearGradient>
+            </ImageBackground>
 
             {/* 메인 콘텐츠 영역 */}
             <View style={styles.contentArea}>
                 {/* Layer 2: 상세 뷰들 */}
                 <Animated.View style={[styles.animatedContainer, fridgeDetailStyle]}>
                     <ImageBackground
-                        source={TAB_BACKGROUNDS.fridge}
+                        source={backgroundImage}
                         style={styles.detailBackground}
                         resizeMode="stretch"
                     >
-                        <IngredientListView
-                            isLoading={isListLoading}
-                            error={isListError}
-                            ingredients={storedIngredients}
-                            tabName="fridge"
-                            color={TAB_ACTIVE_COLORS.fridge}
-                            onAddIngredient={goToAddIngredient}
-                            onItemPress={handleIngredientPress} // ✅ 5. 핸들러 전달
-                        />
+                        <ImageBackground
+                            source={TAB_BACKGROUNDS.fridge}
+                            style={styles.detailBackground}
+                            resizeMode="stretch"
+                        >
+                            <IngredientListView
+                                isLoading={isListLoading}
+                                error={isListError}
+                                ingredients={storedIngredients}
+                                tabName="fridge"
+                                color={TAB_ACTIVE_COLORS.fridge}
+                                onAddIngredient={goToAddIngredient}
+                                onItemPress={handleIngredientPress} // ✅ 5. 핸들러 전달
+                            />
+                        </ImageBackground>
                     </ImageBackground>
                 </Animated.View>
 
                 <Animated.View style={[styles.animatedContainer, freezerDetailStyle]}>
                     <ImageBackground
-                        source={TAB_BACKGROUNDS.freezer}
+                        source={backgroundImage}
                         style={styles.detailBackground}
                         resizeMode="stretch"
                     >
-                        <IngredientListView
-                            isLoading={isListLoading}
-                            error={isListError}
-                            ingredients={storedIngredients}
-                            tabName="freezer"
-                            color={TAB_ACTIVE_COLORS.freezer}
-                            onAddIngredient={goToAddIngredient}
-                            onItemPress={handleIngredientPress} // ✅ 5. 핸들러 전달
-                        />
+                        <ImageBackground
+                            source={TAB_BACKGROUNDS.freezer}
+                            style={styles.detailBackground}
+                            resizeMode="stretch"
+                        >
+                            <IngredientListView
+                                isLoading={isListLoading}
+                                error={isListError}
+                                ingredients={storedIngredients}
+                                tabName="freezer"
+                                color={TAB_ACTIVE_COLORS.freezer}
+                                onAddIngredient={goToAddIngredient}
+                                onItemPress={handleIngredientPress} // ✅ 5. 핸들러 전달
+                            />
+                        </ImageBackground>
                     </ImageBackground>
                 </Animated.View>
 
                 <Animated.View style={[styles.animatedContainer, roomDetailStyle]}>
                     <ImageBackground
-                        source={TAB_BACKGROUNDS.room}
+                        source={backgroundImage}
                         style={styles.detailBackground}
                         resizeMode="stretch"
                     >
@@ -280,12 +294,10 @@ export default function HomeScreen() {
 
                 {/* Layer 1: 요약 뷰 */}
                 <Animated.View style={[styles.animatedContainer, summaryAnimatedStyle]}>
-                    <LinearGradient
-                        colors={['#8387A5', '#DAE4F4', '#96A3C6']}
-                        locations={[0, 0.75, 1]}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 0 }}
+                    <ImageBackground
+                        source={summaryBackgroundImage}
                         style={styles.contentGradient}
+                        resizeMode="cover"
                     >
                         {/* 💡 [수정] isLoading이 true이면서 동시에 기존 카운트가 0일 때만 로딩 표시 */}
                         {isLoading && hasNoCountData ? (
@@ -323,7 +335,7 @@ export default function HomeScreen() {
                                 </ImageBackground>
                             </View>
                         )}
-                    </LinearGradient>
+                    </ImageBackground>
                 </Animated.View>
 
                 {/* 재료 추가 FAB */}

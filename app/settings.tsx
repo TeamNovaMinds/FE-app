@@ -109,9 +109,9 @@ export default function SettingsScreen() {
                 {/* 기타 */}
                 <View style={styles.listContainer}>
                     <Text style={styles.sectionTitle}>기타</Text>
-                    <Link href="/settings/terms" asChild>
+                    <Link href="/skin" asChild>
                         <TouchableOpacity style={styles.listItem}>
-                            <Text style={styles.listText}>이용약관</Text>
+                            <Text style={styles.listText}>스킨 라이브러리</Text>
                             <Ionicons name="chevron-forward" size={20} color="#888" />
                         </TouchableOpacity>
                     </Link>
