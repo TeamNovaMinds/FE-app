@@ -233,6 +233,14 @@ export default function RootLayout() {
                             }}
                         />
 
+                        {/* 타인 냉장고 상세 */}
+                        <Stack.Screen
+                            name="member/[nickname]/refrigerator"
+                            options={{
+                                headerShown: false,
+                            }}
+                        />
+
                         <Stack.Screen name="+not-found" />
                     </Stack>
                     <StatusBar style="auto" />

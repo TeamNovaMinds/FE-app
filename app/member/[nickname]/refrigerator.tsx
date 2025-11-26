@@ -1,0 +1,345 @@
+import React, { useMemo, useState } from 'react';
+import {
+    ActivityIndicator,
+    Image,
+    ImageBackground,
+    ImageSourcePropType,
+    Text,
+    TouchableOpacity,
+    View,
+} from 'react-native';
+import Animated from 'react-native-reanimated';
+import { useLocalSearchParams } from 'expo-router';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+
+import { IngredientListView } from '@/src/features/home/components/IngredientListView';
+import { TAB_ACTIVE_COLORS, TAB_BACKGROUNDS } from '@/src/features/home/constants';
+import { TabName } from '@/src/features/home/types';
+import { useTabAnimation } from '@/src/features/home/hooks/useTabAnimation';
+import { memberRefrigeratorService } from '@/src/features/member-refrigerator/service';
+import { styles as memberStyles } from '@/src/features/member-refrigerator/styles';
+import { styles as homeStyles } from '@/src/features/home/styles';
+import { getImageSource, SKIN_ASSETS, SkinIdentifier } from '@/src/features/skin/skinAssets';
+import { skinService } from '@/src/features/skin/service';
+
+const activeTabBg = require('../../../assets/icons/active_tab_bg.png');
+const defaultHeaderBackground = require('../../../assets/images/default.png');
+const defaultDetailBackground = require('../../../assets/images/room.png');
+const summaryBackground = require('../../../assets/icons/others_summary_bg.png');
+
+const MemberRefrigeratorScreen = () => {
+    const { nickname: nicknameParam } = useLocalSearchParams<{ nickname: string }>();
+    const nickname = Array.isArray(nicknameParam) ? nicknameParam[0] : nicknameParam;
+
+    const [activeTab, setActiveTab] = useState<TabName | null>(null);
+    const queryClient = useQueryClient();
+
+    const {
+        summaryAnimatedStyle,
+        fridgeDetailStyle,
+        freezerDetailStyle,
+        roomDetailStyle,
+    } = useTabAnimation(activeTab);
+
+    const {
+        data: summary,
+        isLoading: isSummaryLoading,
+        error: summaryError,
+    } = useQuery({
+        queryKey: ['memberRefrigeratorSummary', nickname],
+        queryFn: () => memberRefrigeratorService.getSummary(nickname!),
+        enabled: Boolean(nickname),
+    });
+
+    const {
+        data: storedItemsResponse,
+        isLoading: isListLoading,
+        error: listError,
+    } = useQuery({
+        queryKey: ['memberStoredIngredients', nickname, activeTab],
+        queryFn: () => memberRefrigeratorService.getStoredItems(nickname!, activeTab!),
+        enabled: Boolean(nickname && activeTab),
+        staleTime: 1000 * 60 * 5,
+        placeholderData: (prev) => prev,
+    });
+
+    const equippedSkinId = summary?.equippedSkinId;
+
+    // 스킨 상점 목록을 조회해서 해당 스킨의 thumbnailUrl 가져오기
+    const { data: skinShopData } = useQuery({
+        queryKey: ['skinShop'],
+        queryFn: () => skinService.getShopSkins(),
+        staleTime: 1000 * 60 * 10, // 10분간 캐시 유지
+    });
+
+    const resolvedSkinImages = useMemo((): { backgroundImage: ImageSourcePropType; headerBackgroundImage: ImageSourcePropType } => {
+        // equippedSkinId가 있고 스킨 목록이 로드되었을 때
+        if (equippedSkinId && skinShopData?.skins) {
+            // 스킨 목록에서 해당 ID의 스킨 찾기
+            const equippedSkin = skinShopData.skins.find(skin => skin.id === equippedSkinId);
+
+            if (equippedSkin?.thumbnailUrl) {
+                const thumbnailUrl = equippedSkin.thumbnailUrl;
+
+                // thumbnailUrl이 로컬 스킨 식별자인 경우
+                if (!thumbnailUrl.startsWith('http')) {
+                    const skinAsset = SKIN_ASSETS[thumbnailUrl as SkinIdentifier];
+                    if (skinAsset) {
+                        return {
+                            backgroundImage: skinAsset.thumbnail,
+                            headerBackgroundImage: skinAsset.headerBackground,
+                        };
+                    }
+                }
+
+                // 원격 이미지인 경우
+                const source = getImageSource(thumbnailUrl);
+                return {
+                    backgroundImage: source,
+                    headerBackgroundImage: source,
+                };
+            }
+        }
+
+        // 기본 스킨 사용
+        return {
+            backgroundImage: defaultDetailBackground,
+            headerBackgroundImage: defaultHeaderBackground,
+        };
+    }, [equippedSkinId, skinShopData]);
+
+    const storedIngredients = storedItemsResponse?.storedIngredients || [];
+    const listErrorMessage = listError ? '재료를 불러오는 중 오류가 발생했습니다.' : null;
+    const headerTitle = nickname ? `${nickname} 님 냉장고` : '타인 냉장고';
+
+    const handleTabPress = (tabName: TabName) => {
+        const newTab = activeTab === tabName ? null : tabName;
+        setActiveTab(newTab);
+
+        if (nickname && newTab) {
+            queryClient.prefetchQuery({
+                queryKey: ['memberStoredIngredients', nickname, newTab],
+                queryFn: () => memberRefrigeratorService.getStoredItems(nickname, newTab),
+            });
+        }
+    };
+
+    return (
+        <View style={homeStyles.container}>
+            <ImageBackground
+                source={resolvedSkinImages.headerBackgroundImage}
+                style={homeStyles.headerGradient}
+                resizeMode="cover"
+            >
+                <View style={homeStyles.logoContainer}>
+                    <Text style={homeStyles.headerTitle}>{headerTitle}</Text>
+                </View>
+
+                <View style={homeStyles.tabContainer}>
+                    <TouchableOpacity
+                        style={homeStyles.tabButton}
+                        onPress={() => handleTabPress('fridge')}
+                    >
+                        {activeTab === 'fridge' ? (
+                            <ImageBackground
+                                source={activeTabBg}
+                                style={homeStyles.activeTabBackground}
+                                imageStyle={homeStyles.activeTabBackgroundImageStyle}
+                            >
+                                <Text style={[
+                                    homeStyles.tabText,
+                                    homeStyles.activeTabText,
+                                    { color: TAB_ACTIVE_COLORS.fridge }
+                                ]}>
+                                    냉장고
+                                </Text>
+                            </ImageBackground>
+                        ) : (
+                            <Text style={homeStyles.tabText}>
+                                냉장고
+                            </Text>
+                        )}
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={homeStyles.tabButton}
+                        onPress={() => handleTabPress('freezer')}
+                    >
+                        {activeTab === 'freezer' ? (
+                            <ImageBackground
+                                source={activeTabBg}
+                                style={homeStyles.activeTabBackground}
+                                imageStyle={homeStyles.activeTabBackgroundImageStyle}
+                            >
+                                <Text style={[
+                                    homeStyles.tabText,
+                                    homeStyles.activeTabText,
+                                    { color: TAB_ACTIVE_COLORS.freezer }
+                                ]}>
+                                    냉동고
+                                </Text>
+                            </ImageBackground>
+                        ) : (
+                            <Text style={homeStyles.tabText}>
+                                냉동고
+                            </Text>
+                        )}
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={homeStyles.tabButton}
+                        onPress={() => handleTabPress('room')}
+                    >
+                        {activeTab === 'room' ? (
+                            <ImageBackground
+                                source={activeTabBg}
+                                style={homeStyles.activeTabBackground}
+                                imageStyle={homeStyles.activeTabBackgroundImageStyle}
+                            >
+                                <Text style={[
+                                    homeStyles.tabText,
+                                    homeStyles.activeTabText,
+                                    { color: TAB_ACTIVE_COLORS.room }
+                                ]}>
+                                    실온
+                                </Text>
+                            </ImageBackground>
+                        ) : (
+                            <Text style={homeStyles.tabText}>
+                                실온
+                            </Text>
+                        )}
+                    </TouchableOpacity>
+                </View>
+            </ImageBackground>
+
+            <View style={homeStyles.contentArea}>
+                <Animated.View style={[homeStyles.animatedContainer, fridgeDetailStyle]}>
+                    <ImageBackground
+                        source={resolvedSkinImages.backgroundImage}
+                        style={homeStyles.detailBackground}
+                        resizeMode="stretch"
+                    >
+                        <ImageBackground
+                            source={TAB_BACKGROUNDS.fridge}
+                            style={homeStyles.detailBackground}
+                            resizeMode="stretch"
+                        >
+                            <IngredientListView
+                                isLoading={isListLoading}
+                                error={listErrorMessage}
+                                ingredients={storedIngredients}
+                                tabName="fridge"
+                                color={TAB_ACTIVE_COLORS.fridge}
+                                readOnly
+                            />
+                        </ImageBackground>
+                    </ImageBackground>
+                </Animated.View>
+
+                <Animated.View style={[homeStyles.animatedContainer, freezerDetailStyle]}>
+                    <ImageBackground
+                        source={resolvedSkinImages.backgroundImage}
+                        style={homeStyles.detailBackground}
+                        resizeMode="stretch"
+                    >
+                        <ImageBackground
+                            source={TAB_BACKGROUNDS.freezer}
+                            style={homeStyles.detailBackground}
+                            resizeMode="stretch"
+                        >
+                            <IngredientListView
+                                isLoading={isListLoading}
+                                error={listErrorMessage}
+                                ingredients={storedIngredients}
+                                tabName="freezer"
+                                color={TAB_ACTIVE_COLORS.freezer}
+                                readOnly
+                            />
+                        </ImageBackground>
+                    </ImageBackground>
+                </Animated.View>
+
+                <Animated.View style={[homeStyles.animatedContainer, roomDetailStyle]}>
+                    <ImageBackground
+                        source={resolvedSkinImages.backgroundImage}
+                        style={homeStyles.detailBackground}
+                        resizeMode="stretch"
+                    >
+                        <ImageBackground
+                            source={TAB_BACKGROUNDS.room}
+                            style={homeStyles.detailBackground}
+                            resizeMode="stretch"
+                        >
+                            <IngredientListView
+                                isLoading={isListLoading}
+                                error={listErrorMessage}
+                                ingredients={storedIngredients}
+                                tabName="room"
+                                color={TAB_ACTIVE_COLORS.room}
+                                readOnly
+                            />
+                        </ImageBackground>
+                    </ImageBackground>
+                </Animated.View>
+
+                <Animated.View style={[homeStyles.animatedContainer, summaryAnimatedStyle]}>
+                    <View style={memberStyles.summaryWrapper}>
+                        <ImageBackground
+                            source={summaryBackground}
+                            style={memberStyles.summaryCard}
+                            imageStyle={memberStyles.summaryCardImage}
+                            resizeMode="cover"
+                        >
+                            {isSummaryLoading ? (
+                                <View style={memberStyles.summaryLoading}>
+                                    <ActivityIndicator size="large" color="#5FE5FF" />
+                                </View>
+                            ) : summaryError ? (
+                                <View style={memberStyles.summaryLoading}>
+                                    <Text style={{ color: '#FF5C5C' }}>요약 정보를 불러오지 못했습니다.</Text>
+                                </View>
+                            ) : (
+                                <>
+                                    <View style={memberStyles.summaryHeader}>
+                                        <Image
+                                        source={summary?.profileImageUrl
+                                            ? { uri: summary.profileImageUrl }
+                                            : require('../../../assets/images/JustFridge_logo.png')}
+                                        style={memberStyles.profileImage}
+                                    />
+                                        <Text style={memberStyles.nickname}>{summary?.nickname || '알 수 없음'} 님</Text>
+                                    </View>
+
+                                    <View style={memberStyles.statRow}>
+                                        <View style={memberStyles.statItem}>
+                                            <Text style={memberStyles.statValue}>{summary?.recipeCount ?? 0}</Text>
+                                            <Text style={memberStyles.statLabel}>레시피</Text>
+                                        </View>
+                                        <View style={memberStyles.statItem}>
+                                            <Text style={memberStyles.statValue}>{summary?.followerCount ?? 0}</Text>
+                                            <Text style={memberStyles.statLabel}>팔로워</Text>
+                                        </View>
+                                        <View style={memberStyles.statItem}>
+                                            <Text style={memberStyles.statValue}>{summary?.followingCount ?? 0}</Text>
+                                            <Text style={memberStyles.statLabel}>팔로우</Text>
+                                        </View>
+                                    </View>
+
+                                    <View style={memberStyles.rankingBox}>
+                                        <Text style={memberStyles.rankingLabel}>포인트 랭킹</Text>
+                                        <Text style={memberStyles.rankingValue}>
+                                            {summary?.pointRanking ? `${summary.pointRanking}등` : '집계 중'}
+                                        </Text>
+                                    </View>
+                                </>
+                            )}
+                        </ImageBackground>
+                    </View>
+                </Animated.View>
+            </View>
+        </View>
+    );
+};
+
+export default MemberRefrigeratorScreen;

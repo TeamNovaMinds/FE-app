@@ -250,6 +250,12 @@ export default function RecipeDetailScreen() {
                 return difficulty;
         }
     };
+
+    const navigateToAuthorRefrigerator = () => {
+        const nickname = recipe?.authorInfo?.nickname;
+        if (!nickname || recipe?.authorInfo?.myself || recipe?.writtenByMe) return;
+        router.push(`/member/${encodeURIComponent(nickname)}/refrigerator`);
+    };
     const formatCategory = (
         category: 'KOREAN' | 'WESTERN' | 'CHINESE' | 'JAPANESE' | 'OTHER',
     ) => {
@@ -303,7 +309,7 @@ export default function RecipeDetailScreen() {
 
     const renderAuthor = () => (
         <View style={styles.authorSection}>
-            <View style={styles.authorInfo}>
+            <TouchableOpacity style={styles.authorInfo} onPress={navigateToAuthorRefrigerator} activeOpacity={0.8}>
                 <Image
                     source={{
                         uri:
@@ -313,7 +319,7 @@ export default function RecipeDetailScreen() {
                     style={styles.authorImage}
                 />
                 <Text style={styles.authorName}>{recipe?.authorInfo.nickname}</Text>
-            </View>
+            </TouchableOpacity>
 
             {!recipe?.authorInfo.myself && !recipe?.writtenByMe && (
                 <TouchableOpacity
