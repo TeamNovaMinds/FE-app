@@ -1,5 +1,7 @@
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Dimensions } from 'react-native';
 import Constants from 'expo-constants';
+
+const { width: screenWidth } = Dimensions.get('window');
 
 export const styles = StyleSheet.create({
     container: {
@@ -220,11 +222,12 @@ export const styles = StyleSheet.create({
     },
     gridContainer: { // FlatList의 contentContainer
         paddingTop: 24,
-        paddingHorizontal: 20,
         paddingBottom: 120,
+        alignItems: 'center', // 중앙 정렬
     },
     gridRow: { // FlatList의 columnWrapperStyle
         justifyContent: 'flex-start',
+        width: screenWidth - 40, // 화면 너비 - 40 (양쪽 여백 20씩)
         paddingHorizontal: 4,
     },
     gridItem: { // 재료 아이템 (둥근 사각형)

@@ -15,6 +15,7 @@ import {
     TouchableWithoutFeedback,
     ScrollView,
     Alert, // 1. Alert 임포트
+    Dimensions, // 화면 크기 가져오기
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -359,6 +360,9 @@ export default function IngredientSearchScreen() {
     );
 }
 
+// 화면 너비 가져오기
+const { width: screenWidth } = Dimensions.get('window');
+
 // 14. 스타일 시트 수정 (활성 스타일, 추가하기 버튼 스타일 추가)
 const styles = StyleSheet.create({
     backdrop: {
@@ -391,7 +395,8 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         backgroundColor: '#F0F0F0',
         borderRadius: 12,
-        marginHorizontal: 16,
+        width: screenWidth - 32, // 화면 너비 - 32 (양쪽 여백 16씩)
+        alignSelf: 'center', // 중앙 정렬
         marginBottom: 10,
         paddingHorizontal: 12,
     },
@@ -491,11 +496,13 @@ const styles = StyleSheet.create({
         borderTopWidth: 1,
         borderTopColor: '#F0F0F0',
         backgroundColor: '#FFFFFF',
+        alignItems: 'center', // 버튼을 중앙 정렬
     },
     addButton: {
         backgroundColor: '#62A1FF', // 활성 (파란색)
         padding: 16,
         borderRadius: 12,
+        width: screenWidth - 32, // 화면 너비 - 32 (양쪽 여백 16씩)
         alignItems: 'center',
         justifyContent: 'center',
     },
