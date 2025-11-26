@@ -12,6 +12,7 @@ import {
     Alert,
     ImageSourcePropType
 } from 'react-native';
+import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
@@ -52,11 +53,18 @@ const MENU_ITEMS = [
 ];
 
 export default function CommunityScreen() {
+    const router = useRouter(); // ✅ 1. 라우터 훅 사용
 
-    // 카드 클릭 핸들러 (현재는 콘솔 로그만 출력)
-    const handlePress = (menuTitle: string) => {
-        console.log(`${menuTitle} 버튼이 눌렸습니다.`);
-        // 나중에 여기에 router.push(...)를 추가하여 페이지 이동을 구현하면 됩니다.
+    // ✅ 2. handlePress 함수 수정 (menuTitle 대신 id를 받도록 변경 추천)
+    const handlePress = (itemId: string) => {
+        if (itemId === 'ranking') {
+            // 랭킹 페이지로 이동 (app/community/ranking.tsx)
+            router.push('/community/ranking');
+        } else {
+            // 다른 메뉴는 아직 준비 중 알림
+            Alert.alert("알림", "준비 중인 기능입니다.");
+            console.log(`${itemId} 버튼이 눌렸습니다.`);
+        }
     };
 
     return (
@@ -74,7 +82,8 @@ export default function CommunityScreen() {
                     <TouchableOpacity
                         key={item.id}
                         activeOpacity={0.7} // 눌렀을 때 투명해지는 정도 (클릭감)
-                        onPress={() => handlePress(item.title)}
+                        // ✅ 3. onPress에서 item.id를 넘겨주도록 수정
+                        onPress={() => handlePress(item.id)}
                         style={[styles.cardContainer, { backgroundColor: item.image ? 'transparent' : item.tempColor }]}
                     >
                         <ImageBackground
