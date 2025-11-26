@@ -52,6 +52,7 @@ const MemberRefrigeratorScreen = () => {
         queryKey: ['memberRefrigeratorSummary', nickname],
         queryFn: () => memberRefrigeratorService.getSummary(nickname!),
         enabled: Boolean(nickname),
+        refetchOnMount: 'always', // 항상 최신 데이터 가져오기
     });
 
     const {

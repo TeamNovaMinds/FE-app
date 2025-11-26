@@ -107,6 +107,7 @@ export default function RecipeDetailScreen() {
             } else {
                 await axiosInstance.post(endpoint);
             }
+            return { nickname }; // nickname 반환
         },
         onMutate: async () => {
             await queryClient.cancelQueries({ queryKey: ['recipe', recipeId] });
@@ -140,6 +141,11 @@ export default function RecipeDetailScreen() {
         },
         onSettled: () => {
             queryClient.invalidateQueries({ queryKey: ['recipe', recipeId] });
+            // 타인 냉장고 요약 정보도 무효화하여 팔로워 수 업데이트
+            const nickname = recipe?.authorInfo?.nickname;
+            if (nickname) {
+                queryClient.invalidateQueries({ queryKey: ['memberRefrigeratorSummary', nickname] });
+            }
         },
     });
 

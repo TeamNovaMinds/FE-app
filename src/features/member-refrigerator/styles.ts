@@ -1,6 +1,8 @@
 // src/features/member-refrigerator/styles.ts
-import { StyleSheet } from 'react-native';
+import { StyleSheet,Dimensions } from 'react-native';
 import Constants from 'expo-constants';
+
+const { width: screenWidth } = Dimensions.get('window');
 
 export const styles = StyleSheet.create({
     container: {
@@ -83,11 +85,10 @@ export const styles = StyleSheet.create({
         width: '100%',
         paddingTop: 60,
         alignItems: 'center', // ✅ 카드를 화면 정중앙에 위치시킴 (핵심)
-        paddingLeft: 30,
-        paddingRight: 0,
     },
     summaryCard: {
-        width: '100%', // 부모(Wrapper)의 padding 안쪽을 꽉 채움
+        // ✅ 너비를 화면 너비에서 양옆 여백(30*2 = 60)을 뺀 값으로 고정
+        width: screenWidth - 60,
         minHeight: 180,
         borderRadius: 16,
         overflow: 'hidden',
@@ -119,12 +120,12 @@ export const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         marginBottom: 16,
+        gap: 40, // ✅ 추가: [프로필 이미지]와 [스탯] 사이의 간격을 여기서 일괄 조정
     },
     profileImage: {
         width: 74, // 이미지 살짝 키움
         height: 74,
         borderRadius: 37,
-        marginRight: 24, // 스탯과의 간격
         backgroundColor: '#eee',
     },
 
@@ -132,8 +133,7 @@ export const styles = StyleSheet.create({
     statRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 24, // ✅ 스탯 사이 간격 조정
-        marginLeft: 20, // 왼쪽으로 이동 (값을 조정해서 원하는 위치로 이동 가능)
+        gap: 40, // ✅ 스탯 사이 간격 조정
     },
     statItem: {
         alignItems: 'center',
@@ -159,7 +159,6 @@ export const styles = StyleSheet.create({
         alignItems: 'center',
         marginTop: 10,
         width: '100%', // 박스 너비 확보
-        paddingRight: 50, // 오른쪽 여백 추가로 박스 안에 확실히 들어오도록
     },
     rankingLabel: {
         color: '#FFFFFF',
