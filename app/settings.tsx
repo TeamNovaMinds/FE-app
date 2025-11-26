@@ -48,15 +48,6 @@ export default function SettingsScreen() {
 
     return (
         <SafeAreaView style={styles.container}>
-            {/* 헤더 */}
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => router.back()}>
-                    <Ionicons name="arrow-back" size={24} color="#333" />
-                </TouchableOpacity>
-                <Text style={styles.headerTitle}>설정</Text>
-                <View style={{ width: 24 }} />
-            </View>
-
             <ScrollView>
                 {/* 계정 설정 */}
                 <View style={styles.listContainer}>
@@ -98,12 +89,6 @@ export default function SettingsScreen() {
                             <Ionicons name="chevron-forward" size={20} color="#888" />
                         </TouchableOpacity>
                     </Link>
-                    <Link href="/settings/skin-library" asChild>
-                        <TouchableOpacity style={styles.listItem}>
-                            <Text style={styles.listText}>스킨 라이브러리</Text>
-                            <Ionicons name="chevron-forward" size={20} color="#888" />
-                        </TouchableOpacity>
-                    </Link>
                 </View>
 
                 {/* 기타 */}
@@ -141,20 +126,6 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#fff',
-    },
-    header: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingHorizontal: 16,
-        paddingVertical: 12,
-        borderBottomWidth: 1,
-        borderBottomColor: '#f0f0f0',
-    },
-    headerTitle: {
-        fontSize: 18,
-        fontWeight: '600',
-        color: '#000',
     },
     sectionTitle: {
         fontSize: 14,

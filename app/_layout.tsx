@@ -241,6 +241,36 @@ export default function RootLayout() {
                             }}
                         />
 
+                        {/* 설정 페이지 */}
+                        <Stack.Screen
+                            name="settings"
+                            options={{
+                                title: '설정',
+                                headerShown: true,
+                                headerBackTitle: '마이페이지',
+                            }}
+                        />
+
+                        {/* 스킨 목록 페이지 */}
+                        <Stack.Screen
+                            name="skin/index"
+                            options={{
+                                title: '스킨 라이브러리',
+                                headerShown: true,
+                                headerBackTitle: '마이페이지',
+                            }}
+                        />
+
+                        {/* 스킨 상세 페이지 */}
+                        <Stack.Screen
+                            name="skin/[id]"
+                            options={{
+                                title: '스킨 상세',
+                                headerShown: true,
+                                headerBackTitle: '스킨 라이브러리',
+                            }}
+                        />
+
                         <Stack.Screen name="+not-found" />
                     </Stack>
                     <StatusBar style="auto" />

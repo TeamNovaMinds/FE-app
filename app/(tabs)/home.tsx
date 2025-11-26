@@ -13,6 +13,7 @@ import Animated from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import axiosInstance from '@/api/axiosInstance';
+import { Ionicons } from '@expo/vector-icons';
 
 // 타입 및 상수
 import { TabName } from '@/src/features/home/types';
@@ -147,6 +148,16 @@ export default function HomeScreen() {
                         <Text style={styles.headerTitle}>나의 냉장고</Text>
                     )}
                 </View>
+
+                {/* 스킨 설정 버튼 (요약뷰일 때만 표시) */}
+                {activeTab === null && (
+                    <TouchableOpacity
+                        style={styles.settingsButton}
+                        onPress={() => router.push('/skin?tab=OWNED')}
+                    >
+                        <Ionicons name="settings-outline" size={24} color="#333" />
+                    </TouchableOpacity>
+                )}
 
                 {/* 탭 버튼들 */}
                 <View style={styles.tabContainer}>

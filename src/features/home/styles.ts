@@ -45,6 +45,15 @@ export const styles = StyleSheet.create({
         color: '#000000',
         letterSpacing: 1,
     },
+    settingsButton: {
+        position: 'absolute',
+        right: 20,
+        top: 15 + Constants.statusBarHeight,
+        width: 30,
+        height: 30,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
     tabContainer: {
         flexDirection: 'row',
         justifyContent: 'space-between',

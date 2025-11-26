@@ -1,5 +1,5 @@
 // app/skin/index.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
@@ -9,7 +9,7 @@ import {
     Image,
     ActivityIndicator,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { skinService } from '@/src/features/skin/service';
 import { RefrigeratorSkinListItem } from '@/src/features/skin/types';
@@ -20,7 +20,15 @@ type TabType = 'SHOP' | 'OWNED';
 
 export default function SkinListScreen() {
     const router = useRouter();
+    const { tab } = useLocalSearchParams();
     const [activeTab, setActiveTab] = useState<TabType>('SHOP');
+
+    // URL 파라미터로 전달된 탭이 있으면 설정
+    useEffect(() => {
+        if (tab === 'OWNED' || tab === 'SHOP') {
+            setActiveTab(tab as TabType);
+        }
+    }, [tab]);
 
     // React Query 데이터 페칭
     const { data, isLoading, error, refetch } = useQuery({
