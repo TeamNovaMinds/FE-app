@@ -3,6 +3,13 @@ import Constants from 'expo-constants';
 
 const { width: screenWidth } = Dimensions.get('window');
 
+// 그리드 아이템 크기 계산 (4열 기준)
+const horizontalPadding = 20; // 양쪽 여백
+const itemsPerRow = 4;
+const itemSpacing = 8; // 아이템 간 간격 (marginHorizontal * 2)
+const availableWidth = screenWidth - (horizontalPadding * 2);
+const itemWidth = Math.floor((availableWidth - (itemSpacing * (itemsPerRow + 1))) / itemsPerRow);
+
 export const styles = StyleSheet.create({
     container: {
         flex: 1,
@@ -231,8 +238,8 @@ export const styles = StyleSheet.create({
         paddingHorizontal: 4,
     },
     gridItem: { // 재료 아이템 (둥근 사각형)
-        width: 90,
-        height: 90,
+        width: itemWidth, // 화면 크기에 맞게 동적 계산
+        height: itemWidth, // 정사각형 유지
         borderRadius: 16,
         backgroundColor: 'rgba(101, 104, 115, 0.3)',
         alignItems: 'center',
