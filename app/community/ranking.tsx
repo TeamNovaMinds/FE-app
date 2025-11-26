@@ -37,7 +37,7 @@ export default function RankingScreen() {
 
     return (
         <View style={styles.container}>
-            <Stack.Screen options={{ title: '랭킹', headerShadowVisible: false }} />
+            <Stack.Screen options={{ title: '랭킹', headerBackTitle: '커뮤니티', headerShadowVisible: false }} />
 
             <ScrollView contentContainerStyle={styles.scrollContent}>
                 <View style={styles.card}>
