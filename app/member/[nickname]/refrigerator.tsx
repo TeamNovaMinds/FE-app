@@ -11,8 +11,9 @@ import {
     View,
 } from 'react-native';
 import Animated from 'react-native-reanimated';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { Ionicons } from '@expo/vector-icons';
 
 import { IngredientListView } from '@/src/features/home/components/IngredientListView';
 import { TAB_ACTIVE_COLORS } from '@/src/features/home/constants';
@@ -33,6 +34,7 @@ const summaryCardBackground = require('../../../assets/icons/others_summary_bg.p
 const MemberRefrigeratorScreen = () => {
     const { nickname: nicknameParam } = useLocalSearchParams<{ nickname: string }>();
     const nickname = Array.isArray(nicknameParam) ? nicknameParam[0] : nicknameParam;
+    const router = useRouter();
 
     const [activeTab, setActiveTab] = useState<TabName | null>(null);
     const queryClient = useQueryClient();
@@ -149,6 +151,17 @@ const MemberRefrigeratorScreen = () => {
                 resizeMode="cover"
             >
                 <View style={homeStyles.logoContainer}>
+                    <TouchableOpacity
+                        onPress={() => router.back()}
+                        style={{
+                            position: 'absolute',
+                            left: 16,
+                            padding: 8,
+                            zIndex: 10,
+                        }}
+                    >
+                        <Ionicons name="chevron-back" size={28} color="#FFFFFF" />
+                    </TouchableOpacity>
                     <Text style={homeStyles.headerTitle}>{headerTitle}</Text>
                 </View>
 
