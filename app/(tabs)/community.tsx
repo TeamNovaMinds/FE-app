@@ -1,337 +1,169 @@
-// 홈 화면 - 냉장고 재료 관리 (피그마 디자인 반영)
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient'; // added: 그라데이션 라이브러리
-import axiosInstance from '@/api/axiosInstance';
+// app/(tabs)/community.tsx
 
-// added: API 응답 타입 정의
-interface IngredientCountResponse {
-    isSuccess: boolean;
-    code: string;
-    message: string;
-    result: {
-        refrigeratorCount: number;
-        freezerCount: number;
-        roomTempCount: number;
-    };
-}
+import React from 'react';
+import {
+    View,
+    Text,
+    StyleSheet,
+    ScrollView,
+    TouchableOpacity,
+    ImageBackground,
+    Dimensions,
+    Alert,
+    ImageSourcePropType
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-export default function HomeScreen() {
-    // 상단 탭 상태 (냉장고, 냉동고, 실온)
-    const [activeTab, setActiveTab] = useState<'fridge' | 'freezer' | 'room'>('fridge');
+const { width } = Dimensions.get('window');
 
-    // 각 저장 공간의 잔여 재료 개수 상태
-    const [ingredientCount, setIngredientCount] = useState({
-        fridge: 0,
-        freezer: 0,
-        room: 0,
-    });
+// 메뉴 데이터 정의
+// 💡 추후 여기에 실제 이미지 경로를 require(...)로 넣어주시면 됩니다.
+const MENU_ITEMS = [
+    {
+        id: 'tips',
+        title: '꿀팁',
+        subtitle: '여러가지 팁을 공유해요!',
+        // 임시 배경색 (이미지가 없을 때 보임). 이미지를 넣으면 이 색은 가려집니다.
+        tempColor: '#B45F06',
+        // 👇 여기에 이미지를 넣으세요. 예: require('../../assets/images/tips_bg.png')
+        image: require('../../assets/icons/tip_component.png'),
+    },
+    {
+        id: 'ranking',
+        title: '랭킹',
+        subtitle: '요리왕은 누구일까요?',
+        tempColor: '#4285F4',
+        image: require('../../assets/icons/ranking_component.png'),
+    },
+    {
+        id: 'qna',
+        title: '질문방',
+        subtitle: '무엇이든 물어보세요!',
+        tempColor: '#7B61FF',
+        image: require('../../assets/icons/question_component.png'),
+    },
+    {
+        id: 'contest',
+        title: '요리 경진 대회',
+        subtitle: '여러분의 요리 실력을 뽐내보세요!',
+        tempColor: '#D63384',
+        image: require('../../assets/icons/contest_component.png'),
+    },
+];
 
-    // 로딩 상태
-    const [isLoading, setIsLoading] = useState(true);
+export default function CommunityScreen() {
 
-    // 에러 상태
-    const [error, setError] = useState<string | null>(null);
-
-    // 컴포넌트 마운트 시 재료 개수 가져오기
-    useEffect(() => {
-        fetchIngredientCount();
-    }, []);
-
-    // API 호출 함수
-    const fetchIngredientCount = async () => {
-        try {
-            setIsLoading(true);
-            setError(null);
-
-            const response = await axiosInstance.get<IngredientCountResponse>(
-                '/api/refrigerators/stored-items/count'
-            );
-
-            if (response.data.isSuccess) {
-                setIngredientCount({
-                    fridge: response.data.result.refrigeratorCount,
-                    freezer: response.data.result.freezerCount,
-                    room: response.data.result.roomTempCount,
-                });
-            } else {
-                setError('재료 개수를 불러오는데 실패했습니다.');
-            }
-        } catch (err) {
-            console.error('재료 개수 조회 에러:', err);
-            setError('재료 개수를 불러오는 중 오류가 발생했습니다.');
-        } finally {
-            setIsLoading(false);
-        }
+    // 카드 클릭 핸들러 (현재는 콘솔 로그만 출력)
+    const handlePress = (menuTitle: string) => {
+        console.log(`${menuTitle} 버튼이 눌렸습니다.`);
+        // 나중에 여기에 router.push(...)를 추가하여 페이지 이동을 구현하면 됩니다.
     };
 
     return (
-        // 전체 배경: 어두운 회색 (#2D303A)
-        <View style={styles.container}>
-            {/* 상단 헤더 영역 (그라데이션) */}
-            <LinearGradient
-                colors={['#8387A5', '#DAE4F4', '#96A3C6']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.headerGradient}
+        <SafeAreaView style={styles.container}>
+            {/* 헤더 */}
+            <View style={styles.header}>
+                <Text style={styles.headerTitle}>커뮤니티</Text>
+            </View>
+
+            <ScrollView
+                contentContainerStyle={styles.scrollContent}
+                showsVerticalScrollIndicator={false}
             >
-                {/* JUSTFRIDGE 로고 */}
-                <View style={styles.logoContainer}>
-                    <Text style={styles.logoJust}>JUST</Text>
-                    <Text style={styles.logoFridge}>FRIDGE</Text>
-                </View>
-
-                {/* 탭 버튼들 (냉장고, 냉동고, 실온) */}
-                <View style={styles.tabContainer}>
+                {MENU_ITEMS.map((item) => (
                     <TouchableOpacity
-                        style={[styles.tabButton, activeTab === 'fridge' && styles.activeTabButton]}
-                        onPress={() => setActiveTab('fridge')}
+                        key={item.id}
+                        activeOpacity={0.7} // 눌렀을 때 투명해지는 정도 (클릭감)
+                        onPress={() => handlePress(item.title)}
+                        style={[styles.cardContainer, { backgroundColor: item.image ? 'transparent' : item.tempColor }]}
                     >
-                        <Text style={[styles.tabText, activeTab === 'fridge' && styles.activeTabText]}>
-                            냉장고
-                        </Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                        style={[styles.tabButton, activeTab === 'freezer' && styles.activeTabButton]}
-                        onPress={() => setActiveTab('freezer')}
-                    >
-                        <Text style={[styles.tabText, activeTab === 'freezer' && styles.activeTabText]}>
-                            냉동고
-                        </Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                        style={[styles.tabButton, activeTab === 'room' && styles.activeTabButton]}
-                        onPress={() => setActiveTab('room')}
-                    >
-                        <Text style={[styles.tabText, activeTab === 'room' && styles.activeTabText]}>
-                            실온
-                        </Text>
-                    </TouchableOpacity>
-                </View>
-            </LinearGradient>
-
-            {/* 메인 콘텐츠 영역 (그라데이션) */}
-            <LinearGradient
-                colors={['#8387A5', '#DAE4F4', '#96A3C6']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.contentGradient}
-            >
-                {isLoading ? (
-                    // 로딩 중
-                    <View style={styles.loadingContainer}>
-                        <ActivityIndicator size="large" color="#89FFF1" />
-                        <Text style={styles.loadingText}>재료 개수를 불러오는 중...</Text>
-                    </View>
-                ) : error ? (
-                    // 에러 발생
-                    <View style={styles.errorContainer}>
-                        <Text style={styles.errorText}>{error}</Text>
-                        <TouchableOpacity style={styles.retryButton} onPress={fetchIngredientCount}>
-                            <Text style={styles.retryButtonText}>다시 시도</Text>
-                        </TouchableOpacity>
-                    </View>
-                ) : (
-                    // 정상 데이터 표시
-                    <View style={styles.countBoxWrapper}>
-                        {/* 재료 개수 박스 */}
-                        <View style={styles.countBox}>
-                            {/* 반투명 그라데이션 오버레이 */}
-                            <LinearGradient
-                                colors={['rgba(255, 255, 255, 0)', 'rgba(255, 255, 255, 0.08)', 'rgba(255, 255, 255, 0)']}
-                                start={{ x: 0, y: 0 }}
-                                end={{ x: 1, y: 0 }}
-                                style={styles.countBoxOverlay}
-                            />
-
-                            <View style={styles.countBoxContent}>
-                                <Text style={styles.countLabel}>
-                                    냉장고 잔여 재료 : <Text style={styles.countNumber}>{ingredientCount.fridge}</Text>
-                                </Text>
-                                <Text style={styles.countLabel}>
-                                    냉동고 잔여 재료 : <Text style={styles.countNumber}>{ingredientCount.freezer}</Text>
-                                </Text>
-                                <Text style={styles.countLabel}>
-                                    실온 잔여 재료 : <Text style={styles.countNumber}>{ingredientCount.room}</Text>
-                                </Text>
+                        <ImageBackground
+                            source={item.image as ImageSourcePropType}
+                            style={styles.cardBackground}
+                            imageStyle={{ borderRadius: 16 }} // 이미지 자체의 둥근 모서리
+                            resizeMode="cover"
+                        >
+                            {/* 텍스트 가독성을 위한 얇은 오버레이 (필요 시 opacity 조절) */}
+                            <View style={styles.textOverlay}>
+                                <Text style={styles.cardTitle}>{item.title}</Text>
+                                <Text style={styles.cardSubtitle}>{item.subtitle}</Text>
                             </View>
-                        </View>
-                    </View>
-                )}
-            </LinearGradient>
-        </View>
+                        </ImageBackground>
+                    </TouchableOpacity>
+                ))}
+            </ScrollView>
+        </SafeAreaView>
     );
 }
 
 const styles = StyleSheet.create({
-    // 전체 컨테이너
     container: {
         flex: 1,
-        backgroundColor: '#2D303A', // 피그마의 전체 배경색
+        backgroundColor: '#FFFFFF',
     },
+    header: {
+        paddingVertical: 16,
+        borderBottomWidth: 1,
+        borderBottomColor: '#F0F0F0',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    headerTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: '#000',
+    },
+    scrollContent: {
+        paddingHorizontal: 20,
+        paddingTop: 20,
+        paddingBottom: 40,
+    },
+    cardContainer: {
+        width: '100%',
+        height: 140, // 카드 높이
+        marginBottom: 20,
+        borderRadius: 16,
 
-    // 상단 헤더 그라데이션
-    headerGradient: {
-        height: 126,
-        borderBottomWidth: 2,
-        borderBottomColor: '#2D303A',
-        borderBottomLeftRadius: 4,
-        borderBottomRightRadius: 4,
-        // 피그마의 box-shadow 효과
-        shadowColor: '#070251',
-        shadowOffset: { width: -2, height: -2 },
+        // 그림자 설정 (iOS)
+        shadowColor: "#000",
+        shadowOffset: {
+            width: 0,
+            height: 4,
+        },
         shadowOpacity: 0.25,
-        shadowRadius: 4,
+        shadowRadius: 3.84,
+        // 그림자 설정 (Android)
         elevation: 5,
     },
-
-    // JUSTFRIDGE 로고
-    logoContainer: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginTop: 33,
-    },
-    logoJust: {
-        fontSize: 22,
-        fontWeight: 'bold',
-        color: '#000000',
-        letterSpacing: 1,
-    },
-    logoFridge: {
-        fontSize: 22,
-        fontWeight: 'bold',
-        color: '#1298FF',
-        letterSpacing: 1,
-    },
-
-    // 탭 컨테이너
-    tabContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        paddingHorizontal: 24,
-        marginTop: 17,
-    },
-
-    // 탭 버튼
-    tabButton: {
-        width: 100,
-        height: 44,
-        borderRadius: 12,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: 'transparent',
-    },
-    activeTabButton: {
-        backgroundColor: 'rgba(255, 255, 255, 0.3)', // 활성화된 탭 배경
-    },
-    tabText: {
-        fontSize: 16,
-        fontWeight: '600',
-        color: '#161616',
-    },
-    activeTabText: {
-        color: '#161616',
-        fontWeight: '700',
-    },
-
-    // 메인 콘텐츠 그라데이션
-    contentGradient: {
-        flex: 1,
-        borderTopWidth: 1,
-        borderTopColor: '#A2AECE',
-        borderTopLeftRadius: 4,
-        borderTopRightRadius: 4,
-    },
-
-    // 재료 개수 박스 래퍼
-    countBoxWrapper: {
-        marginTop: 58,
-        paddingHorizontal: 38,
-    },
-
-    // 재료 개수 박스
-    countBox: {
-        width: 299,
-        height: 169,
-        backgroundColor: '#2D303A',
-        borderRadius: 12,
-        position: 'relative',
-        // 그림자 효과
-        shadowColor: '#000000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.25,
-        shadowRadius: 4,
-        elevation: 5,
-    },
-
-    // 반투명 그라데이션 오버레이
-    countBoxOverlay: {
-        position: 'absolute',
+    cardBackground: {
         width: '100%',
         height: '100%',
-        borderRadius: 12,
-    },
-
-    // 재료 개수 박스 내용
-    countBoxContent: {
-        flex: 1,
-        justifyContent: 'space-around',
-        paddingVertical: 34,
-        paddingHorizontal: 24,
-    },
-
-    countLabel: {
-        fontSize: 20,
-        fontWeight: '600',
-        color: '#FCFCFC',
-        textAlign: 'left',
-    },
-    countNumber: {
-        fontSize: 20,
-        fontWeight: '700',
-        color: '#89FFF1', // 청록색 숫자
-    },
-
-    // 로딩 컨테이너
-    loadingContainer: {
-        flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
     },
-    loadingText: {
-        marginTop: 15,
-        fontSize: 16,
-        color: '#2D303A',
-        fontWeight: '500',
-    },
-
-    // 에러 컨테이너
-    errorContainer: {
-        flex: 1,
+    textOverlay: {
+        width: '100%',
+        height: '100%',
+        backgroundColor: 'rgba(0,0,0,0.2)', // 이미지가 밝을 경우 글씨가 잘 보이도록 반투명 검정 배경
+        borderRadius: 16,
         justifyContent: 'center',
         alignItems: 'center',
-        paddingHorizontal: 20,
     },
-    errorText: {
-        fontSize: 16,
-        color: '#FF5C5C',
-        textAlign: 'center',
-        marginBottom: 20,
-        fontWeight: '500',
-    },
-    retryButton: {
-        backgroundColor: '#89FFF1',
-        paddingVertical: 12,
-        paddingHorizontal: 30,
-        borderRadius: 8,
-    },
-    retryButtonText: {
-        color: '#2D303A',
-        fontSize: 16,
+    cardTitle: {
+        fontSize: 24,
         fontWeight: 'bold',
+        color: '#FFFFFF',
+        marginBottom: 8,
+        textShadowColor: 'rgba(0, 0, 0, 0.3)',
+        textShadowOffset: { width: 0, height: 2 },
+        textShadowRadius: 4,
+    },
+    cardSubtitle: {
+        fontSize: 14,
+        fontWeight: '500',
+        color: '#F0F0F0',
+        textShadowColor: 'rgba(0, 0, 0, 0.3)',
+        textShadowOffset: { width: 0, height: 1 },
+        textShadowRadius: 2,
     },
 });
