@@ -363,6 +363,13 @@ export default function IngredientSearchScreen() {
 // 화면 너비 가져오기
 const { width: screenWidth } = Dimensions.get('window');
 
+// 그리드 아이템 크기 계산 (4열 기준)
+const horizontalPadding = 22; // 양쪽 여백
+const itemsPerRow = 4;
+const itemSpacing = 12; // 아이템 간 총 간격
+const availableWidth = screenWidth - (horizontalPadding * 2);
+const itemWidth = Math.floor((availableWidth - (itemSpacing * (itemsPerRow - 1))) / itemsPerRow);
+
 // 14. 스타일 시트 수정 (활성 스타일, 추가하기 버튼 스타일 추가)
 const styles = StyleSheet.create({
     backdrop: {
@@ -443,16 +450,17 @@ const styles = StyleSheet.create({
     },
     // 그리드 스타일
     gridContainer: {
-        paddingHorizontal: 12, // 그리드 전체의 좌우 패딩
+        alignItems: 'center', // 중앙 정렬
     },
     gridRow: {
         justifyContent: 'flex-start', // 아이템들을 왼쪽부터 정렬
-        paddingHorizontal: 4,
+        width: screenWidth - 32, // 화면 너비 - 32 (양쪽 여백 16씩)
+        alignSelf: 'center', // gridRow 자체를 중앙 정렬
     },
     // 그리드 아이템 스타일 (기존 itemContainer 수정)
     itemContainer: {
-        width: 90,  // 아이템 너비
-        height: 90, // 아이템 높이
+        width: itemWidth,  // 화면 크기에 맞게 동적 계산
+        height: itemWidth, // 정사각형 유지
         borderRadius: 12, // 둥근 사각형
         backgroundColor: '#F0F0F0', // 피그마와 유사한 배경색
         alignItems: 'center',
