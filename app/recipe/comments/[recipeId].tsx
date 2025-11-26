@@ -35,6 +35,8 @@ import { useAuthStore } from '@/store/authStore';
 interface AuthorInfo {
     nickname: string;
     profileImageUrl: string | null;
+    following?: boolean;
+    myself?: boolean;
 }
 
 // 2계층 구조를 위한 타입 (대댓글)

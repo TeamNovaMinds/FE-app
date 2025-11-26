@@ -24,6 +24,8 @@ import { useInfiniteQuery, InfiniteData } from '@tanstack/react-query';
 interface AuthorInfo {
     nickname: string;
     profileImageUrl: string | null;
+    following?: boolean;
+    myself?: boolean;
 }
 
 interface Recipe {
