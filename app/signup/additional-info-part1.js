@@ -44,10 +44,13 @@ export default function AdditionalInfoPart1Screen() {
             const response = await axiosInstance.get(`/api/auth/check-nickname?nickname=${nicknameToCheck}`);
             if (response.data.isSuccess) {
                 setIsNicknameAvailable(true);
+                setNicknameError(''); // 성공 시 에러 메시지 초기화
             } else {
+                setIsNicknameAvailable(false);
                 setNicknameError(response.data.message || '사용할 수 없는 닉네임입니다.');
             }
         } catch (error) {
+            setIsNicknameAvailable(false);
             setNicknameError(error.response?.data?.message || '닉네임 확인 중 오류 발생');
         } finally {
             setIsCheckingNickname(false);
