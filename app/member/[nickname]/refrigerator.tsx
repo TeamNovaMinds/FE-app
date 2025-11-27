@@ -24,8 +24,7 @@ import { styles as memberStyles } from '@/src/features/member-refrigerator/style
 import { styles as homeStyles } from '@/src/features/home/styles';
 import { getImageSource, SKIN_ASSETS, SkinIdentifier } from '@/src/features/skin/skinAssets';
 import { skinService } from '@/src/features/skin/service';
-
-const activeTabBg = require('../../../assets/icons/active_tab_bg.png');
+import ActiveTabBg from '../../../assets/icons/active_tab_bg.svg';
 const defaultHeaderBackground = require('../../../assets/images/default.png');
 const defaultDetailBackground = require('../../../assets/images/room.png');
 const defaultSummaryBackground = require('../../../assets/images/default.png');
@@ -171,11 +170,13 @@ const MemberRefrigeratorScreen = () => {
                         onPress={() => handleTabPress('fridge')}
                     >
                         {activeTab === 'fridge' ? (
-                            <ImageBackground
-                                source={activeTabBg}
-                                style={homeStyles.activeTabBackground}
-                                imageStyle={homeStyles.activeTabBackgroundImageStyle}
-                            >
+                            <View style={homeStyles.activeTabBackground}>
+                                <ActiveTabBg
+                                    width="100%"
+                                    height="100%"
+                                    style={{ position: 'absolute' }}
+                                    preserveAspectRatio="none"
+                                />
                                 <Text style={[
                                     homeStyles.tabText,
                                     homeStyles.activeTabText,
@@ -183,7 +184,7 @@ const MemberRefrigeratorScreen = () => {
                                 ]}>
                                     냉장고
                                 </Text>
-                            </ImageBackground>
+                            </View>
                         ) : (
                             <Text style={homeStyles.tabText}>
                                 냉장고
@@ -196,11 +197,13 @@ const MemberRefrigeratorScreen = () => {
                         onPress={() => handleTabPress('freezer')}
                     >
                         {activeTab === 'freezer' ? (
-                            <ImageBackground
-                                source={activeTabBg}
-                                style={homeStyles.activeTabBackground}
-                                imageStyle={homeStyles.activeTabBackgroundImageStyle}
-                            >
+                            <View style={homeStyles.activeTabBackground}>
+                                <ActiveTabBg
+                                    width="100%"
+                                    height="100%"
+                                    style={{ position: 'absolute' }}
+                                    preserveAspectRatio="none"
+                                />
                                 <Text style={[
                                     homeStyles.tabText,
                                     homeStyles.activeTabText,
@@ -208,7 +211,7 @@ const MemberRefrigeratorScreen = () => {
                                 ]}>
                                     냉동고
                                 </Text>
-                            </ImageBackground>
+                            </View>
                         ) : (
                             <Text style={homeStyles.tabText}>
                                 냉동고
@@ -221,11 +224,13 @@ const MemberRefrigeratorScreen = () => {
                         onPress={() => handleTabPress('room')}
                     >
                         {activeTab === 'room' ? (
-                            <ImageBackground
-                                source={activeTabBg}
-                                style={homeStyles.activeTabBackground}
-                                imageStyle={homeStyles.activeTabBackgroundImageStyle}
-                            >
+                            <View style={homeStyles.activeTabBackground}>
+                                <ActiveTabBg
+                                    width="100%"
+                                    height="100%"
+                                    style={{ position: 'absolute' }}
+                                    preserveAspectRatio="none"
+                                />
                                 <Text style={[
                                     homeStyles.tabText,
                                     homeStyles.activeTabText,
@@ -233,7 +238,7 @@ const MemberRefrigeratorScreen = () => {
                                 ]}>
                                     실온
                                 </Text>
-                            </ImageBackground>
+                            </View>
                         ) : (
                             <Text style={homeStyles.tabText}>
                                 실온

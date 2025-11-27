@@ -14,6 +14,9 @@ import { useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import axiosInstance from '@/api/axiosInstance';
 import { Ionicons } from '@expo/vector-icons';
+import PlusIcon from '../../assets/icons/plus.svg';
+import ActiveTabBg from '../../assets/icons/active_tab_bg.svg';
+import HomeLogo from '../../assets/icons/home_logo.svg';
 
 // 타입 및 상수
 import { TabName } from '@/src/features/home/types';
@@ -139,11 +142,7 @@ export default function HomeScreen() {
             >
                 <View style={styles.logoContainer}>
                     {activeTab === null ? (
-                        <Image
-                            source={require('../../assets/icons/home_logo.png')}
-                            style={styles.logoImage}
-                            resizeMode="contain"
-                        />
+                        <HomeLogo style={styles.logoImage} />
                     ) : (
                         <Text style={styles.headerTitle}>나의 냉장고</Text>
                     )}
@@ -167,11 +166,13 @@ export default function HomeScreen() {
                         onPress={() => handleTabPress('fridge')}
                     >
                         {activeTab === 'fridge' ? (
-                            <ImageBackground
-                                source={require('../../assets/icons/active_tab_bg.png')}
-                                style={styles.activeTabBackground}
-                                imageStyle={styles.activeTabBackgroundImageStyle}
-                            >
+                            <View style={styles.activeTabBackground}>
+                                <ActiveTabBg
+                                    width="100%"
+                                    height="100%"
+                                    style={{ position: 'absolute' }}
+                                    preserveAspectRatio="none"
+                                />
                                 <Text style={[
                                     styles.tabText,
                                     styles.activeTabText,
@@ -179,7 +180,7 @@ export default function HomeScreen() {
                                 ]}>
                                     냉장고
                                 </Text>
-                            </ImageBackground>
+                            </View>
                         ) : (
                             <Text style={styles.tabText}>
                                 냉장고
@@ -193,11 +194,13 @@ export default function HomeScreen() {
                         onPress={() => handleTabPress('freezer')}
                     >
                         {activeTab === 'freezer' ? (
-                            <ImageBackground
-                                source={require('../../assets/icons/active_tab_bg.png')}
-                                style={styles.activeTabBackground}
-                                imageStyle={styles.activeTabBackgroundImageStyle}
-                            >
+                            <View style={styles.activeTabBackground}>
+                                <ActiveTabBg
+                                    width="100%"
+                                    height="100%"
+                                    style={{ position: 'absolute' }}
+                                    preserveAspectRatio="none"
+                                />
                                 <Text style={[
                                     styles.tabText,
                                     styles.activeTabText,
@@ -205,7 +208,7 @@ export default function HomeScreen() {
                                 ]}>
                                     냉동고
                                 </Text>
-                            </ImageBackground>
+                            </View>
                         ) : (
                             <Text style={styles.tabText}>
                                 냉동고
@@ -219,11 +222,13 @@ export default function HomeScreen() {
                         onPress={() => handleTabPress('room')}
                     >
                         {activeTab === 'room' ? (
-                            <ImageBackground
-                                source={require('../../assets/icons/active_tab_bg.png')}
-                                style={styles.activeTabBackground}
-                                imageStyle={styles.activeTabBackgroundImageStyle}
-                            >
+                            <View style={styles.activeTabBackground}>
+                                <ActiveTabBg
+                                    width="100%"
+                                    height="100%"
+                                    style={{ position: 'absolute' }}
+                                    preserveAspectRatio="none"
+                                />
                                 <Text style={[
                                     styles.tabText,
                                     styles.activeTabText,
@@ -231,7 +236,7 @@ export default function HomeScreen() {
                                 ]}>
                                     실온
                                 </Text>
-                            </ImageBackground>
+                            </View>
                         ) : (
                             <Text style={styles.tabText}>
                                 실온
@@ -351,10 +356,7 @@ export default function HomeScreen() {
                             style={styles.fabButton}
                             onPress={goToAddIngredient}
                         >
-                            <Image
-                                source={require('../../assets/icons/plus.png')}
-                                style={styles.fabIcon}
-                            />
+                            <PlusIcon width={22} height={22} />
                             <Text style={styles.fabText}>재료 추가</Text>
                         </TouchableOpacity>
                     </Animated.View>

@@ -19,6 +19,7 @@ import { Ionicons } from '@expo/vector-icons';
 import axiosInstance from '@/api/axiosInstance';
 import { Link } from 'expo-router';
 import { useInfiniteQuery, InfiniteData } from '@tanstack/react-query';
+import PlusIcon from '../../assets/icons/plus.svg';
 
 // --- 타입 정의 (API 응답과 일치) ---
 interface AuthorInfo {
@@ -429,10 +430,7 @@ export default function RecipeScreen() {
             />
             <Link href="/recipe/create" asChild>
                 <TouchableOpacity style={styles.fab}>
-                    <Image
-                        source={require('../../assets/icons/plus.png')}
-                        style={styles.fabIcon}
-                    />
+                    <PlusIcon width={22} height={22} />
                     <Text style={styles.fabText}>레시피 등록</Text>
                 </TouchableOpacity>
             </Link>

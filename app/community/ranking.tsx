@@ -14,6 +14,7 @@ import { useQuery } from '@tanstack/react-query';
 import { rankingService } from '@/src/features/ranking/service';
 import { LinearGradient } from 'expo-linear-gradient'; // ✅ 추가
 import { format } from 'date-fns';
+import CrownIcon from '@/assets/images/crown.svg';
 
 const { width } = Dimensions.get('window');
 
@@ -57,14 +58,9 @@ export default function RankingScreen() {
 
                             return (
                                 <View key={item.nickname} style={[styles.podiumItem, isFirst && styles.podiumItemFirst]}>
-                                    {/* 👑 1등 왕관 (이미지) */}
+                                    {/* 👑 1등 왕관 (SVG) */}
                                     {isFirst && (
-                                        <Image
-                                            // source={require('@/assets/images/crown.png')}
-                                            source={require('@/assets/images/crown.png')} // 임시 이미지
-                                            style={styles.crownImage}
-                                            resizeMode="contain"
-                                        />
+                                        <CrownIcon width={30} height={30} style={styles.crownImage} />
                                     )}
 
                                     {/* ✅ 1등일 때: LinearGradient로 감싸서 그라데이션 테두리 표현

@@ -14,6 +14,7 @@ import { useInfiniteQuery, InfiniteData } from '@tanstack/react-query';
 import { rankingService } from '@/src/features/ranking/service';
 import { RankingMember, AllRankingResponse } from '@/src/features/ranking/types';
 import { LinearGradient } from 'expo-linear-gradient';
+import CrownIcon from '@/assets/images/crown.svg';
 
 export default function AllRankingScreen() {
     const router = useRouter();
@@ -63,13 +64,9 @@ export default function AllRankingScreen() {
 
             {/* 프로필 이미지 영역 (왕관 + 테두리 처리를 위해 View로 감쌈) */}
             <View style={styles.profileWrapper}>
-                {/* 👑 1등 왕관 (리스트용 작은 사이즈) */}
+                {/* 👑 1등 왕관 (SVG - 리스트용 작은 사이즈) */}
                 {isFirst && (
-                    <Image
-                        source={require('@/assets/images/crown.png')}
-                        style={styles.crownImageList}
-                        resizeMode="contain"
-                    />
+                    <CrownIcon width={20} height={20} style={styles.crownImageList} />
                 )}
 
                 {isFirst ? (

@@ -5,6 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
 import { Image } from 'react-native';
+import HomeLogo from '../assets/icons/home_logo.svg';
 
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -156,11 +157,7 @@ export default function RootLayout() {
                             options={{
                                 headerShown: true,
                                 headerTitle: () => (
-                                    <Image
-                                        source={require('../assets/icons/home_logo.png')}
-                                        style={{ width: 120, height: 40 }}
-                                        resizeMode="contain"
-                                    />
+                                    <HomeLogo width={120} height={40} />
                                 ),
                                 headerBackVisible: false
                             }}
