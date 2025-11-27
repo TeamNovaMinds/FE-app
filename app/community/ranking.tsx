@@ -31,6 +31,11 @@ export default function RankingScreen() {
     const rest = rankings.slice(3);
     const podiumData = [top3[1], top3[0], top3[2]].filter(Boolean);
 
+    const navigateToUserRefrigerator = (nickname: string) => {
+        if (!nickname) return;
+        router.push(`/member/${encodeURIComponent(nickname)}/refrigerator`);
+    };
+
     if (isLoading) {
         return <View style={styles.center}><ActivityIndicator size="large" color="#007AFF" /></View>;
     }
@@ -65,31 +70,35 @@ export default function RankingScreen() {
                                     {/* ✅ 1등일 때: LinearGradient로 감싸서 그라데이션 테두리 표현
                                         ✅ 아닐 때: 그냥 View로 감싸기
                                      */}
-                                    {isFirst ? (
-                                        <LinearGradient
-                                            // 디자인 시안과 비슷한 하늘색 -> 파란색 그라데이션
-                                            colors={['#4facfe', '#00f2fe']}
-                                            start={{ x: 0, y: 0 }}
-                                            end={{ x: 1, y: 1 }}
-                                            style={styles.gradientBorder}
-                                        >
-                                            <View style={styles.profileInner}>
+                                    <TouchableOpacity onPress={() => navigateToUserRefrigerator(item.nickname)} activeOpacity={0.8}>
+                                        {isFirst ? (
+                                            <LinearGradient
+                                                // 디자인 시안과 비슷한 하늘색 -> 파란색 그라데이션
+                                                colors={['#4facfe', '#00f2fe']}
+                                                start={{ x: 0, y: 0 }}
+                                                end={{ x: 1, y: 1 }}
+                                                style={styles.gradientBorder}
+                                            >
+                                                <View style={styles.profileInner}>
+                                                    <Image
+                                                        source={item.profileImgUrl ? { uri: item.profileImgUrl } : require('@/assets/images/JustFridge_logo.png')}
+                                                        style={styles.profileImageFirst}
+                                                    />
+                                                </View>
+                                            </LinearGradient>
+                                        ) : (
+                                            <View style={styles.profileContainer}>
                                                 <Image
                                                     source={item.profileImgUrl ? { uri: item.profileImgUrl } : require('@/assets/images/JustFridge_logo.png')}
-                                                    style={styles.profileImageFirst}
+                                                    style={styles.profileImage}
                                                 />
                                             </View>
-                                        </LinearGradient>
-                                    ) : (
-                                        <View style={styles.profileContainer}>
-                                            <Image
-                                                source={item.profileImgUrl ? { uri: item.profileImgUrl } : require('@/assets/images/JustFridge_logo.png')}
-                                                style={styles.profileImage}
-                                            />
-                                        </View>
-                                    )}
+                                        )}
+                                    </TouchableOpacity>
 
-                                    <Text style={styles.podiumName} numberOfLines={1}>{item.nickname}</Text>
+                                    <TouchableOpacity onPress={() => navigateToUserRefrigerator(item.nickname)} activeOpacity={0.8}>
+                                        <Text style={styles.podiumName} numberOfLines={1}>{item.nickname}</Text>
+                                    </TouchableOpacity>
                                     <Text style={styles.podiumPoint}>{item.point.toLocaleString()}</Text>
                                 </View>
                             );
@@ -100,7 +109,12 @@ export default function RankingScreen() {
 
                     <View style={styles.listContainer}>
                         {rest.map((item) => (
-                            <View key={item.nickname} style={styles.listItem}>
+                            <TouchableOpacity
+                                key={item.nickname}
+                                style={styles.listItem}
+                                onPress={() => navigateToUserRefrigerator(item.nickname)}
+                                activeOpacity={0.7}
+                            >
                                 <Text style={styles.rankNumber}>{item.rank}</Text>
                                 <Image
                                     source={item.profileImgUrl ? { uri: item.profileImgUrl } : require('@/assets/images/JustFridge_logo.png')}
@@ -108,7 +122,7 @@ export default function RankingScreen() {
                                 />
                                 <Text style={styles.listName} numberOfLines={1}>{item.nickname}</Text>
                                 <Text style={styles.listPoint}>{item.point.toLocaleString()}</Text>
-                            </View>
+                            </TouchableOpacity>
                         ))}
                     </View>
 

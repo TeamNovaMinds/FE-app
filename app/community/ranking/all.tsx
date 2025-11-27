@@ -6,15 +6,18 @@ import {
     FlatList,
     Image,
     ActivityIndicator,
-    SafeAreaView
+    SafeAreaView,
+    TouchableOpacity
 } from 'react-native';
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import { useInfiniteQuery, InfiniteData } from '@tanstack/react-query';
 import { rankingService } from '@/src/features/ranking/service';
 import { RankingMember, AllRankingResponse } from '@/src/features/ranking/types';
 import { LinearGradient } from 'expo-linear-gradient';
 
 export default function AllRankingScreen() {
+    const router = useRouter();
+
     const {
         data,
         fetchNextPage,
@@ -33,12 +36,21 @@ export default function AllRankingScreen() {
 
     const allRankings = data?.pages.flatMap((page: AllRankingResponse) => page.rankings) ?? [];
 
+    const navigateToUserRefrigerator = (nickname: string) => {
+        if (!nickname) return;
+        router.push(`/member/${encodeURIComponent(nickname)}/refrigerator`);
+    };
+
     const renderItem = ({ item }: { item: RankingMember }) => {
 
         const isFirst = item.rank === 1;
 
         return (
-            <View style={styles.itemContainer}>
+            <TouchableOpacity
+                style={styles.itemContainer}
+                onPress={() => navigateToUserRefrigerator(item.nickname)}
+                activeOpacity={0.7}
+            >
                 {/* 순위 뱃지 */}
             <View style={styles.rankBadge}>
                 <Text style={[
@@ -89,7 +101,7 @@ export default function AllRankingScreen() {
             </View>
 
             <Text style={styles.point}>{item.point.toLocaleString()} P</Text>
-        </View>
+        </TouchableOpacity>
     );
 };
 
