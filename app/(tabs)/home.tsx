@@ -17,6 +17,7 @@ import { Ionicons } from '@expo/vector-icons';
 import PlusIcon from '../../assets/icons/plus.svg';
 import ActiveTabBg from '../../assets/icons/active_tab_bg.svg';
 import HomeLogo from '../../assets/icons/home_logo.svg';
+import SummaryBg from '../../assets/icons/summary_bg.svg';
 
 // 타입 및 상수
 import { TabName } from '@/src/features/home/types';
@@ -325,13 +326,14 @@ export default function HomeScreen() {
                             </View>
                         ) : (
                             <View style={styles.countBoxWrapper}>
-                                {/* View + LinearGradient를 ImageBackground로 교체 */}
-                                <ImageBackground
-                                    source={require('../../assets/icons/summary_bg.png')} // 1. 저장한 이미지 경로
-                                    style={styles.countBox} // 2. 기존 countBox 스타일 재사용
-                                    imageStyle={styles.countBoxImageStyle} // 3. 이미지에 둥근 모서리 적용
-                                >
-                                    {/* 3. LinearGradient(countBoxOverlay)는 삭제 */}
+                                {/* SVG 배경 사용 */}
+                                <View style={styles.countBox}>
+                                    <SummaryBg
+                                        width="100%"
+                                        height="100%"
+                                        style={{ position: 'absolute' }}
+                                        preserveAspectRatio="none"
+                                    />
                                     <View style={styles.countBoxContent}>
                                         <Text style={styles.countLabel}>
                                             냉장고 잔여 재료 : <Text style={styles.countNumber}>{ingredientCount.fridge}</Text>
@@ -343,7 +345,7 @@ export default function HomeScreen() {
                                             실온 잔여 재료 : <Text style={styles.countNumber}>{ingredientCount.room}</Text>
                                         </Text>
                                     </View>
-                                </ImageBackground>
+                                </View>
                             </View>
                         )}
                     </ImageBackground>
