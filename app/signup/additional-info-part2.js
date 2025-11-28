@@ -10,14 +10,14 @@ import { useQueryClient } from '@tanstack/react-query';
 // --- 임시 하드코딩 데이터 ---
 // ⚠️ 중요: 아이콘 이미지 파일을 assets/images 폴더에 추가해주세요!
 const CATEGORIES = [
-    { key: 'KOREAN', name: '한식', icon: require('../../assets/images/JustFridge_logo.png') },
-    { key: 'JAPANESE', name: '일식', icon: require('../../assets/images/JustFridge_logo.png') },
-    { key: 'CHINESE', name: '중식', icon: require('../../assets/images/JustFridge_logo.png') },
-    { key: 'WESTERN', name: '양식', icon: require('../../assets/images/JustFridge_logo.png') },
-    { key: 'ASIAN', name: '아시안', icon: require('../../assets/images/JustFridge_logo.png') }, // '동양'으로 텍스트 변경
-    { key: 'DESSERT', name: '디저트', icon: require('../../assets/images/JustFridge_logo.png') },
-    { key: 'DRINK', name: '음료/술', icon: require('../../assets/images/JustFridge_logo.png') },
-    { key: 'BAKERY', name: '베이커리', icon: require('../../assets/images/JustFridge_logo.png') },
+    { key: 'KOREAN', name: '한식', icon: require('../../assets/icons/korean.jpg') },
+    { key: 'JAPANESE', name: '일식', icon: require('../../assets/icons/japan.jpg') },
+    { key: 'CHINESE', name: '중식', icon: require('../../assets/icons/china.jpg') },
+    { key: 'WESTERN', name: '양식', icon: require('../../assets/icons/west.jpg') },
+    { key: 'ASIAN', name: '아시안', icon: require('../../assets/icons/asia.jpg') }, // '동양'으로 텍스트 변경
+    { key: 'DESSERT', name: '디저트', icon: require('../../assets/icons/dessert.png') },
+    { key: 'DRINK', name: '음료/술', icon: require('../../assets/icons/drink.png') },
+    { key: 'BAKERY', name: '베이커리', icon: require('../../assets/icons/bread.jpg') },
     { key: 'SNACK', name: '간식', icon: require('../../assets/images/JustFridge_logo.png') },
 
     // 필요시 다른 카테고리 추가
