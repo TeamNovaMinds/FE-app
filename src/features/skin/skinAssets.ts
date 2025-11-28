@@ -3,10 +3,10 @@
 // 스킨 식별자별 assets 매핑
 export const SKIN_ASSETS = {
     default: {
-        thumbnail: require('@/assets/images/default.svg'),
-        images: [require('@/assets/images/default.svg')],
-        summaryBackground: require('@/assets/images/default.svg'), // 요약 화면 배경
-        headerBackground: require('@/assets/images/default_header.svg'), // 헤더 배경
+        thumbnail: require('@/assets/images/default.png'),
+        images: [require('@/assets/images/default.png')],
+        summaryBackground: require('@/assets/images/default.png'), // 요약 화면 배경
+        headerBackground: require('@/assets/images/default_header.png'), // 헤더 배경
         fridgeBackground: require('@/assets/images/fridge.png'), // 냉장고 내부 배경
         freezerBackground: require('@/assets/images/freezer.png'), // 냉동고 내부 배경
         roomBackground: require('@/assets/images/room.png'), // 실온 배경
