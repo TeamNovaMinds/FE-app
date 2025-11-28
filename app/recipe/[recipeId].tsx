@@ -4,7 +4,6 @@ import {
     Text,
     StyleSheet,
     ScrollView,
-    Image,
     TouchableOpacity,
     FlatList,
     Dimensions,
@@ -13,6 +12,7 @@ import {
     Alert,
     RefreshControl,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
@@ -294,7 +294,9 @@ export default function RecipeDetailScreen() {
                 <Image
                     source={{ uri: item.imageUrl }}
                     style={styles.carouselImage}
-                    resizeMode="cover"
+                    contentFit="cover"
+                    transition={200}
+                    cachePolicy="memory-disk"
                 />
             )}
             style={styles.carouselContainer}
@@ -323,6 +325,9 @@ export default function RecipeDetailScreen() {
                             'https://via.placeholder.com/40',
                     }}
                     style={styles.authorImage}
+                    contentFit="cover"
+                    transition={200}
+                    cachePolicy="memory-disk"
                 />
                 <Text style={styles.authorName}>{recipe?.authorInfo.nickname}</Text>
             </TouchableOpacity>
@@ -390,6 +395,9 @@ export default function RecipeDetailScreen() {
                         <Image
                             source={{ uri: item.imageUrl }}
                             style={styles.ingredientImage}
+                            contentFit="contain"
+                            transition={200}
+                            cachePolicy="memory-disk"
                         />
                     )}
                     <View style={styles.ingredientTextContainer}>
@@ -417,7 +425,13 @@ export default function RecipeDetailScreen() {
                     <View key={step.order} style={styles.stepItem}>
                         <Text style={styles.stepOrder}>Step {index + 1}</Text>
                         {step.imageUrl && (
-                            <Image source={{ uri: step.imageUrl }} style={styles.stepImage} />
+                            <Image
+                                source={{ uri: step.imageUrl }}
+                                style={styles.stepImage}
+                                contentFit="cover"
+                                transition={200}
+                                cachePolicy="memory-disk"
+                            />
                         )}
                         <Text style={styles.stepDescription}>{step.description}</Text>
                     </View>
@@ -453,6 +467,9 @@ export default function RecipeDetailScreen() {
                                 'https://via.placeholder.com/36',
                         }}
                         style={styles.commentAuthorImage}
+                        contentFit="cover"
+                        transition={200}
+                        cachePolicy="memory-disk"
                     />
                     <View style={styles.commentContent}>
                         <Text style={styles.commentAuthorName}>

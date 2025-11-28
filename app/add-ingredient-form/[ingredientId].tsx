@@ -9,11 +9,11 @@ import {
     TouchableOpacity,
     Alert,
     ActivityIndicator,
-    Image,
     ScrollView,
     Keyboard,
     TouchableWithoutFeedback,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import axiosInstance from '@/api/axiosInstance';
@@ -170,7 +170,13 @@ export default function AddIngredientFormScreen() {
                         </View>
                     ) : (
                         ingredientImageUrl ? (
-                            <Image source={{ uri: ingredientImageUrl }} style={styles.ingredientImage} />
+                            <Image
+                                source={{ uri: ingredientImageUrl }}
+                                style={styles.ingredientImage}
+                                contentFit="contain"
+                                transition={200}
+                                cachePolicy="memory-disk"
+                            />
                         ) : (
                             <View style={styles.imagePlaceholder}>
                                 <Text style={styles.noImageText}>이미지 없음</Text>

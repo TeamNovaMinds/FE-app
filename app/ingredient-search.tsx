@@ -8,7 +8,6 @@ import {
     TextInput,
     TouchableOpacity,
     FlatList,
-    Image,
     ActivityIndicator,
     Pressable,
     Keyboard,
@@ -17,6 +16,7 @@ import {
     Alert, // 1. Alert 임포트
     Dimensions, // 화면 크기 가져오기
 } from 'react-native';
+import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -309,6 +309,9 @@ export default function IngredientSearchScreen() {
                                             <Image
                                                 source={item.imageUrl ? { uri: item.imageUrl } : require('../assets/images/JustFridge_logo.png')}
                                                 style={styles.itemImage}
+                                                contentFit="contain"
+                                                transition={200}
+                                                cachePolicy="memory-disk"
                                             />
                                             <Text
                                                 style={[

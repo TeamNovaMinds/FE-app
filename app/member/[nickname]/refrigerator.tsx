@@ -3,12 +3,12 @@
 import React, { useMemo, useState } from 'react';
 import {
     ActivityIndicator,
-    Image,
     ImageSourcePropType,
     Text,
     TouchableOpacity,
     View,
 } from 'react-native';
+import { Image } from 'expo-image';
 import Animated from 'react-native-reanimated';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -338,6 +338,9 @@ const MemberRefrigeratorScreen = () => {
                                                     ? { uri: summary.profileImageUrl }
                                                     : require('../../../assets/images/JustFridge_logo.png')}
                                                 style={memberStyles.profileImage}
+                                                contentFit="cover"
+                                                transition={200}
+                                                cachePolicy="memory-disk"
                                             />
 
                                             {/* 오른쪽: 스탯 (레시피, 팔로워, 팔로우) */}

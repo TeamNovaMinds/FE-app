@@ -7,7 +7,6 @@ import {
     TextInput,
     TouchableOpacity,
     FlatList,
-    Image,
     ScrollView,
     Dimensions,
     NativeSyntheticEvent,
@@ -15,6 +14,7 @@ import {
     ActivityIndicator,
     ImageBackground,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import axiosInstance from '@/api/axiosInstance';
 import { Link } from 'expo-router';
@@ -126,6 +126,9 @@ const RecipeCard: React.FC<{ item: RecipeListItem }> = ({ item }) => {
                         <Image
                             source={item.authorInfo.profileImageUrl ? { uri: item.authorInfo.profileImageUrl } : require('../../assets/images/JustFridge_logo.png')}
                             style={styles.authorImage}
+                            contentFit="cover"
+                            transition={200}
+                            cachePolicy="memory-disk"
                         />
                         <Text style={styles.authorName} numberOfLines={1}>{item.authorInfo.nickname}</Text>
                     </View>
@@ -179,7 +182,13 @@ const ListHeader = React.memo<ListHeaderProps>((props) => {
             <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false} onScroll={onScroll} scrollEventThrottle={16}>
                 {BANNERS.map((uri, index) => (
                     <View key={index} style={styles.bannerWrapper}>
-                        <Image source={{ uri }} style={styles.bannerImage} />
+                        <Image
+                            source={{ uri }}
+                            style={styles.bannerImage}
+                            contentFit="cover"
+                            transition={200}
+                            cachePolicy="memory-disk"
+                        />
                         <View style={styles.bannerTextContainer}>
                             <Text style={styles.bannerTitle}>저당 디저트 레시피</Text>
                             <Text style={styles.bannerSubtitle}>오늘의 인기메뉴!</Text>

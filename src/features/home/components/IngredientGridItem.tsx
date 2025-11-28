@@ -1,5 +1,6 @@
 import React from 'react';
-import { TouchableOpacity, Image, Text } from 'react-native';
+import { TouchableOpacity, Text } from 'react-native';
+import { Image } from 'expo-image';
 import { StoredIngredient } from '../types';
 import { styles } from '../styles';
 
@@ -20,6 +21,9 @@ export const IngredientGridItem: React.FC<IngredientGridItemProps> = ({ item, on
         <Image
             source={item.imageUrl ? { uri: item.imageUrl } : require('../../../../assets/images/JustFridge_logo.png')}
             style={styles.gridItemImage}
+            contentFit="contain"
+            transition={200}
+            cachePolicy="memory-disk"
         />
         <Text style={styles.gridItemText} numberOfLines={1}>{item.ingredientName}</Text>
     </TouchableOpacity>
