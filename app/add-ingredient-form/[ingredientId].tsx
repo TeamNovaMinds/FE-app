@@ -304,8 +304,8 @@ const styles = StyleSheet.create({
         backgroundColor: '#FAFAFA',
     },
     storageButtonActive: {
-        backgroundColor: '#62A1FF',
-        borderColor: '#62A1FF',
+        backgroundColor: '#1298FF',
+        borderColor: '#1298FF',
     },
     storageText: {
         color: '#333',
@@ -326,7 +326,7 @@ const styles = StyleSheet.create({
     },
     submitButton: {
         marginTop: 32,
-        backgroundColor: '#62A1FF',
+        backgroundColor: '#1298FF',
         padding: 16,
         borderRadius: 8,
         alignItems: 'center',

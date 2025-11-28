@@ -208,14 +208,14 @@ const styles = StyleSheet.create({
         shadowRadius: 4,
     },
     actionButton: {
-        backgroundColor: '#4A90E2',
+        backgroundColor: '#1298FF',
         paddingVertical: 16,
         borderRadius: 12,
         alignItems: 'center',
         justifyContent: 'center',
     },
     equipButton: {
-        backgroundColor: '#50C878',
+        backgroundColor: '#1298FF',
     },
     disabledButton: {
         backgroundColor: '#ccc',

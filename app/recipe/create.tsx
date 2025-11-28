@@ -166,7 +166,7 @@ export default function CreateRecipeScreen() {
             if (type === 'step' && index !== undefined) {
                 currentStepIndex.current = index;
                 // 현재 스크롤 위치 저장
-                const scrollView = scrollRef.current?.getScrollResponder?.();
+                const scrollView = scrollRef.current?.getScrollResponder?.() as any;
                 if (scrollView && typeof scrollView.scrollTo === 'function') {
                     savedScrollPosition.current = scrollView.contentOffset?.y || 0;
                 }
