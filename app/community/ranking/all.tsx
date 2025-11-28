@@ -109,17 +109,19 @@ export default function AllRankingScreen() {
         return null;
     };
 
-    if (isLoading) {
-        return <View style={styles.center}><ActivityIndicator size="large" color="#007AFF" /></View>;
-    }
-
-    if (error) {
-        return <View style={styles.center}><Text>랭킹을 불러오는데 실패했습니다.</Text></View>;
-    }
-
     return (
         <SafeAreaView style={styles.container}>
             <Stack.Screen options={{ title: '전체 랭킹', headerBackTitle: '뒤로' }} />
+
+            {isLoading && (
+                <View style={styles.center}><ActivityIndicator size="large" color="#007AFF" /></View>
+            )}
+
+            {error && (
+                <View style={styles.center}><Text>랭킹을 불러오는데 실패했습니다.</Text></View>
+            )}
+
+            {!isLoading && !error && (
 
             <FlatList
                 data={allRankings}
@@ -133,6 +135,7 @@ export default function AllRankingScreen() {
                 contentContainerStyle={styles.listContent}
                 // 1등 구분선 등 헤더가 필요하면 ListHeaderComponent 추가
             />
+            )}
         </SafeAreaView>
     );
 }

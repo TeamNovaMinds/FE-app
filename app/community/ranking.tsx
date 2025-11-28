@@ -37,13 +37,15 @@ export default function RankingScreen() {
         router.push(`/member/${encodeURIComponent(nickname)}/refrigerator`);
     };
 
-    if (isLoading) {
-        return <View style={styles.center}><ActivityIndicator size="large" color="#007AFF" /></View>;
-    }
-
     return (
         <View style={styles.container}>
             <Stack.Screen options={{ title: '랭킹', headerBackTitle: '커뮤니티', headerShadowVisible: false }} />
+
+            {isLoading && (
+                <View style={styles.center}><ActivityIndicator size="large" color="#007AFF" /></View>
+            )}
+
+            {!isLoading && (
 
             <ScrollView contentContainerStyle={styles.scrollContent}>
                 <View style={styles.card}>
@@ -130,6 +132,7 @@ export default function RankingScreen() {
                     </TouchableOpacity>
                 </View>
             </ScrollView>
+            )}
         </View>
     );
 }

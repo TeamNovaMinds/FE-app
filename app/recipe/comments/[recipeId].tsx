@@ -404,26 +404,23 @@ export default function RecipeCommentsScreen() {
     ), [handleReplyPress, handleEditPress, handleDeletePress]);
 
     // 로딩 / 에러 / 빈 화면 처리
-    if (isLoading && !data) {
-        return (
-            <View style={styles.center}>
-                <ActivityIndicator size="large" />
-            </View>
-        );
-    }
-
-    if (error) {
-        return (
-            <View style={styles.center}>
-                <Text style={styles.errorText}>{error.message}</Text>
-            </View>
-        );
-    }
-
     return (
         <SafeAreaView style={styles.safeArea}>
             <Stack.Screen options={{ title: '댓글 전체보기' }} />
 
+            {isLoading && !data && (
+                <View style={styles.center}>
+                    <ActivityIndicator size="large" />
+                </View>
+            )}
+
+            {error && (
+                <View style={styles.center}>
+                    <Text style={styles.errorText}>{error.message}</Text>
+                </View>
+            )}
+
+            {!isLoading && !error && (
             <KeyboardAvoidingView
                 style={styles.container}
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -511,6 +508,7 @@ export default function RecipeCommentsScreen() {
                     </TouchableOpacity>
                 </View>
             </KeyboardAvoidingView>
+            )}
         </SafeAreaView>
     );
 }
