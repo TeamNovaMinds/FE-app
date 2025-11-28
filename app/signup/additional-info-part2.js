@@ -18,7 +18,7 @@ const CATEGORIES = [
     { key: 'DESSERT', name: '디저트', icon: require('../../assets/icons/dessert.png') },
     { key: 'DRINK', name: '음료/술', icon: require('../../assets/icons/drink.png') },
     { key: 'BAKERY', name: '베이커리', icon: require('../../assets/icons/bread.png') },
-    { key: 'SNACK', name: '간식', icon: require('../../assets/images/JustFridge_logo.png') },
+    { key: 'SNACK', name: '간식', icon: require('../../assets/icons/snack.png') },
 
     // 필요시 다른 카테고리 추가
 ];
