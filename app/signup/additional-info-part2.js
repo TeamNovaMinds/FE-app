@@ -14,13 +14,11 @@ const CATEGORIES = [
     { key: 'CHINESE', name: '중식', icon: require('../../assets/images/JustFridge_logo.png') },
     { key: 'WESTERN', name: '양식', icon: require('../../assets/images/JustFridge_logo.png') },
     { key: 'ASIAN', name: '아시안', icon: require('../../assets/images/JustFridge_logo.png') }, // '동양'으로 텍스트 변경
-    { key: 'SNACK', name: '분식', icon: require('../../assets/images/JustFridge_logo.png') }, // '분식'으로 텍스트 변경
-    { key: 'HEALTHY', name: '건강식', icon: require('../../assets/images/JustFridge_logo.png') },
-    { key: 'HOMEMADE', name: '혼밥', icon: require('../../assets/images/JustFridge_logo.png') },
-    { key: 'VEGETABLES', name: '채소류', icon: require('../../assets/images/JustFridge_logo.png') },
-    { key: 'CHICKEN', name: '치킨', icon: require('../../assets/images/JustFridge_logo.png') },
-    { key: 'DUMPLING', name: '덮밥류', icon: require('../../assets/images/JustFridge_logo.png') },
     { key: 'DESSERT', name: '디저트', icon: require('../../assets/images/JustFridge_logo.png') },
+    { key: 'DRINK', name: '음료/술', icon: require('../../assets/images/JustFridge_logo.png') },
+    { key: 'BAKERY', name: '베이커리', icon: require('../../assets/images/JustFridge_logo.png') },
+    { key: 'SNACK', name: '간식', icon: require('../../assets/images/JustFridge_logo.png') },
+
     // 필요시 다른 카테고리 추가
 ];
 
