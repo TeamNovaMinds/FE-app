@@ -10,7 +10,7 @@ import { useQueryClient } from '@tanstack/react-query';
 // --- 임시 하드코딩 데이터 ---
 // ⚠️ 중요: 아이콘 이미지 파일을 assets/images 폴더에 추가해주세요!
 const CATEGORIES = [
-    { key: 'KOREAN', name: '한식', icon: require('../../assets/icons/korean.jpg') },
+    { key: 'KOREAN', name: '한식', icon: require('../../assets/icons/korean.png') },
     { key: 'JAPANESE', name: '일식', icon: require('../../assets/icons/japan.png') },
     { key: 'CHINESE', name: '중식', icon: require('../../assets/icons/china.png') },
     { key: 'WESTERN', name: '양식', icon: require('../../assets/icons/west.png') },
