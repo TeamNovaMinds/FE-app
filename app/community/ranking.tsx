@@ -14,7 +14,9 @@ import { useQuery } from '@tanstack/react-query';
 import { rankingService } from '@/src/features/ranking/service';
 import { LinearGradient } from 'expo-linear-gradient'; // ✅ 추가
 import { format } from 'date-fns';
-import CrownIcon from '@/assets/images/crown.svg';
+import FirstCrownIcon from '@/assets/icons/first_crown.svg';
+import SecondCrownIcon from '@/assets/icons/second_crown.svg';
+import ThirdCrownIcon from '@/assets/icons/thrid_crown.svg';
 import UnknownIcon from '@/assets/icons/unknown.svg';
 
 const { width } = Dimensions.get('window');
@@ -58,55 +60,50 @@ export default function RankingScreen() {
                     <View style={styles.podiumContainer}>
                         {podiumData.map((item, index) => {
                             const isFirst = item.rank === 1;
+                            const isSecond = item.rank === 2;
+                            const isThird = item.rank === 3;
 
                             return (
                                 <View key={item.nickname} style={[styles.podiumItem, isFirst && styles.podiumItemFirst]}>
-                                    {/* 👑 1등 왕관 (SVG) */}
+                                    {/* 👑 왕관 (1, 2, 3등) */}
                                     {isFirst && (
-                                        <CrownIcon width={30} height={30} style={styles.crownImage} />
+                                        <FirstCrownIcon width={30} height={30} style={styles.crownImageFirst} />
+                                    )}
+                                    {isSecond && (
+                                        <SecondCrownIcon width={30} height={30} style={styles.crownImageSmall} />
+                                    )}
+                                    {isThird && (
+                                        <ThirdCrownIcon width={30} height={30} style={styles.crownImageSmall} />
                                     )}
 
-                                    {/* ✅ 1등일 때: LinearGradient로 감싸서 그라데이션 테두리 표현
-                                        ✅ 아닐 때: 그냥 View로 감싸기
-                                     */}
+                                    {/* ✅ 1,2,3등 모두 LinearGradient로 감싸서 그라데이션 테두리 표현 */}
                                     <TouchableOpacity onPress={() => navigateToUserRefrigerator(item.nickname)} activeOpacity={0.8}>
-                                        {isFirst ? (
-                                            <LinearGradient
-                                                // 디자인 시안과 비슷한 하늘색 -> 파란색 그라데이션
-                                                colors={['#4facfe', '#00f2fe']}
-                                                start={{ x: 0, y: 0 }}
-                                                end={{ x: 1, y: 1 }}
-                                                style={styles.gradientBorder}
-                                            >
-                                                <View style={styles.profileInner}>
-                                                    {item.profileImgUrl ? (
-                                                        <Image
-                                                            source={{ uri: item.profileImgUrl }}
-                                                            style={styles.profileImageFirst}
-                                                            contentFit="contain"
-                                                            transition={200}
-                                                            cachePolicy="memory-disk"
-                                                        />
-                                                    ) : (
-                                                        <UnknownIcon width={70} height={70} />
-                                                    )}
-                                                </View>
-                                            </LinearGradient>
-                                        ) : (
-                                            <View style={styles.profileContainer}>
+                                        <LinearGradient
+                                            colors={
+                                                isFirst
+                                                    ? ['#FFD700', '#FFA500'] // 1등: 금색
+                                                    : isSecond
+                                                    ? ['#d4d4d4', '#a8a8a8'] // 2등: 은색
+                                                    : ['#cd7f32', '#b8860b'] // 3등: 동색
+                                            }
+                                            start={{ x: 0, y: 0 }}
+                                            end={{ x: 1, y: 1 }}
+                                            style={isFirst ? styles.gradientBorder : styles.gradientBorderSmall}
+                                        >
+                                            <View style={isFirst ? styles.profileInner : styles.profileInnerSmall}>
                                                 {item.profileImgUrl ? (
                                                     <Image
                                                         source={{ uri: item.profileImgUrl }}
-                                                        style={styles.profileImage}
+                                                        style={isFirst ? styles.profileImageFirst : styles.profileImage}
                                                         contentFit="contain"
                                                         transition={200}
                                                         cachePolicy="memory-disk"
                                                     />
                                                 ) : (
-                                                    <UnknownIcon width={50} height={50} />
+                                                    <UnknownIcon width={isFirst ? 70 : 50} height={isFirst ? 70 : 50} />
                                                 )}
                                             </View>
-                                        )}
+                                        </LinearGradient>
                                     </TouchableOpacity>
 
                                     <TouchableOpacity onPress={() => navigateToUserRefrigerator(item.nickname)} activeOpacity={0.8}>
@@ -187,11 +184,18 @@ const styles = StyleSheet.create({
     podiumItem: { alignItems: 'center', width: width * 0.22 },
     podiumItemFirst: { marginBottom: 20 },
 
-    // ✅ 왕관 스타일
-    crownImage: {
+    // ✅ 1등 왕관 스타일
+    crownImageFirst: {
         width: 30,
         height: 30,
-        marginBottom: -10, // 프로필 이미지와 겹치도록 위치 조정
+        marginBottom: -4, // 프로필 이미지 바로 위에 위치
+        zIndex: 10,
+    },
+    // ✅ 2,3등 왕관 스타일
+    crownImageSmall: {
+        width: 30,
+        height: 30,
+        marginBottom: -7, // 2,3등 프로필 이미지에 맞춰 위치 조정
         zIndex: 10,
     },
 
@@ -204,11 +208,26 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginBottom: 8,
         // 그림자
-        shadowColor: "#4facfe",
+        shadowColor: "#FFD700",
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.4,
         shadowRadius: 6,
         elevation: 8,
+    },
+    // ✅ 2,3등 그라데이션 테두리 컨테이너
+    gradientBorderSmall: {
+        width: 56, // 이미지(50) + 테두리(3*2)
+        height: 56,
+        borderRadius: 28,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 8,
+        // 그림자
+        shadowColor: "#999",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.3,
+        shadowRadius: 4,
+        elevation: 4,
     },
     // ✅ 1등 이미지 감싸는 흰색 영역 (이미지와 테두리 사이 여백)
     profileInner: {
@@ -216,6 +235,15 @@ const styles = StyleSheet.create({
         height: 70,
         borderRadius: 35,
         backgroundColor: '#fff', // 이미지 배경 흰색
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    // ✅ 2,3등 이미지 감싸는 흰색 영역
+    profileInnerSmall: {
+        width: 50,
+        height: 50,
+        borderRadius: 25,
+        backgroundColor: '#fff',
         justifyContent: 'center',
         alignItems: 'center',
     },

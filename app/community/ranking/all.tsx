@@ -14,7 +14,9 @@ import { useInfiniteQuery, InfiniteData } from '@tanstack/react-query';
 import { rankingService } from '@/src/features/ranking/service';
 import { RankingMember, AllRankingResponse } from '@/src/features/ranking/types';
 import { LinearGradient } from 'expo-linear-gradient';
-import CrownIcon from '@/assets/images/crown.svg';
+import FirstCrownIcon from '@/assets/icons/first_crown.svg';
+import SecondCrownIcon from '@/assets/icons/second_crown.svg';
+import ThirdCrownIcon from '@/assets/icons/thrid_crown.svg';
 import UnknownIcon from '@/assets/icons/unknown.svg';
 
 export default function AllRankingScreen() {
@@ -46,6 +48,9 @@ export default function AllRankingScreen() {
     const renderItem = ({ item }: { item: RankingMember }) => {
 
         const isFirst = item.rank === 1;
+        const isSecond = item.rank === 2;
+        const isThird = item.rank === 3;
+        const isTopThree = isFirst || isSecond || isThird;
 
         return (
             <TouchableOpacity
@@ -65,15 +70,27 @@ export default function AllRankingScreen() {
 
             {/* 프로필 이미지 영역 (왕관 + 테두리 처리를 위해 View로 감쌈) */}
             <View style={styles.profileWrapper}>
-                {/* 👑 1등 왕관 (SVG - 리스트용 작은 사이즈) */}
+                {/* 👑 왕관 (1, 2, 3등) */}
                 {isFirst && (
-                    <CrownIcon width={20} height={20} style={styles.crownImageList} />
+                    <FirstCrownIcon width={20} height={20} style={styles.crownImageList} />
+                )}
+                {isSecond && (
+                    <SecondCrownIcon width={20} height={20} style={styles.crownImageList} />
+                )}
+                {isThird && (
+                    <ThirdCrownIcon width={20} height={20} style={styles.crownImageList} />
                 )}
 
-                {isFirst ? (
-                    // ✅ 1등: 그라데이션 테두리
+                {isTopThree ? (
+                    // ✅ 1,2,3등: 그라데이션 테두리
                     <LinearGradient
-                        colors={['#4facfe', '#00f2fe']}
+                        colors={
+                            isFirst
+                                ? ['#FFD700', '#FFA500'] // 1등: 금색
+                                : isSecond
+                                ? ['#d4d4d4', '#a8a8a8'] // 2등: 은색
+                                : ['#cd7f32', '#b8860b'] // 3등: 동색
+                        }
                         start={{ x: 0, y: 0 }}
                         end={{ x: 1, y: 1 }}
                         style={styles.gradientBorderList}
