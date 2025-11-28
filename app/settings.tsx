@@ -14,19 +14,28 @@ import {
 import { useRouter, Link } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '@/store/authStore';
-import * as SecureStore from 'expo-secure-store';
+import { clearAuthData } from '@/utils/tokenStorage';
+import { useQueryClient } from '@tanstack/react-query';
 
 export default function SettingsScreen() {
     const router = useRouter();
     const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+    const queryClient = useQueryClient();
 
     const logout = useAuthStore((state) => state.logout);
 
     const handleLogout = async () => {
         try {
+            // 1. Zustand store 초기화
             logout();
-            await SecureStore.deleteItemAsync('accessToken');
-            await SecureStore.deleteItemAsync('refreshToken');
+
+            // 2. 토큰 및 사용자 정보 삭제
+            await clearAuthData();
+
+            // 3. React Query 캐시 완전 초기화
+            queryClient.clear();
+
+            // 4. 로그인 페이지로 이동
             router.replace('/');
         } catch (error) {
             console.error("로그아웃 실패:", error);

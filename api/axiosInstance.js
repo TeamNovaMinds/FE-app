@@ -34,8 +34,6 @@ axiosInstance.interceptors.request.use(
             '/api/auth/login',
             '/api/auth/signup',
             '/api/auth/refresh',
-            '/api/auth/additional-info-part1',
-            '/api/auth/additional-info-part2',
             '/api/auth/check-email',
             '/api/auth/check-nickname'
         ];

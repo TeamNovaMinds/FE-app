@@ -5,6 +5,7 @@ import { SafeAreaView as NewSafeAreaView } from 'react-native-safe-area-context'
 import axiosInstance from '../../api/axiosInstance';
 import useSignupStore, { useAuthStore } from '../../store/authStore';
 import { saveAuthData } from '../../utils/tokenStorage';
+import { useQueryClient } from '@tanstack/react-query';
 
 // --- 임시 하드코딩 데이터 ---
 // ⚠️ 중요: 아이콘 이미지 파일을 assets/images 폴더에 추가해주세요!
@@ -26,6 +27,7 @@ export default function AdditionalInfoPart2Screen() {
     const router = useRouter();
     const store = useSignupStore();
     const { login } = useAuthStore();
+    const queryClient = useQueryClient();
 
     const [selected, setSelected] = useState([]);
     const [isSigningUp, setIsSigningUp] = useState(false);
@@ -54,32 +56,34 @@ export default function AdditionalInfoPart2Screen() {
             const { email, password, name, nickname, profileImgUrl } = store;
 
             console.log('=== 회원가입 시작 ===');
-            console.log('1단계: 기본 정보 전송', { email, name });
+            console.log('모든 정보 한 번에 전송:', {
+                email,
+                name,
+                nickname,
+                profileImgUrl,
+                interestCategories: selected
+            });
 
-            const signupResponse = await axiosInstance.post('/api/auth/signup', { email, password, name });
-            console.log('1단계 응답:', signupResponse.data);
+            // 모든 정보를 한 번에 전송
+            const response = await axiosInstance.post('/api/auth/signup', {
+                email,
+                password,
+                name,
+                nickname,
+                profileImgUrl: profileImgUrl || '',
+                interestCategories: selected
+            });
 
-            if (!signupResponse.data.isSuccess) {
-                throw new Error(signupResponse.data.message || '기본 정보 등록 실패');
-            }
-
-            console.log('2단계: 프로필 정보 전송', { nickname });
-            const part1Response = await axiosInstance.post('/api/auth/additional-info-part1', { nickname, profileImgUrl });
-            console.log('2단계 응답:', part1Response.data);
-
-            if (!part1Response.data.isSuccess) {
-                throw new Error(part1Response.data.message || '프로필 정보 등록 실패');
-            }
-
-            console.log('3단계: 관심 카테고리 전송', { interestCategories: selected });
-            const response = await axiosInstance.post('/api/auth/additional-info-part2', { interestCategories: selected });
-            console.log('3단계 응답:', response.data);
+            console.log('회원가입 응답:', response.data);
 
             // 회원가입 완료 시 토큰 저장
             if (response.data.isSuccess) {
                 const { accessToken, refreshToken, nickname: resNickname, name: resName, profileImg, profileCompleted } = response.data.result;
 
                 console.log('회원가입 성공! 토큰 저장 중...');
+
+                // React Query 캐시 초기화 (이전 사용자 데이터 제거)
+                queryClient.clear();
 
                 // 토큰과 사용자 정보 저장
                 await saveAuthData(accessToken, refreshToken, {
@@ -97,7 +101,7 @@ export default function AdditionalInfoPart2Screen() {
                 store.reset();
                 router.replace('/home');
             } else {
-                throw new Error(response.data.message || '관심 카테고리 등록 실패');
+                throw new Error(response.data.message || '회원가입 실패');
             }
         } catch (error) {
             console.error('회원가입 에러 상세:', {
@@ -172,7 +176,7 @@ const styles = StyleSheet.create({
     categoryItemSelected: {
         backgroundColor: '#E6F3FF',
         borderWidth: 2,
-        borderColor: '#76C4FF',
+        borderColor: '#1298FF',
     },
     categoryImage: {
         width: 44,
@@ -191,7 +195,7 @@ const styles = StyleSheet.create({
     button: {
         width: '100%',
         height: 48,
-        backgroundColor: '#76C4FF',
+        backgroundColor: '#1298FF',
         borderRadius: 12,
         justifyContent: 'center',
         alignItems: 'center',
