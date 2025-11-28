@@ -56,6 +56,15 @@ export const SKIN_ASSETS = {
         freezerBackground: require('@/assets/images/giant_freeze.png'), // 냉동고 내부 배경
         roomBackground: require('@/assets/images/giant_.png'), // 실온 배경
     },
+    naru: {
+        thumbnail: require('@/assets/images/naru.png'),
+        images: [require('@/assets/images/naru_freeze.png')],
+        summaryBackground: require('@/assets/images/naru.png'), // 요약 화면 배경
+        headerBackground: require('@/assets/images/naru_header.png'), // 헤더 배경
+        fridgeBackground: require('@/assets/images/naru_fridge.png'), // 냉장고 내부 배경
+        freezerBackground: require('@/assets/images/naru_freeze.png'), // 냉동고 내부 배경
+        roomBackground: require('@/assets/images/naru_.png'), // 실온 배경
+    },
 
     // 추가 스킨은 여기에 추가
     // modern: {
