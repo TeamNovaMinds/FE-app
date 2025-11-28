@@ -4,7 +4,6 @@ import React, { useMemo, useState } from 'react';
 import {
     ActivityIndicator,
     Image,
-    ImageBackground,
     ImageSourcePropType,
     Text,
     TouchableOpacity,
@@ -14,6 +13,7 @@ import Animated from 'react-native-reanimated';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
+import { SvgImageBackground } from '@/components/SvgImageBackground';
 
 import { IngredientListView } from '@/src/features/home/components/IngredientListView';
 import { TAB_ACTIVE_COLORS } from '@/src/features/home/constants';
@@ -144,7 +144,7 @@ const MemberRefrigeratorScreen = () => {
 
     return (
         <View style={homeStyles.container}>
-            <ImageBackground
+            <SvgImageBackground
                 source={resolvedSkinImages.headerBackgroundImage}
                 style={homeStyles.headerGradient}
                 resizeMode="cover"
@@ -246,11 +246,11 @@ const MemberRefrigeratorScreen = () => {
                         )}
                     </TouchableOpacity>
                 </View>
-            </ImageBackground>
+            </SvgImageBackground>
 
             <View style={homeStyles.contentArea}>
                 <Animated.View style={[homeStyles.animatedContainer, fridgeDetailStyle]}>
-                    <ImageBackground
+                    <SvgImageBackground
                         source={resolvedSkinImages.fridgeBackgroundImage}
                         style={homeStyles.detailBackground}
                         resizeMode="stretch"
@@ -263,11 +263,11 @@ const MemberRefrigeratorScreen = () => {
                             color={TAB_ACTIVE_COLORS.fridge}
                             readOnly
                         />
-                    </ImageBackground>
+                    </SvgImageBackground>
                 </Animated.View>
 
                 <Animated.View style={[homeStyles.animatedContainer, freezerDetailStyle]}>
-                    <ImageBackground
+                    <SvgImageBackground
                         source={resolvedSkinImages.freezerBackgroundImage}
                         style={homeStyles.detailBackground}
                         resizeMode="stretch"
@@ -280,11 +280,11 @@ const MemberRefrigeratorScreen = () => {
                             color={TAB_ACTIVE_COLORS.freezer}
                             readOnly
                         />
-                    </ImageBackground>
+                    </SvgImageBackground>
                 </Animated.View>
 
                 <Animated.View style={[homeStyles.animatedContainer, roomDetailStyle]}>
-                    <ImageBackground
+                    <SvgImageBackground
                         source={resolvedSkinImages.roomBackgroundImage}
                         style={homeStyles.detailBackground}
                         resizeMode="stretch"
@@ -297,17 +297,17 @@ const MemberRefrigeratorScreen = () => {
                             color={TAB_ACTIVE_COLORS.room}
                             readOnly
                         />
-                    </ImageBackground>
+                    </SvgImageBackground>
                 </Animated.View>
 
                 <Animated.View style={[homeStyles.animatedContainer, summaryAnimatedStyle]}>
-                    <ImageBackground
+                    <SvgImageBackground
                         source={resolvedSkinImages.summaryBackgroundImage}
                         style={homeStyles.contentGradient}
                         resizeMode="cover"
                     >
                         <View style={memberStyles.summaryWrapper}>
-                            <ImageBackground
+                            <SvgImageBackground
                                 source={summaryCardBackground}
                                 style={memberStyles.summaryCard}
                                 imageStyle={memberStyles.summaryCardImage}
@@ -366,9 +366,9 @@ const MemberRefrigeratorScreen = () => {
                                         </View>
                                     </>
                                 )}
-                            </ImageBackground>
+                            </SvgImageBackground>
                         </View>
-                    </ImageBackground>
+                    </SvgImageBackground>
                 </Animated.View>
             </View>
         </View>

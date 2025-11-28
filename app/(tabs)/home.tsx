@@ -6,7 +6,6 @@ import {
     TouchableOpacity,
     ActivityIndicator,
     Image,
-    ImageBackground,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated from 'react-native-reanimated';
@@ -18,6 +17,7 @@ import PlusIcon from '../../assets/icons/plus.svg';
 import ActiveTabBg from '../../assets/icons/active_tab_bg.svg';
 import HomeLogo from '../../assets/icons/home_logo.svg';
 import SummaryBg from '../../assets/icons/summary_bg.svg';
+import { SvgImageBackground } from '@/components/SvgImageBackground';
 
 // 타입 및 상수
 import { TabName } from '@/src/features/home/types';
@@ -136,7 +136,7 @@ export default function HomeScreen() {
     return (
         <View style={styles.container}>
             {/* 상단 헤더 영역 */}
-            <ImageBackground
+            <SvgImageBackground
                 source={headerBackgroundImage}
                 style={styles.headerGradient}
                 resizeMode="cover"
@@ -245,13 +245,13 @@ export default function HomeScreen() {
                         )}
                     </TouchableOpacity>
                 </View>
-            </ImageBackground>
+            </SvgImageBackground>
 
             {/* 메인 콘텐츠 영역 */}
             <View style={styles.contentArea}>
                 {/* Layer 2: 상세 뷰들 */}
                 <Animated.View style={[styles.animatedContainer, fridgeDetailStyle]}>
-                    <ImageBackground
+                    <SvgImageBackground
                         source={fridgeBackgroundImage}
                         style={styles.detailBackground}
                         resizeMode="stretch"
@@ -265,11 +265,11 @@ export default function HomeScreen() {
                             onAddIngredient={goToAddIngredient}
                             onItemPress={handleIngredientPress}
                         />
-                    </ImageBackground>
+                    </SvgImageBackground>
                 </Animated.View>
 
                 <Animated.View style={[styles.animatedContainer, freezerDetailStyle]}>
-                    <ImageBackground
+                    <SvgImageBackground
                         source={freezerBackgroundImage}
                         style={styles.detailBackground}
                         resizeMode="stretch"
@@ -283,11 +283,11 @@ export default function HomeScreen() {
                             onAddIngredient={goToAddIngredient}
                             onItemPress={handleIngredientPress}
                         />
-                    </ImageBackground>
+                    </SvgImageBackground>
                 </Animated.View>
 
                 <Animated.View style={[styles.animatedContainer, roomDetailStyle]}>
-                    <ImageBackground
+                    <SvgImageBackground
                         source={roomBackgroundImage}
                         style={styles.detailBackground}
                         resizeMode="stretch"
@@ -301,12 +301,12 @@ export default function HomeScreen() {
                             onAddIngredient={goToAddIngredient}
                             onItemPress={handleIngredientPress}
                         />
-                    </ImageBackground>
+                    </SvgImageBackground>
                 </Animated.View>
 
                 {/* Layer 1: 요약 뷰 */}
                 <Animated.View style={[styles.animatedContainer, summaryAnimatedStyle]}>
-                    <ImageBackground
+                    <SvgImageBackground
                         source={summaryBackgroundImage}
                         style={styles.contentGradient}
                         resizeMode="cover"
@@ -348,7 +348,7 @@ export default function HomeScreen() {
                                 </View>
                             </View>
                         )}
-                    </ImageBackground>
+                    </SvgImageBackground>
                 </Animated.View>
 
                 {/* 재료 추가 FAB */}

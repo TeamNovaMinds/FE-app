@@ -3,7 +3,6 @@ import {
     View,
     Text,
     StyleSheet,
-    Image,
     ScrollView,
     TouchableOpacity,
     Alert,
@@ -14,6 +13,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { skinService } from '@/src/features/skin/service';
 import { getSkinDetailImages } from '@/src/features/skin/skinAssets';
+import { SvgImage } from '@/components/SvgImage';
 
 const { width } = Dimensions.get('window');
 
@@ -99,7 +99,7 @@ export default function SkinDetailScreen() {
             {/* 1. 상단 이미지 영역 (고정 이미지, 움직임 없음) */}
             <View style={styles.imageArea}>
                 {mainImage ? (
-                    <Image
+                    <SvgImage
                         source={mainImage}
                         style={styles.detailImage}
                         resizeMode="cover"

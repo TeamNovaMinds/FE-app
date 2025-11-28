@@ -6,7 +6,6 @@ import {
     StyleSheet,
     TouchableOpacity,
     FlatList,
-    Image,
     ActivityIndicator,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -15,6 +14,7 @@ import { skinService } from '@/src/features/skin/service';
 import { RefrigeratorSkinListItem } from '@/src/features/skin/types';
 import { Colors } from '@/constants/Colors'; // 프로젝트의 색상 상수 사용 권장
 import { getImageSource } from '@/src/features/skin/skinAssets';
+import { SvgImage } from '@/components/SvgImage';
 
 type TabType = 'SHOP' | 'OWNED';
 
@@ -51,7 +51,7 @@ export default function SkinListScreen() {
         >
             <View style={styles.thumbnailContainer}>
                 {item.thumbnailUrl ? (
-                    <Image source={getImageSource(item.thumbnailUrl)} style={styles.thumbnail} />
+                    <SvgImage source={getImageSource(item.thumbnailUrl)} style={styles.thumbnail} />
                 ) : (
                     <View style={[styles.thumbnail, { backgroundColor: '#ddd' }]} />
                 )}
