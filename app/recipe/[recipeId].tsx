@@ -489,30 +489,6 @@ export default function RecipeDetailScreen() {
 
     // --- 로딩/에러/메인 UI ---
 
-    if (isLoading) {
-        return (
-            <View style={styles.center}>
-                <ActivityIndicator size="large" color="#FF6347" />
-            </View>
-        );
-    }
-
-    if (error) {
-        return (
-            <View style={styles.center}>
-                <Text style={styles.errorText}>{error.message || '레시피를 불러오는 중 오류가 발생했습니다.'}</Text>
-            </View>
-        );
-    }
-
-    if (!recipe) {
-        return (
-            <View style={styles.center}>
-                <Text style={styles.errorText}>레시피를 찾을 수 없습니다.</Text>
-            </View>
-        );
-    }
-
     return (
         <SafeAreaView style={styles.safeArea}>
             <Stack.Screen
@@ -523,46 +499,68 @@ export default function RecipeDetailScreen() {
                 }}
             />
 
-            <ScrollView
-                style={styles.container}
-                contentContainerStyle={styles.contentContainer}
-                refreshControl={
-                    <RefreshControl
-                        refreshing={refreshing}
-                        onRefresh={onRefresh}
-                        tintColor="#FF6347"
-                    />
-                }
-            >
-                {renderImageCarousel()}
-                <View style={styles.recipeContent}>
-                    {renderAuthor()}
-                    {renderRecipeInfo()}
-                    <View style={styles.divider} />
-                    {renderIngredients()}
-                    <View style={styles.divider} />
-                    {renderSteps()}
-                    <View style={styles.divider} />
-                    {renderCommentsPreview()}
+            {isLoading && (
+                <View style={styles.center}>
+                    <ActivityIndicator size="large" color="#FF6347" />
                 </View>
-            </ScrollView>
+            )}
 
-            <View style={styles.footer}>
-                <TouchableOpacity onPress={handleLike} style={styles.likeButton}>
-                    <Ionicons
-                        name={recipe?.likedByMe ? 'heart' : 'heart-outline'}
-                        size={30}
-                        color={recipe?.likedByMe ? '#FF6347' : '#555'}
-                    />
-                    <Text style={styles.likeCount}>{recipe?.likeCount || 0}</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                    style={styles.commentInputContainer}
-                    onPress={navigateToComments}
-                >
-                    <Text style={styles.commentInputText}>댓글을 남겨주세요...</Text>
-                </TouchableOpacity>
-            </View>
+            {error && (
+                <View style={styles.center}>
+                    <Text style={styles.errorText}>{error.message || '레시피를 불러오는 중 오류가 발생했습니다.'}</Text>
+                </View>
+            )}
+
+            {!isLoading && !error && !recipe && (
+                <View style={styles.center}>
+                    <Text style={styles.errorText}>레시피를 찾을 수 없습니다.</Text>
+                </View>
+            )}
+
+            {!isLoading && !error && recipe && (
+                <>
+                    <ScrollView
+                        style={styles.container}
+                        contentContainerStyle={styles.contentContainer}
+                        refreshControl={
+                            <RefreshControl
+                                refreshing={refreshing}
+                                onRefresh={onRefresh}
+                                tintColor="#FF6347"
+                            />
+                        }
+                    >
+                        {renderImageCarousel()}
+                        <View style={styles.recipeContent}>
+                            {renderAuthor()}
+                            {renderRecipeInfo()}
+                            <View style={styles.divider} />
+                            {renderIngredients()}
+                            <View style={styles.divider} />
+                            {renderSteps()}
+                            <View style={styles.divider} />
+                            {renderCommentsPreview()}
+                        </View>
+                    </ScrollView>
+
+                    <View style={styles.footer}>
+                        <TouchableOpacity onPress={handleLike} style={styles.likeButton}>
+                            <Ionicons
+                                name={recipe?.likedByMe ? 'heart' : 'heart-outline'}
+                                size={30}
+                                color={recipe?.likedByMe ? '#FF6347' : '#555'}
+                            />
+                            <Text style={styles.likeCount}>{recipe?.likeCount || 0}</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={styles.commentInputContainer}
+                            onPress={navigateToComments}
+                        >
+                            <Text style={styles.commentInputText}>댓글을 남겨주세요...</Text>
+                        </TouchableOpacity>
+                    </View>
+                </>
+            )}
         </SafeAreaView>
     );
 }
