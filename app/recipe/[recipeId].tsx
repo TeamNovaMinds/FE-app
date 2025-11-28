@@ -20,6 +20,7 @@ import axiosInstance from '../../api/axiosInstance';
 import { RecipeIngredient, RecipeOrder, Comment } from '../../src/features/recipe/types';
 import { formatRelativeTime } from '../../utils/date';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import UnknownIcon from '@/assets/icons/unknown.svg';
 
 const { width } = Dimensions.get('window');
 
@@ -318,17 +319,19 @@ export default function RecipeDetailScreen() {
     const renderAuthor = () => (
         <View style={styles.authorSection}>
             <TouchableOpacity style={styles.authorInfo} onPress={navigateToAuthorRefrigerator} activeOpacity={0.8}>
-                <Image
-                    source={{
-                        uri:
-                            recipe?.authorInfo.profileImageUrl ||
-                            'https://via.placeholder.com/40',
-                    }}
-                    style={styles.authorImage}
-                    contentFit="cover"
-                    transition={200}
-                    cachePolicy="memory-disk"
-                />
+                {recipe?.authorInfo.profileImageUrl ? (
+                    <Image
+                        source={{ uri: recipe.authorInfo.profileImageUrl }}
+                        style={styles.authorImage}
+                        contentFit="cover"
+                        transition={200}
+                        cachePolicy="memory-disk"
+                    />
+                ) : (
+                    <View style={styles.authorImage}>
+                        <UnknownIcon width={40} height={40} />
+                    </View>
+                )}
                 <Text style={styles.authorName}>{recipe?.authorInfo.nickname}</Text>
             </TouchableOpacity>
 
@@ -460,17 +463,19 @@ export default function RecipeDetailScreen() {
                         index === recipe.commentPreview.previewComments.length - 1 && { marginBottom: 0 }
                     ]}
                 >
-                    <Image
-                        source={{
-                            uri:
-                                comment.authorInfo.profileImageUrl ||
-                                'https://via.placeholder.com/36',
-                        }}
-                        style={styles.commentAuthorImage}
-                        contentFit="cover"
-                        transition={200}
-                        cachePolicy="memory-disk"
-                    />
+                    {comment.authorInfo.profileImageUrl ? (
+                        <Image
+                            source={{ uri: comment.authorInfo.profileImageUrl }}
+                            style={styles.commentAuthorImage}
+                            contentFit="cover"
+                            transition={200}
+                            cachePolicy="memory-disk"
+                        />
+                    ) : (
+                        <View style={styles.commentAuthorImage}>
+                            <UnknownIcon width={36} height={36} />
+                        </View>
+                    )}
                     <View style={styles.commentContent}>
                         <Text style={styles.commentAuthorName}>
                             {comment.authorInfo.nickname}

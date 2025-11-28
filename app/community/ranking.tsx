@@ -3,18 +3,19 @@ import {
     View,
     Text,
     StyleSheet,
-    Image,
     ScrollView,
     TouchableOpacity,
     ActivityIndicator,
     Dimensions
 } from 'react-native';
+import { Image } from 'expo-image';
 import { Stack, useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { rankingService } from '@/src/features/ranking/service';
 import { LinearGradient } from 'expo-linear-gradient'; // ✅ 추가
 import { format } from 'date-fns';
 import CrownIcon from '@/assets/images/crown.svg';
+import UnknownIcon from '@/assets/icons/unknown.svg';
 
 const { width } = Dimensions.get('window');
 
@@ -78,18 +79,32 @@ export default function RankingScreen() {
                                                 style={styles.gradientBorder}
                                             >
                                                 <View style={styles.profileInner}>
-                                                    <Image
-                                                        source={item.profileImgUrl ? { uri: item.profileImgUrl } : require('@/assets/images/JustFridge_logo.png')}
-                                                        style={styles.profileImageFirst}
-                                                    />
+                                                    {item.profileImgUrl ? (
+                                                        <Image
+                                                            source={{ uri: item.profileImgUrl }}
+                                                            style={styles.profileImageFirst}
+                                                            contentFit="contain"
+                                                            transition={200}
+                                                            cachePolicy="memory-disk"
+                                                        />
+                                                    ) : (
+                                                        <UnknownIcon width={70} height={70} />
+                                                    )}
                                                 </View>
                                             </LinearGradient>
                                         ) : (
                                             <View style={styles.profileContainer}>
-                                                <Image
-                                                    source={item.profileImgUrl ? { uri: item.profileImgUrl } : require('@/assets/images/JustFridge_logo.png')}
-                                                    style={styles.profileImage}
-                                                />
+                                                {item.profileImgUrl ? (
+                                                    <Image
+                                                        source={{ uri: item.profileImgUrl }}
+                                                        style={styles.profileImage}
+                                                        contentFit="contain"
+                                                        transition={200}
+                                                        cachePolicy="memory-disk"
+                                                    />
+                                                ) : (
+                                                    <UnknownIcon width={50} height={50} />
+                                                )}
                                             </View>
                                         )}
                                     </TouchableOpacity>
@@ -114,10 +129,19 @@ export default function RankingScreen() {
                                 activeOpacity={0.7}
                             >
                                 <Text style={styles.rankNumber}>{item.rank}</Text>
-                                <Image
-                                    source={item.profileImgUrl ? { uri: item.profileImgUrl } : require('@/assets/images/JustFridge_logo.png')}
-                                    style={styles.listProfileImage}
-                                />
+                                {item.profileImgUrl ? (
+                                    <Image
+                                        source={{ uri: item.profileImgUrl }}
+                                        style={styles.listProfileImage}
+                                        contentFit="contain"
+                                        transition={200}
+                                        cachePolicy="memory-disk"
+                                    />
+                                ) : (
+                                    <View style={styles.listProfileImage}>
+                                        <UnknownIcon width={36} height={36} />
+                                    </View>
+                                )}
                                 <Text style={styles.listName} numberOfLines={1}>{item.nickname}</Text>
                                 <Text style={styles.listPoint}>{item.point.toLocaleString()}</Text>
                             </TouchableOpacity>

@@ -20,6 +20,7 @@ import axiosInstance from '@/api/axiosInstance';
 import { Link } from 'expo-router';
 import { useInfiniteQuery, InfiniteData } from '@tanstack/react-query';
 import PlusIcon from '../../assets/icons/plus.svg';
+import UnknownIcon from '../../assets/icons/unknown.svg';
 
 // --- 타입 정의 (API 응답과 일치) ---
 interface AuthorInfo {
@@ -123,13 +124,19 @@ const RecipeCard: React.FC<{ item: RecipeListItem }> = ({ item }) => {
 
                     {/* 2-2. 작성자 정보 */}
                     <View style={styles.authorContainer}>
-                        <Image
-                            source={item.authorInfo.profileImageUrl ? { uri: item.authorInfo.profileImageUrl } : require('../../assets/images/JustFridge_logo.png')}
-                            style={styles.authorImage}
-                            contentFit="cover"
-                            transition={200}
-                            cachePolicy="memory-disk"
-                        />
+                        {item.authorInfo.profileImageUrl ? (
+                            <Image
+                                source={{ uri: item.authorInfo.profileImageUrl }}
+                                style={styles.authorImage}
+                                contentFit="cover"
+                                transition={200}
+                                cachePolicy="memory-disk"
+                            />
+                        ) : (
+                            <View style={styles.authorImage}>
+                                <UnknownIcon width={24} height={24} />
+                            </View>
+                        )}
                         <Text style={styles.authorName} numberOfLines={1}>{item.authorInfo.nickname}</Text>
                     </View>
 

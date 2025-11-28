@@ -6,7 +6,6 @@ import {
     Text,
     FlatList,
     StyleSheet,
-    Image,
     TextInput,
     TouchableOpacity,
     SafeAreaView,
@@ -17,6 +16,7 @@ import {
     TouchableWithoutFeedback,
     Keyboard,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import {
     useInfiniteQuery,
@@ -28,6 +28,7 @@ import axiosInstance from '@/api/axiosInstance';
 import { formatRelativeTime } from '@/utils/date';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '@/store/authStore';
+import UnknownIcon from '@/assets/icons/unknown.svg';
 
 // --- 1. 타입 정의 ---
 
@@ -171,10 +172,19 @@ const CommentItem: React.FC<CommentItemProps> = ({
 
     return (
         <View style={[styles.commentItem, isReply && styles.replyItem]}>
-            <Image
-                source={item.authorInfo.profileImageUrl ? { uri: item.authorInfo.profileImageUrl } : require('../../../assets/images/JustFridge_logo.png')}
-                style={styles.authorImage}
-            />
+            {item.authorInfo.profileImageUrl ? (
+                <Image
+                    source={{ uri: item.authorInfo.profileImageUrl }}
+                    style={styles.authorImage}
+                    contentFit="cover"
+                    transition={200}
+                    cachePolicy="memory-disk"
+                />
+            ) : (
+                <View style={styles.authorImage}>
+                    <UnknownIcon width={36} height={36} />
+                </View>
+            )}
             <View style={styles.commentContent}>
                 <Text style={styles.authorName}>{item.authorInfo.nickname}</Text>
                 <Text style={styles.commentText}>{item.content}</Text>

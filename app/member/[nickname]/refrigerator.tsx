@@ -25,6 +25,7 @@ import { styles as homeStyles } from '@/src/features/home/styles';
 import { getImageSource, SKIN_ASSETS, SkinIdentifier } from '@/src/features/skin/skinAssets';
 import { skinService } from '@/src/features/skin/service';
 import ActiveTabBg from '../../../assets/icons/active_tab_bg.svg';
+import UnknownIcon from '@/assets/icons/unknown.svg';
 const defaultHeaderBackground = require('../../../assets/images/default.png');
 const defaultDetailBackground = require('../../../assets/images/room.png');
 const defaultSummaryBackground = require('../../../assets/images/default.png');
@@ -333,15 +334,19 @@ const MemberRefrigeratorScreen = () => {
                                         {/* 2. 프로필 이미지 + 스탯 (가로 배치) */}
                                         <View style={memberStyles.profileStatsRow}>
                                             {/* 왼쪽: 프로필 이미지 */}
-                                            <Image
-                                                source={summary?.profileImageUrl
-                                                    ? { uri: summary.profileImageUrl }
-                                                    : require('../../../assets/images/JustFridge_logo.png')}
-                                                style={memberStyles.profileImage}
-                                                contentFit="cover"
-                                                transition={200}
-                                                cachePolicy="memory-disk"
-                                            />
+                                            {summary?.profileImageUrl ? (
+                                                <Image
+                                                    source={{ uri: summary.profileImageUrl }}
+                                                    style={memberStyles.profileImage}
+                                                    contentFit="cover"
+                                                    transition={200}
+                                                    cachePolicy="memory-disk"
+                                                />
+                                            ) : (
+                                                <View style={memberStyles.profileImage}>
+                                                    <UnknownIcon width={80} height={80} />
+                                                </View>
+                                            )}
 
                                             {/* 오른쪽: 스탯 (레시피, 팔로워, 팔로우) */}
                                             <View style={memberStyles.statRow}>

@@ -4,17 +4,18 @@ import {
     Text,
     StyleSheet,
     FlatList,
-    Image,
     ActivityIndicator,
     SafeAreaView,
     TouchableOpacity
 } from 'react-native';
+import { Image } from 'expo-image';
 import { Stack, useRouter } from 'expo-router';
 import { useInfiniteQuery, InfiniteData } from '@tanstack/react-query';
 import { rankingService } from '@/src/features/ranking/service';
 import { RankingMember, AllRankingResponse } from '@/src/features/ranking/types';
 import { LinearGradient } from 'expo-linear-gradient';
 import CrownIcon from '@/assets/images/crown.svg';
+import UnknownIcon from '@/assets/icons/unknown.svg';
 
 export default function AllRankingScreen() {
     const router = useRouter();
@@ -78,18 +79,34 @@ export default function AllRankingScreen() {
                         style={styles.gradientBorderList}
                     >
                         <View style={styles.profileInnerList}>
-                            <Image
-                                source={item.profileImgUrl ? { uri: item.profileImgUrl } : require('@/assets/images/JustFridge_logo.png')}
-                                style={styles.profileImageFirstList}
-                            />
+                            {item.profileImgUrl ? (
+                                <Image
+                                    source={{ uri: item.profileImgUrl }}
+                                    style={styles.profileImageFirstList}
+                                    contentFit="contain"
+                                    transition={200}
+                                    cachePolicy="memory-disk"
+                                />
+                            ) : (
+                                <UnknownIcon width={44} height={44} />
+                            )}
                         </View>
                     </LinearGradient>
                 ) : (
                     // 일반: 그냥 이미지
-                    <Image
-                        source={item.profileImgUrl ? { uri: item.profileImgUrl } : require('@/assets/images/JustFridge_logo.png')}
-                        style={styles.profileImage}
-                    />
+                    item.profileImgUrl ? (
+                        <Image
+                            source={{ uri: item.profileImgUrl }}
+                            style={styles.profileImage}
+                            contentFit="contain"
+                            transition={200}
+                            cachePolicy="memory-disk"
+                        />
+                    ) : (
+                        <View style={styles.profileImage}>
+                            <UnknownIcon width={44} height={44} />
+                        </View>
+                    )
                 )}
             </View>
 
