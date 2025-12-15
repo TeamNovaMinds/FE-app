@@ -66,7 +66,6 @@ const RecipePreviewCard = ({ item }: { item: SimpleRecipe }) => {
 
 
 export default function MyPageScreen() {
-    // ... (State, fetch/handle 함수 등 기존 코드와 동일) ...
     const [activeTab, setActiveTab] = useState<TabKey | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [isImageUploading, setIsImageUploading] = useState(false);
@@ -77,8 +76,8 @@ export default function MyPageScreen() {
     const [myPosts, setMyPosts] = useState<SimplePost[]>([]);
     const queryClient = useQueryClient();
 
-    // React Query로 프로필 정보 캐싱 (placeholderData로 이전 캐시 먼저 표시)
-    const { data: profileData } = useQuery({
+    // React Query로 프로필 정보 캐싱
+    const { data: profileData, refetch: refetchProfile } = useQuery({
         queryKey: ['profile'],
         queryFn: async () => {
             const response = await axiosInstance.get('/api/auth/me');
@@ -87,10 +86,17 @@ export default function MyPageScreen() {
             }
             throw new Error(response.data.message || '프로필 조회 실패');
         },
-        staleTime: 1000 * 60, // 1분간 신선한 데이터로 간주
+        staleTime: 0, // 항상 새로 가져옴
         gcTime: 1000 * 60 * 5, // 5분간 캐시 유지
-        placeholderData: (previousData) => previousData, // 이전 데이터를 먼저 표시
+        refetchOnMount: true, // 마운트 시 새로고침
     });
+
+    // 화면 포커스 시 프로필 데이터 새로고침
+    useFocusEffect(
+        useCallback(() => {
+            refetchProfile();
+        }, [refetchProfile])
+    );
 
     // profileData가 변경되면 zustand store 업데이트
     React.useEffect(() => {
@@ -230,16 +236,18 @@ export default function MyPageScreen() {
                     />
                 </TouchableOpacity>
             </View>
-            <View style={styles.followSection}>
-                <View style={styles.followBox}>
-                    <Text style={styles.followCount}>{profile?.followerCount ?? 0}</Text>
-                    <Text style={styles.followLabel}>팔로워</Text>
-                </View>
-                <View style={styles.followBox}>
-                    <Text style={styles.followCount}>{profile?.followingCount ?? 0}</Text>
-                    <Text style={styles.followLabel}>팔로잉</Text>
-                </View>
-            </View>
+            <Link href="/mypage/follow" asChild>
+                <TouchableOpacity style={styles.followSection}>
+                    <View style={styles.followBox}>
+                        <Text style={styles.followCount}>{profile?.followerCount ?? 0}</Text>
+                        <Text style={styles.followLabel}>팔로워</Text>
+                    </View>
+                    <View style={styles.followBox}>
+                        <Text style={styles.followCount}>{profile?.followingCount ?? 0}</Text>
+                        <Text style={styles.followLabel}>팔로잉</Text>
+                    </View>
+                </TouchableOpacity>
+            </Link>
         </View>
     );
     const renderPoints = () => (

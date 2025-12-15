@@ -147,6 +147,11 @@ export default function RecipeDetailScreen() {
             if (nickname) {
                 queryClient.invalidateQueries({ queryKey: ['memberRefrigeratorSummary', nickname] });
             }
+            // 내 프로필 정보도 무효화하여 팔로잉 수 업데이트
+            queryClient.invalidateQueries({ queryKey: ['profile'] });
+            // 팔로워/팔로잉 목록도 무효화
+            queryClient.invalidateQueries({ queryKey: ['followers'] });
+            queryClient.invalidateQueries({ queryKey: ['followings'] });
         },
     });
 

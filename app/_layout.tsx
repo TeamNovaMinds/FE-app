@@ -265,6 +265,17 @@ export default function RootLayout() {
                             }}
                         />
 
+                        {/* 팔로워/팔로잉 목록 페이지 */}
+                        <Stack.Screen
+                            name="mypage/follow"
+                            options={{
+                                title: '팔로워 · 팔로잉',
+                                headerShown: true,
+                                headerBackVisible: true,
+                                headerBackTitle: '마이페이지',
+                            }}
+                        />
+
                         {/* 스킨 목록 페이지 */}
                         <Stack.Screen
                             name="skin/index"
