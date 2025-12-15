@@ -7,16 +7,40 @@ import UnknownIcon from '../../../../assets/icons/unknown.svg';
 
 interface FollowMemberItemProps {
   member: FollowMemberInfo;
+  tabType: 'followers' | 'followings';
   onInvite?: (nickname: string) => void;
+  onFollowToggle?: (nickname: string, isCurrentlyFollowing: boolean) => void;
 }
 
 /**
  * 팔로워/팔로잉 목록의 개별 아이템 컴포넌트
  */
-export const FollowMemberItem: React.FC<FollowMemberItemProps> = ({ member, onInvite }) => {
+export const FollowMemberItem: React.FC<FollowMemberItemProps> = ({
+  member,
+  tabType,
+  onInvite,
+  onFollowToggle,
+}) => {
   const { nickname, profileImgUrl, invitationStatus } = member;
 
-  const renderActionButton = () => {
+  // 팔로워 탭: NOT_MUTUAL이면 내가 역팔로우 안 함 (팔로잉 버튼 표시)
+  // 팔로잉 탭: 항상 내가 팔로우 중 (언팔로잉 버튼 표시)
+  const isFollowing = tabType === 'followings' || invitationStatus !== 'NOT_MUTUAL';
+
+  const renderFollowButton = () => {
+    return (
+      <TouchableOpacity
+        style={[styles.followButton, isFollowing && styles.unfollowButton]}
+        onPress={() => onFollowToggle?.(nickname, isFollowing)}
+      >
+        <Text style={[styles.followButtonText, isFollowing && styles.unfollowButtonText]}>
+          {isFollowing ? '언팔로잉' : '팔로잉'}
+        </Text>
+      </TouchableOpacity>
+    );
+  };
+
+  const renderInviteButton = () => {
     switch (invitationStatus) {
       case 'MUTUAL_FOLLOW_INVITE':
         return (
@@ -65,7 +89,10 @@ export const FollowMemberItem: React.FC<FollowMemberItemProps> = ({ member, onIn
           <Text style={styles.nickname}>{nickname}</Text>
         </TouchableOpacity>
       </Link>
-      <View style={styles.rightSection}>{renderActionButton()}</View>
+      <View style={styles.rightSection}>
+        {renderInviteButton()}
+        {renderFollowButton()}
+      </View>
     </View>
   );
 };
@@ -110,13 +137,42 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   rightSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
     marginLeft: 12,
+  },
+  followButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#4891FF',
+    backgroundColor: '#fff',
+    minWidth: 85,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  unfollowButton: {
+    backgroundColor: '#4891FF',
+    borderColor: '#4891FF',
+  },
+  followButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#4891FF',
+  },
+  unfollowButtonText: {
+    color: '#fff',
   },
   inviteButton: {
     paddingHorizontal: 16,
     paddingVertical: 8,
-    backgroundColor: '#4891FF',
+    backgroundColor: '#34C759',
     borderRadius: 8,
+    minWidth: 85,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   inviteButtonText: {
     color: '#fff',
@@ -124,20 +180,26 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   badgeGreen: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
     backgroundColor: '#E8F5E9',
     borderRadius: 8,
+    minWidth: 85,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   badgeYellow: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
     backgroundColor: '#FFF9E6',
     borderRadius: 8,
+    minWidth: 85,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   badgeText: {
-    fontSize: 13,
-    fontWeight: '500',
+    fontSize: 14,
+    fontWeight: '600',
     color: '#666',
   },
 });

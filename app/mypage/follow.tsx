@@ -105,11 +105,42 @@ export default function FollowScreen() {
     }
   };
 
+  // 팔로잉/언팔로잉 핸들러
+  const handleFollowToggle = async (nickname: string, isCurrentlyFollowing: boolean) => {
+    try {
+      const endpoint = `/api/members/${encodeURIComponent(nickname)}/following`;
+
+      if (isCurrentlyFollowing) {
+        // 언팔로잉
+        await axiosInstance.delete(endpoint);
+        Alert.alert('성공', '언팔로잉했습니다.');
+      } else {
+        // 팔로잉
+        await axiosInstance.post(endpoint);
+        Alert.alert('성공', '팔로잉했습니다.');
+      }
+
+      // 목록 및 프로필 새로고침 (언팔로잉 시 목록에서 사라짐)
+      queryClient.invalidateQueries({ queryKey: ['followers'] });
+      queryClient.invalidateQueries({ queryKey: ['followings'] });
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+    } catch (error: any) {
+      console.error('팔로잉 토글 오류:', error);
+      const message = error.response?.data?.message || '처리 중 오류가 발생했습니다.';
+      Alert.alert('오류', message);
+    }
+  };
+
   const currentData = activeTab === 'followers' ? followersData?.followers : followingsData?.followings;
   const isLoading = activeTab === 'followers' ? isLoadingFollowers : isLoadingFollowings;
 
   const renderItem = ({ item }: { item: FollowMemberInfo }) => (
-    <FollowMemberItem member={item} onInvite={handleInvite} />
+    <FollowMemberItem
+      member={item}
+      tabType={activeTab}
+      onInvite={handleInvite}
+      onFollowToggle={handleFollowToggle}
+    />
   );
 
   const renderEmpty = () => (

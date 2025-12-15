@@ -168,10 +168,14 @@ export default function RecipeDetailScreen() {
             Alert.alert('오류', errorMessage);
             console.error('Follow error:', err?.response?.data || err);
         },
-        onSettled: () => {
-            // 데이터 동기화를 위해 무효화
+        onSuccess: async () => {
+            // ✅ 성공 시 캐시 무효화 및 즉시 리페치
+            console.log('✅ 팔로우/언팔로우 성공 - 캐시 무효화 시작');
+
+            await queryClient.invalidateQueries({ queryKey: ['profile'], refetchType: 'active' });
+            await queryClient.refetchQueries({ queryKey: ['profile'], type: 'active' });
+
             queryClient.invalidateQueries({ queryKey: ['recipe', recipeId] });
-            queryClient.invalidateQueries({ queryKey: ['profile'] }); // ✅ 최신 데이터 다시 받아오기
 
             const nickname = recipe?.authorInfo?.nickname;
             if (nickname) {
@@ -179,6 +183,8 @@ export default function RecipeDetailScreen() {
             }
             queryClient.invalidateQueries({ queryKey: ['followers'] });
             queryClient.invalidateQueries({ queryKey: ['followings'] });
+
+            console.log('✅ 모든 캐시 무효화 완료');
         },
     });
 

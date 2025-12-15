@@ -69,7 +69,6 @@ export default function MyPageScreen() {
     const [activeTab, setActiveTab] = useState<TabKey | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [isImageUploading, setIsImageUploading] = useState(false);
-    const profile = useAuthStore((state) => state.user);
     const updateUser = useAuthStore((state) => state.updateUser);
     const [likedRecipes, setLikedRecipes] = useState<SimpleRecipe[]>([]);
     const [myRecipes, setMyRecipes] = useState<SimpleRecipe[]>([]);
@@ -80,8 +79,13 @@ export default function MyPageScreen() {
     const { data: profileData, refetch: refetchProfile } = useQuery({
         queryKey: ['profile'],
         queryFn: async () => {
+            console.log('🔄 마이페이지: 프로필 데이터 요청 중...');
             const response = await axiosInstance.get('/api/auth/me');
             if (response.data.isSuccess) {
+                console.log('✅ 마이페이지: 프로필 데이터 받음', {
+                    followerCount: response.data.result.followerCount,
+                    followingCount: response.data.result.followingCount,
+                });
                 return response.data.result;
             }
             throw new Error(response.data.message || '프로필 조회 실패');
@@ -94,8 +98,11 @@ export default function MyPageScreen() {
     // 화면 포커스 시 프로필 데이터 새로고침
     useFocusEffect(
         useCallback(() => {
+            console.log('📱 마이페이지: 화면 포커스 - 프로필 새로고침 시작');
+            // ✅ 캐시 무효화 후 새로 가져오기
+            queryClient.invalidateQueries({ queryKey: ['profile'] });
             refetchProfile();
-        }, [refetchProfile])
+        }, [refetchProfile, queryClient])
     );
 
     // profileData가 변경되면 zustand store 업데이트
@@ -104,6 +111,19 @@ export default function MyPageScreen() {
             updateUser(profileData);
         }
     }, [profileData, updateUser]);
+
+    // ✅ React Query 데이터를 우선 사용
+    const profile = profileData;
+
+    // 디버깅: 프로필 데이터 변경 시 로그
+    React.useEffect(() => {
+        if (profile) {
+            console.log('📊 마이페이지: 현재 표시 중인 프로필 데이터', {
+                followerCount: profile.followerCount,
+                followingCount: profile.followingCount,
+            });
+        }
+    }, [profile]);
 
     const fetchLikedRecipes = async () => {
         try {
@@ -328,6 +348,13 @@ export default function MyPageScreen() {
                         <Ionicons name={activeTab === 'my-posts' ? "chevron-up" : "chevron-down"} size={20} color={activeTab === 'my-posts' ? '#007AFF' : '#888'} />
                     </TouchableOpacity>
                     {activeTab === 'my-posts' && renderPreviewList(myPosts, '/mypage/my-posts')}
+
+                    <Link href="/mypage/invitations" asChild>
+                        <TouchableOpacity style={styles.tabButton}>
+                            <Text style={styles.tabText}>냉장고 초대 관리</Text>
+                            <Ionicons name="chevron-forward" size={20} color="#888" />
+                        </TouchableOpacity>
+                    </Link>
 
                     <Link href="/settings" asChild>
                         <TouchableOpacity style={styles.tabButton}>
