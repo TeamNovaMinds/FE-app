@@ -203,8 +203,8 @@ export default function CreateRecipeScreen() {
                 return;
             }
 
-            // 파일 크기 검증 (fileSize가 있는 경우)
             if (selectedImage.fileSize && !validateFileSize(selectedImage.fileSize)) {
+            // 파일 크기 검증 (fileSize가 있는 경우)
                 Alert.alert('파일 크기 오류', '10MB 이하의 이미지만 업로드 가능합니다.');
                 return;
             }

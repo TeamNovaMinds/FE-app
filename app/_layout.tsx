@@ -1,3 +1,20 @@
+import 'text-encoding';
+
+// React Native에서 SockJS 사용을 위한 polyfill
+if (typeof global.location === 'undefined') {
+  global.location = {
+    protocol: 'http:',
+    host: 'localhost',
+    hostname: 'localhost',
+    port: '',
+    pathname: '/',
+    search: '',
+    hash: '',
+    href: 'http://localhost/',
+    origin: 'http://localhost',
+  } as any;
+}
+
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';

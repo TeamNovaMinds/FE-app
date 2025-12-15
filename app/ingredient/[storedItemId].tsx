@@ -75,12 +75,6 @@ export default function IngredientDetailScreen() {
     // 1. home.tsx에서 전달받은 파라미터 (string 타입으로 받음)
     const params = useLocalSearchParams<StoredIngredientParams>();
 
-    // 디버깅: params 출력
-    console.log('=== Ingredient Detail Params ===');
-    console.log('params:', JSON.stringify(params, null, 2));
-    console.log('ingredientName:', params.ingredientName);
-    console.log('imageUrl:', params.imageUrl);
-
     // 2. 파라미터를 StoredIngredient 타입에 맞게 수동으로 변환합니다.
     const item: StoredIngredient = {
         id: Number(params.id),

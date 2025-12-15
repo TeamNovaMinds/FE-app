@@ -11,6 +11,7 @@ const fetchIngredientCountAPI = async () => {
     );
     if (response.data.isSuccess) {
         return {
+            refrigeratorId: response.data.result.refrigeratorId,
             fridge: response.data.result.refrigeratorCount,
             freezer: response.data.result.freezerCount,
             room: response.data.result.roomTempCount,
@@ -27,13 +28,6 @@ const fetchStoredIngredientsAPI = async (tabName: TabName): Promise<StoredIngred
     );
 
     if (response.data.isSuccess) {
-        // 디버깅: API 응답 확인
-        console.log('=== API Response ===');
-        console.log('storedIngredients:', JSON.stringify(response.data.result.storedIngredients, null, 2));
-        if (response.data.result.storedIngredients.length > 0) {
-            console.log('First item ingredientName:', response.data.result.storedIngredients[0].ingredientName);
-            console.log('First item imageUrl:', response.data.result.storedIngredients[0].imageUrl);
-        }
         return response.data.result.storedIngredients;
     }
     throw new Error(response.data.message || '재료를 불러오는데 실패했습니다.');
@@ -42,13 +36,17 @@ const fetchStoredIngredientsAPI = async (tabName: TabName): Promise<StoredIngred
 export const useIngredientData = (activeTab: TabName | null) => {
     // 재료 개수 조회 (항상 활성화, placeholderData로 이전 캐시 먼저 표시)
     const {
-        data: ingredientCount = { fridge: 0, freezer: 0, room: 0 },
+        data: ingredientCount = { refrigeratorId: 0, fridge: 0, freezer: 0, room: 0 },
         isLoading,
         error: countError,
         refetch: refetchCount,
     } = useQuery({
         queryKey: ['ingredientCount'],
-        queryFn: fetchIngredientCountAPI,
+        queryFn: async () => {
+            const result = await fetchIngredientCountAPI();
+            console.log('📊 Ingredient Count API Response:', result);
+            return result;
+        },
         staleTime: 1000 * 60 * 5, // 5분간 fresh
         placeholderData: (previousData) => previousData, // 이전 데이터를 먼저 표시
     });

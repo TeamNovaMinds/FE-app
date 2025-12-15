@@ -1,5 +1,5 @@
 // 홈 화면 - 냉장고 재료 관리 (피그마 디자인 반영)
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
     View,
     Text,
@@ -18,6 +18,7 @@ import ActiveTabBg from '../../assets/icons/active_tab_bg.svg';
 import HomeLogo from '../../assets/icons/home_logo.svg';
 import SummaryBg from '../../assets/icons/summary_bg.svg';
 import { SvgImageBackground } from '@/components/SvgImageBackground';
+import { useRefrigeratorSocket } from '@/hooks/useRefrigeratorSocket'; // 훅 import
 
 // 타입 및 상수
 import { TabName } from '@/src/features/home/types';
@@ -51,6 +52,25 @@ export default function HomeScreen() {
         isListError,
         fetchIngredientCount,
     } = useIngredientData(activeTab);
+
+    // 웹소켓 콜백: 재료 변경 시 데이터 업데이트
+    const handleSocketUpdate = useCallback(() => {
+        console.log('📡 WebSocket: Ingredient update received, refreshing data...');
+        console.log('Current refrigeratorId:', ingredientCount.refrigeratorId);
+        console.log('Current tab:', activeTab);
+
+        // React Query 캐시 무효화 (변경된 부분만 다시 가져옴)
+        queryClient.invalidateQueries({ queryKey: ['ingredientCount'] });
+        if (activeTab) {
+            queryClient.invalidateQueries({ queryKey: ['storedIngredients', activeTab] });
+        }
+    }, [queryClient, ingredientCount.refrigeratorId, activeTab]);
+
+    // 웹소켓 연결
+    useRefrigeratorSocket(
+        ingredientCount.refrigeratorId || null,
+        handleSocketUpdate
+    );
 
     const {
         summaryAnimatedStyle,
@@ -112,12 +132,6 @@ export default function HomeScreen() {
 
     // ✅ 4. 재료 아이템 클릭 시 호출될 핸들러
     const handleIngredientPress = (item: StoredIngredient) => {
-        // 디버깅: 전달하는 item 데이터 확인
-        console.log('=== handleIngredientPress ===');
-        console.log('item:', JSON.stringify(item, null, 2));
-        console.log('ingredientName:', item.ingredientName);
-        console.log('imageUrl:', item.imageUrl);
-
         // StoredIngredient 객체 전체를 params로 전달합니다.
         // [storedItemId].tsx 파일이 item.id를 자동으로 받습니다.
         router.push({

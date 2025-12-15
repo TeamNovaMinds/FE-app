@@ -4,6 +4,7 @@ export interface IngredientCountResponse {
     code: string;
     message: string;
     result: {
+        refrigeratorId: number;
         refrigeratorCount: number;
         freezerCount: number;
         roomTempCount: number;
@@ -27,6 +28,7 @@ export interface StoredIngredientResponse {
     code: string;
     message: string;
     result: {
+        refrigeratorId: number;
         addedCount: number;
         storedIngredients: StoredIngredient[];
     };
