@@ -108,15 +108,22 @@ export default function RecipeDetailScreen() {
             } else {
                 await axiosInstance.post(endpoint);
             }
-            return { nickname }; // nickname 반환
+            return { nickname };
         },
         onMutate: async () => {
+            // 1. 진행 중인 쿼리 취소 (레시피 상세, 내 프로필)
             await queryClient.cancelQueries({ queryKey: ['recipe', recipeId] });
+            await queryClient.cancelQueries({ queryKey: ['profile'] });
 
+            // 2. 이전 데이터 스냅샷 저장
             const previousRecipe = queryClient.getQueryData(['recipe', recipeId]);
-            const previousFollowing =
+            const previousProfile = queryClient.getQueryData(['profile']); // ✅ 내 프로필 데이터 스냅샷
+
+            // 현재 팔로잉 상태 확인
+            const isFollowing =
                 (previousRecipe as any)?.authorInfo?.following ?? recipe?.authorInfo?.following ?? false;
 
+            // 3. 레시피 데이터 Optimistic Update (팔로우 버튼 UI)
             queryClient.setQueryData(['recipe', recipeId], (old: any) => {
                 const base = old || recipe;
                 if (!base) return old;
@@ -130,26 +137,46 @@ export default function RecipeDetailScreen() {
                 };
             });
 
-            return { previousRecipe, previousFollowing };
+            // 4. ✅ [핵심] 내 프로필 데이터 Optimistic Update (팔로잉 숫자 즉시 변경)
+            if (previousProfile) {
+                queryClient.setQueryData(['profile'], (oldProfile: any) => {
+                    if (!oldProfile) return oldProfile;
+                    // 팔로잉 중이었으면 -> 언팔로우(감소), 아니면 -> 팔로우(증가)
+                    const newCount = isFollowing
+                        ? (oldProfile.followingCount > 0 ? oldProfile.followingCount - 1 : 0)
+                        : oldProfile.followingCount + 1;
+
+                    return {
+                        ...oldProfile,
+                        followingCount: newCount,
+                    };
+                });
+            }
+
+            return { previousRecipe, previousProfile };
         },
         onError: (err: any, variables, context) => {
+            // 에러 발생 시 롤백
             if (context?.previousRecipe) {
                 queryClient.setQueryData(['recipe', recipeId], context.previousRecipe);
             }
+            if (context?.previousProfile) {
+                queryClient.setQueryData(['profile'], context.previousProfile); // ✅ 프로필 데이터 롤백
+            }
+
             const errorMessage = err?.response?.data?.message || err?.message || '팔로우 처리에 실패했습니다.';
             Alert.alert('오류', errorMessage);
             console.error('Follow error:', err?.response?.data || err);
         },
         onSettled: () => {
+            // 데이터 동기화를 위해 무효화
             queryClient.invalidateQueries({ queryKey: ['recipe', recipeId] });
-            // 타인 냉장고 요약 정보도 무효화하여 팔로워 수 업데이트
+            queryClient.invalidateQueries({ queryKey: ['profile'] }); // ✅ 최신 데이터 다시 받아오기
+
             const nickname = recipe?.authorInfo?.nickname;
             if (nickname) {
                 queryClient.invalidateQueries({ queryKey: ['memberRefrigeratorSummary', nickname] });
             }
-            // 내 프로필 정보도 무효화하여 팔로잉 수 업데이트
-            queryClient.invalidateQueries({ queryKey: ['profile'] });
-            // 팔로워/팔로잉 목록도 무효화
             queryClient.invalidateQueries({ queryKey: ['followers'] });
             queryClient.invalidateQueries({ queryKey: ['followings'] });
         },
