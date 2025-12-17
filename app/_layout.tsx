@@ -104,6 +104,7 @@ export default function RootLayout() {
             const response = await axiosInstance.get('/api/refrigerators/stored-items/count');
             if (response.data.isSuccess) {
               return {
+                refrigeratorId: response.data.result.refrigeratorId, // ✅ 추가: 웹소켓 연결에 필요
                 fridge: response.data.result.refrigeratorCount,
                 freezer: response.data.result.freezerCount,
                 room: response.data.result.roomTempCount,

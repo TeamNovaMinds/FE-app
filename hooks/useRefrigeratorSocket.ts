@@ -67,28 +67,18 @@ export const useRefrigeratorSocket = (refrigeratorId: number | null, onUpdate: (
                     // 3. 구독 (Subscribe) 설정
                     // 백엔드: sendRefreshSignal 메서드의 destination 참고 ("/sub/refrigerator/{id}")
                     const subscription = client.current?.subscribe(`/sub/refrigerator/${refrigeratorId}`, (message) => {
-                        console.log('📩 Raw Message Received:', message);
-                        console.log('📩 Message Body:', message.body);
-                        console.log('📩 Message Headers:', message.headers);
-
                         if (message.body) {
                             try {
                                 const parsedBody: SocketMessage = JSON.parse(message.body);
-                                console.log('📩 Parsed Message:', parsedBody);
 
                                 // 메시지 타입이 'INGREDIENT_UPDATE'이면 화면 갱신 함수 실행
                                 if (parsedBody.type === 'INGREDIENT_UPDATE') {
-                                    console.log('🔄 Triggering data refresh...');
+                                    console.log('🔄 Ingredient updated, refreshing...');
                                     onUpdateRef.current(); // ref를 통해 최신 콜백 호출
-                                } else {
-                                    console.log('⚠️ Unknown message type:', parsedBody.type);
                                 }
                             } catch (error) {
-                                console.error('❌ Failed to parse message:', error);
-                                console.error('Raw body:', message.body);
+                                console.error('❌ Failed to parse WebSocket message:', error);
                             }
-                        } else {
-                            console.log('⚠️ Message received but body is empty');
                         }
                     });
 

@@ -56,19 +56,17 @@ export default function HomeScreen() {
     // 웹소켓 콜백: 재료 변경 시 데이터 업데이트
     const handleSocketUpdate = useCallback(() => {
         console.log('📡 WebSocket: Ingredient update received, refreshing data...');
-        console.log('Current refrigeratorId:', ingredientCount.refrigeratorId);
-        console.log('Current tab:', activeTab);
 
         // React Query 캐시 무효화 (변경된 부분만 다시 가져옴)
         queryClient.invalidateQueries({ queryKey: ['ingredientCount'] });
         if (activeTab) {
             queryClient.invalidateQueries({ queryKey: ['storedIngredients', activeTab] });
         }
-    }, [queryClient, ingredientCount.refrigeratorId, activeTab]);
+    }, [queryClient, activeTab]);
 
     // 웹소켓 연결
     useRefrigeratorSocket(
-        ingredientCount.refrigeratorId || null,
+        ingredientCount.refrigeratorId > 0 ? ingredientCount.refrigeratorId : null,
         handleSocketUpdate
     );
 
