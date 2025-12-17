@@ -80,9 +80,7 @@ export default function FollowScreen() {
             text: '초대하기',
             onPress: async () => {
               try {
-                const response = await axiosInstance.post('/api/refrigerators/invitations', {
-                  inviteeNickname: nickname,
-                });
+                const response = await axiosInstance.post(`/api/refrigerators/invitations/${nickname}/send`);
 
                 if (response.data.isSuccess) {
                   Alert.alert('성공', '초대장을 보냈습니다.');

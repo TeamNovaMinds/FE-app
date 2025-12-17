@@ -109,6 +109,12 @@ export default function SettingsScreen() {
                             <Ionicons name="chevron-forward" size={20} color="#888" />
                         </TouchableOpacity>
                     </Link>
+                    <Link href="/notification-test" asChild>
+                        <TouchableOpacity style={styles.listItem}>
+                            <Text style={styles.listText}>알림 테스트 (개발용)</Text>
+                            <Ionicons name="chevron-forward" size={20} color="#888" />
+                        </TouchableOpacity>
+                    </Link>
                     <Link href="/settings/privacy" asChild>
                         <TouchableOpacity style={styles.listItem}>
                             <Text style={styles.listText}>개인정보 처리방침</Text>

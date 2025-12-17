@@ -31,6 +31,7 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 import { useAuthStore } from '@/store/authStore';
 import { getAccessToken, getUserInfo } from '../utils/tokenStorage';
 import axiosInstance from '@/api/axiosInstance';
+import { useNotifications } from '@/hooks/useNotifications';
 
 // Create a client
 const queryClient = new QueryClient({
@@ -52,6 +53,9 @@ export default function RootLayout() {
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
 
+  // 알림 초기화
+  const { registerDeviceToBackend } = useNotifications();
+
   // 앱 시작 시 토큰 확인하여 자동 로그인 및 주요 데이터 prefetch
   useEffect(() => {
     const checkAuth = async () => {
@@ -66,6 +70,9 @@ export default function RootLayout() {
 
             // 주요 데이터 미리 로딩 (백그라운드에서 실행)
             prefetchMainData();
+
+            // 디바이스 등록 (백그라운드에서 실행)
+            registerDeviceToBackend();
           }
         }
       } catch (error) {
@@ -293,6 +300,25 @@ export default function RootLayout() {
                                 title: '스킨 상세',
                                 headerShown: true,
                                 headerBackTitle: '스킨 라이브러리',
+                            }}
+                        />
+
+                        {/* 알림 페이지 */}
+                        <Stack.Screen
+                            name="notifications"
+                            options={{
+                                title: '알림',
+                                headerShown: false,
+                            }}
+                        />
+
+                        {/* 알림 테스트 페이지 (개발용) */}
+                        <Stack.Screen
+                            name="notification-test"
+                            options={{
+                                title: '알림 테스트',
+                                headerShown: true,
+                                headerBackTitle: '설정',
                             }}
                         />
 

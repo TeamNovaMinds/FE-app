@@ -35,7 +35,28 @@
     "plugins": [
       "expo-router",
       "expo-secure-store",
-      "expo-web-browser"
-    ]
+      "expo-web-browser",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/notification-icon.png",
+          "color": "#ffffff",
+          "sounds": []
+        }
+      ]
+    ],
+    "notification": {
+      "icon": "./assets/images/notification-icon.png",
+      "color": "#ffffff",
+      "iosDisplayInForeground": true,
+      "androidMode": "default",
+      "androidCollapsedTitle": "JustFridge"
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "8292e4fb-65b2-4e17-a233-8214b23aa6e1"
+      }
+    }
   }
 }
